@@ -44,7 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArgumentProcessingException.cs" />
-    <Compile Include="Parameters.cs" />
+    <Compile Include="Switches.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -16,28 +16,30 @@ namespace SsisBuild.Runner
         {
             var vsPath = GetVisualStudioPrivateAssembliesPath();
 
-            // relaunch the application with the base directory of Visual Studio Private assemblies
-            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
-            {
-                if (Directory.Exists(vsPath))
-                {
-                    var appDomainSetup = AppDomain.CurrentDomain.SetupInformation;
+            //// relaunch the application with the base directory of Visual Studio Private assemblies
+            //if (AppDomain.CurrentDomain.IsDefaultAppDomain())
+            //{
+            //    if (Directory.Exists(vsPath))
+            //    {
+            //        var appDomainSetup = AppDomain.CurrentDomain.SetupInformation;
 
-                    appDomainSetup.ApplicationBase = vsPath;
-                    var workerDomain = AppDomain.CreateDomain("Worker Domain", null, appDomainSetup);
-                    workerDomain.ExecuteAssembly(typeof(Program).Assembly.Location, args);
-                }
-                else
-                {
-                    throw new Exception("SQL Server Data Tools for Visual Studio 2015 are not installed.");
-                }
-            }
-            else
+            //        appDomainSetup.ApplicationBase = vsPath;
+            //        var workerDomain = AppDomain.CreateDomain("Worker Domain", null, appDomainSetup);
+            //        workerDomain.ExecuteAssembly(typeof(Program).Assembly.Location, args);
+            //    }
+            //    else
+            //    {
+            //        throw new Exception("SQL Server Data Tools for Visual Studio 2015 are not installed.");
+            //    }
+            //}
+            //else
             {
-                Parameters parameters = null;
+                DisplayHeader();
+
+                Switches switches;
                 try
                 {
-                    parameters = Parameters.ProcessArgs(args);
+                    switches = Switches.ProcessArgs(args);
                 }
                 catch (ArgumentProcessingException x)
                 {
@@ -51,29 +53,46 @@ namespace SsisBuild.Runner
                     return;
                 }
 
-                EchoParameters(parameters);
+                EchoParameters(switches);
 
-                BuildIspac(parameters.ProjectPath, parameters.BuildArguments);
+                var builder = new Builder(new ConsoleLogger());
+                builder.Execute(switches.ProjectPath, switches.ProtectionLevel, switches.Password, switches.NewPassword, switches.OutputFolder, switches.Configuration, switches.Parameters);
             }
         }
 
-        private static void BuildIspac(string projectPath, IDictionary<string, string> buildArguments)
+        private static void DisplayHeader()
         {
-            var builder = new SsisBuild.Builder(new ConsoleLogger());
-            builder.Execute(projectPath, null, "Deployment", buildArguments);
+            Console.WriteLine("SSIS Build Engine");
+            Console.WriteLine("Copyright (c) 2017 Roman Tumaykin");
+
         }
 
-        private static void EchoParameters(Parameters parameters)
+        private static void EchoParameters(Switches switches)
         {
-            Console.WriteLine("Running SSIS Build with the following parameters:");
+            Console.WriteLine("Executing SSIS Build with the following switches:");
             Console.WriteLine();
-            Console.WriteLine($"Test Parameters Only:     {parameters.TestOnly}");
-            Console.WriteLine($"Project File:             {parameters.ProjectPath}");
+            Console.WriteLine($"Project File:         {switches.ProjectPath}");
+
+            if (!string.IsNullOrWhiteSpace(switches.ProtectionLevel))
+                Console.WriteLine($"-ProtectionLevel:     {switches.ProtectionLevel}");
+
+            if (!string.IsNullOrWhiteSpace(switches.Password))
+                Console.WriteLine($"-Password:            {switches.Password}");
+
+            if (!string.IsNullOrWhiteSpace(switches.NewPassword))
+                Console.WriteLine($"-NewPassword:         {switches.NewPassword}");
+
+            if (!string.IsNullOrWhiteSpace(switches.OutputFolder))
+                Console.WriteLine($"-OutputFolder:        {switches.OutputFolder}");
+
+            if (!string.IsNullOrWhiteSpace(switches.Configuration))
+                Console.WriteLine($"-Configuration:       {switches.Configuration}");
+
             Console.WriteLine();
             Console.WriteLine("Project parameters:");
-            foreach (var buildArgument in parameters.BuildArguments)
+            foreach (var parameter in switches.Parameters)
             {
-                Console.WriteLine($"     {buildArgument.Key}:\t{buildArgument.Value}");
+                Console.WriteLine($"  {parameter.Key}:\t{parameter.Value}");
             }
         }
 
@@ -90,20 +109,38 @@ namespace SsisBuild.Runner
 
         private static void Usage()
         {
-            Console.WriteLine("SSIS Build Engine");
-            Console.WriteLine("Syntax:      ssisbuild [project file] [parameters]");
+            Console.WriteLine("---------------------------------------------------------------");
+            Console.WriteLine("Usage:");
             Console.WriteLine("");
-            Console.WriteLine("Description: Builds an SSIS project into an ispac file.");
-            Console.WriteLine("             If a project file is not specified, ssisbuild");
-            Console.WriteLine("             searches current working directory for a file");
-            Console.WriteLine("             with dtproj extension and uses that file.");
+            Console.WriteLine("Syntax:              ssisbuild [Project File] [-<Switch Name> <Value>] [...[-<Switch Name> <Value>]] [-Parameter:<Name> <Value>] [...[-Parameter:<Name> <Value>]]");
             Console.WriteLine("");
-            Console.WriteLine("             Parameters (project or package level) are passed");
-            Console.WriteLine("             in a form of /<n>=<v> where <n> is a parameter");
-            Console.WriteLine("             name, <v> is a parameter value. Each parameter");
-            Console.WriteLine("             must be passed separately.");
+            Console.WriteLine("Description:         Builds an SSIS project into an ispac file.");
+            Console.WriteLine("");
+            Console.WriteLine("Switches:");
+            Console.WriteLine("");
+            Console.WriteLine("  Project File:      Full path to a SSIS project file (with dtproj extension). If a project file is not specified, ssisbuild searches current working directory");
+            Console.WriteLine("                     for a file with dtproj extension and uses that file.");
+            Console.WriteLine("");
+            Console.WriteLine("  -Configuration:    Required. Name of configuration to use. If such configuration does not exist in the project, then the first configuration from dtproj file");
+            Console.WriteLine("                     will be copied into requested configuration name.");
+            Console.WriteLine("");
+            Console.WriteLine("  -OutputFolder:     Full path to a folder where the ispac file will be created. If ommitted, then the ispac file will be created in the");
+            Console.WriteLine("                     bin/<Configuration> subfolder of the project folder.");
+            Console.WriteLine("");
+            Console.WriteLine("  -ProtectionLevel:  Overrides current project protection level. Available values are DontSaveSensitive, EncryptAllWithPassword, EncryptSensitiveWithPassword.");
+            Console.WriteLine("");
+            Console.WriteLine("  -Password:         Password to decrypt original project data if its current protection level is either EncryptAllWithPassword or EncryptSensitiveWithPassword, ");
+            Console.WriteLine("                     in which case the value should be supplied, otherwise build will fail.");
+            Console.WriteLine("");
+            Console.WriteLine("  -NewPassword:      Password to encrypt resulting project if its resulting protection level is either EncryptAllWithPassword or EncryptSensitiveWithPassword.");
+            Console.WriteLine("                     If ommitted, the value of the <Password> switch is used for encryption, unless original protection level was DontSaveSensitive,");
+            Console.WriteLine("                     in which case the value should be supplied, otherwise build will fail.");
+            Console.WriteLine("");
+            Console.WriteLine("  -Parameter:        Project or Package parameter. Name is a standard full parameter name including the scope. For example Project::Parameter1. During the build,");
+            Console.WriteLine("                     these values will replace existing values regardless of what these values were originally.");
+            Console.WriteLine("");
             Console.WriteLine("Example:");
-            Console.WriteLine("     ssisbuild test.dtproj /param1=\"some value\" /param2=2");
+            Console.WriteLine("     ssisbuild example.dtproj -Configuration Release -Parameter:SampleParameter \"some value\"");
         }
     }
 }

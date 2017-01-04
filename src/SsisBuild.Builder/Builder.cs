@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 using Microsoft.DataTransformationServices.Project;
@@ -28,12 +29,16 @@ namespace SsisBuild
         /// </summary>
         /// <param name="projectFilePath">A full path to a dtproj file</param>
         /// <param name="outputDirectory">Output directory where an ispac file will be created.</param>
-        /// <param name="forcedProtectionLevel"></param>
+        /// <param name="protectionLevel"></param>
         /// <param name="password"></param>
+        /// <param name="newPassword"></param>
         /// <param name="configurationName"></param>
         /// <param name="parameters"></param>
         public void Execute(
             string projectFilePath,
+            string protectionLevel,
+            string password,
+            string newPassword,
             string outputDirectory,
             string configurationName,
             IDictionary<string, string> parameters
@@ -63,7 +68,7 @@ namespace SsisBuild
 
             var outputFileName = Path.GetFileName(Path.ChangeExtension(projectFilePath, "ispac"));
             var outputFileDirectory = string.IsNullOrWhiteSpace(outputDirectory)
-                ? Path.Combine(sourceProjectDirectory, "bin", configurationName)
+                ? Path.Combine(sourceProjectDirectory, "bin", configuration.Name)
                 : outputDirectory;
 
             Directory.CreateDirectory(outputFileDirectory);
@@ -259,7 +264,7 @@ namespace SsisBuild
             nsManager.AddNamespace("SSIS", Constants.NsSsis);
 
             // Properties
-            var propertyNodes = manifestXml.SelectNodes("/Manifest/SSIS:Project/SSIS:Properties/SSIS:Property",
+            var propertyNodes = manifestXml.SelectNodes("/SSIS:Project/SSIS:Properties/SSIS:Property",
                 nsManager);
 
             if (propertyNodes != null)
@@ -270,7 +275,11 @@ namespace SsisBuild
                     if (propertyXmlNode?.Attributes != null && propertyXmlNode.Attributes.Count > 0)
                     {
                         var propertyName = propertyXmlNode.Attributes["SSIS:Name"].Value;
-                        var propertyValue = propertyXmlNode.Value;
+                        var propertyValue = propertyXmlNode.HasChildNodes
+                            ? propertyXmlNode.ChildNodes.OfType<XmlNode>()
+                                .FirstOrDefault(n => n.NodeType == XmlNodeType.CDATA || n.NodeType == XmlNodeType.Text)?
+                                .Value
+                            : "";
 
                         manifest.Properties.Add(propertyName, propertyValue);
                     }
@@ -279,7 +288,7 @@ namespace SsisBuild
 
             // Packages
             var packageNodes = manifestXml.SelectNodes(
-                "/Manifest/SSIS:Project/SSIS:Project/SSIS:Packages/SSIS:Package", nsManager);
+                "/SSIS:Project/SSIS:Packages/SSIS:Package", nsManager);
 
             if (packageNodes != null)
             {
@@ -289,16 +298,28 @@ namespace SsisBuild
                     if (packageXmlNode?.Attributes != null && packageXmlNode.Attributes.Count > 0)
                     {
                         var packageName = packageXmlNode.Attributes["SSIS:Name"].Value;
+                        var entryPointString = packageXmlNode.Attributes["SSIS:EntryPoint"].Value;
                         bool entryPoint;
-                        if (bool.TryParse(packageXmlNode.Attributes["SSIS:EntryPoint"].Value, out entryPoint))
-                            manifest.Packages.Add(new PackageManifest() {EntryPoint = entryPoint, Name = packageName});
+                        if (new[] {"0", "1"}.Contains(entryPointString))
+                        {
+                            entryPoint = entryPointString != "0";
+                        }
+                        else
+                        {
+                            if (!bool.TryParse(entryPointString, out entryPoint))
+                            {
+                                continue;
+                            }
+                        }
+
+                        manifest.Packages.Add(new PackageManifest() {EntryPoint = entryPoint, Name = packageName});
                     }
                 }
             }
 
             // Connection managers
             var connectionManagerNodes = manifestXml.SelectNodes(
-                "/Manifest/SSIS:Project/SSIS:Project/SSIS:ConnectionManagers/SSIS:ConnectionManager", nsManager);
+                "/SSIS:Project/SSIS:ConnectionManagers/SSIS:ConnectionManager", nsManager);
 
             if (connectionManagerNodes != null)
             {
@@ -318,28 +339,6 @@ namespace SsisBuild
 
         private DataTransformationsConfiguration GetProjectConfiguration(ProjectSerialization sourceProject, string configurationName)
         {
-            if (string.IsNullOrWhiteSpace(configurationName))
-            {
-                _logger.LogMessage($"Determining configuration");
-
-                if (sourceProject.Configurations.Count == 0)
-                {
-                    _logger.LogError("Project does not contain any configurations.");
-                    return null;
-                }
-
-                var configuration = sourceProject.Configurations[0] as DataTransformationsConfiguration;
-                if (configuration == null)
-                {
-                    _logger.LogError("Project configurations node is corrupt.");
-                    return null;
-                }
-
-                _logger.LogMessage($"Extracting configuration {configuration.Name}");
-
-                return configuration;
-            }
-
             _logger.LogMessage($"Extracting configuration {configurationName}");
 
             foreach (var configurationObject in sourceProject.Configurations)
@@ -351,8 +350,11 @@ namespace SsisBuild
                 }
             }
 
-            _logger.LogError($"Configuration {configurationName} was not found");
-            return null;
+            var firstConfiguration = sourceProject.Configurations[0] as DataTransformationsConfiguration;
+            _logger.LogMessage($"Creating new configuration {configurationName} from existing configuration {firstConfiguration.Name}.");
+            firstConfiguration.Name = configurationName;
+
+            return firstConfiguration;
         }
 
         private static void SetProjectPropertiesFromManifest(Project project, ProjectManifest manifest)
