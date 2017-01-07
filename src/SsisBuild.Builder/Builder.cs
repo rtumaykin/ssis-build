@@ -124,6 +124,7 @@ namespace SsisBuild
 
                 _logger.LogMessage($"Original project protection level is {projectManifest.ProtectionLevel}.");
                 _logger.LogMessage($"Destination project protection level is {finalProtectionLevel}.");
+
                 outputProject.ProtectionLevel = finalProtectionLevel;
 
                 string encryptionPassword = null;
@@ -235,74 +236,88 @@ namespace SsisBuild
                             connectionManagerName);
                         connectionManager.Load(null, File.OpenRead(connectionManagerFilePath));
                     }
+                }
 
+                _logger.LogMessage("");
 
-                    // Add packages to project
-                    foreach (var packageItem in projectManifest.Packages)
+                // Add packages to project
+                foreach (var packageItem in projectManifest.Packages)
+                {
+                    var packagePath = Path.Combine(sourceProjectDirectory, packageItem.Name);
+                    _logger.LogMessage($"Loading package {packagePath}");
+                    var package = LoadPackage(packagePath);
+
+                    if (package.ProtectionLevel != finalProtectionLevel)
                     {
-                        var packagePath = Path.Combine(sourceProjectDirectory, packageItem.Name);
-                        _logger.LogMessage($"Loading package {packagePath}");
-                        var package = LoadPackage(packagePath);
-
                         _logger.LogMessage(
                             $"Original package {packageItem.Name} protection level is {package.ProtectionLevel}.");
                         _logger.LogMessage(
                             $"Setting package {packageItem.Name} protection level to {finalProtectionLevel}.");
-                        package.ProtectionLevel = finalProtectionLevel;
-                        if (IsPasswordProtectedLevel(finalProtectionLevel))
-                        {
-                            package.PackagePassword = encryptionPassword;
-                        }
-
-                        // set package parameters
-                        if (parameterSet.Count > 0)
-                        {
-                            foreach (Parameter packageParameter in package.Parameters)
-                            {
-                                if (parameters.ContainsKey($"{package.Name}::{packageParameter.Name}"))
-                                {
-                                    _logger.LogMessage(
-                                        $"Overriding parameter value for {packageParameter.Name} with passed parameter value {parameters[$"{package.Name}::{packageParameter.Name}"]}");
-                                    packageParameter.Value =
-                                        ConvertToObject(parameters[$"{package.Name}::{packageParameter.Name}"],
-                                            packageParameter.Value.GetType());
-                                }
-                            }
-
-                            SetParameterConfigurationValues(package.Parameters, parameterSet);
-                        }
-
-
-                        outputProject.PackageItems.Add(package, packageItem.Name);
-                        outputProject.PackageItems[packageItem.Name].EntryPoint = packageItem.EntryPoint;
-                        outputProject.PackageItems[packageItem.Name].Package.ComputeExpressions(true);
                     }
 
-                    if (!string.IsNullOrWhiteSpace(releaseNotesFilePath))
+                    package.ProtectionLevel = finalProtectionLevel;
+                    if (IsPasswordProtectedLevel(finalProtectionLevel))
                     {
-                        if (File.Exists(releaseNotesFilePath))
-                        {
-                            var releaseNotes = ReleaseNotesHelper.ParseReleaseNotes(releaseNotesFilePath);
-                            _logger.LogMessage($"Overriding Version to {releaseNotes.Version}");
-                            outputProject.VersionMajor = releaseNotes.Version.Major;
-                            outputProject.VersionMinor = releaseNotes.Version.Minor;
-                            outputProject.VersionBuild = releaseNotes.Version.Build;
-
-                            _logger.LogMessage($"Adding Release Notes {string.Join("\r\n", releaseNotes.Notes)}");
-                            outputProject.VersionComments = string.Join("\r\n", releaseNotes.Notes);
-                        }
-                        else
-                        {
-                            throw new Exception($"Release notes file {releaseNotesFilePath} does not exist.");
-                        }
+                        package.PackagePassword = encryptionPassword;
                     }
 
-                    // Save project
-                    _logger.LogMessage($"Saving project to: {outputFilePath}.");
+                    // set package parameters
+                    if (parameterSet.Count > 0)
+                    {
+                        foreach (Parameter packageParameter in package.Parameters)
+                        {
+                            var parameterFullName = $"{package.Name}::{packageParameter.Name}";
+                            if (parameters.ContainsKey(parameterFullName))
+                            {
+                                packageParameter.Value =
+                                    ConvertToObject(parameters[parameterFullName],
+                                        packageParameter.Value.GetType());
 
-                    outputProject.SaveTo(outputFilePath);
-                    outputProject.Dispose();
+                                var parameterSetKeyToRemove = parameterSet.FirstOrDefault(ps => ps.Value.Name == parameterFullName).Key;
+
+                                if (parameterSetKeyToRemove != null)
+                                {
+                                    parameterSet.Remove(parameterSetKeyToRemove);
+                                }
+
+                                _logger.LogMessage($"Value of {parameterFullName} is set based on passed parameter to {packageParameter.Value}.");
+                            }
+                        }
+
+                        SetParameterConfigurationValues(package.Parameters, parameterSet);
+                    }
+
+
+                    outputProject.PackageItems.Add(package, packageItem.Name);
+                    outputProject.PackageItems[packageItem.Name].EntryPoint = packageItem.EntryPoint;
+                    outputProject.PackageItems[packageItem.Name].Package.ComputeExpressions(true);
                 }
+
+                if (!string.IsNullOrWhiteSpace(releaseNotesFilePath))
+                {
+                    if (File.Exists(releaseNotesFilePath))
+                    {
+                        var releaseNotes = ReleaseNotesHelper.ParseReleaseNotes(releaseNotesFilePath);
+                        _logger.LogMessage($"Overriding Version to {releaseNotes.Version}");
+                        outputProject.VersionMajor = releaseNotes.Version.Major;
+                        outputProject.VersionMinor = releaseNotes.Version.Minor;
+                        outputProject.VersionBuild = releaseNotes.Version.Build;
+
+                        _logger.LogMessage($"Adding Release Notes {string.Join("\r\n", releaseNotes.Notes)}");
+                        outputProject.VersionComments = string.Join("\r\n", releaseNotes.Notes);
+                    }
+                    else
+                    {
+                        throw new Exception($"Release notes file {releaseNotesFilePath} does not exist.");
+                    }
+                }
+
+                // Save project
+                _logger.LogMessage($"Saving project to: {outputFilePath}.");
+
+                outputProject.SaveTo(outputFilePath);
+                outputProject.Dispose();
+
             }
             catch (Exception e)
             {
