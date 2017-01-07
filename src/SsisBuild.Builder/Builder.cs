@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Xml;
+using System.Xml
 using System.Xml.Serialization;
 using Microsoft.DataTransformationServices.Project;
 using Microsoft.DataTransformationServices.Project.ComponentModel;
@@ -46,7 +46,7 @@ namespace SsisBuild
             string configurationName,
             string releaseNotesFilePath,
             IDictionary<string, string> parameters,
-            IDictionary<string, string> sensitiveParameters 
+            IDictionary<string, string> sensitiveParameters
         )
         {
             try
@@ -65,7 +65,8 @@ namespace SsisBuild
                     }
                 }
 
-                LogParametersUsed(projectFilePath, protectionLevel, password, newPassword, outputDirectory, configurationName, parameters, sensitiveParameters);
+                LogParametersUsed(projectFilePath, protectionLevel, password, newPassword, outputDirectory,
+                    configurationName, parameters, sensitiveParameters);
 
                 var sourceProjectDirectory = Path.GetDirectoryName(projectFilePath);
 
@@ -76,14 +77,14 @@ namespace SsisBuild
                     throw new Exception($"Project file {projectFilePath} does not exist.");
 
                 _logger.LogMessage("");
-                _logger.LogMessage($"----------- Starting Build. Project file: {projectFilePath} ------------------------");
+                _logger.LogMessage(
+                    $"----------- Starting Build. Project file: {projectFilePath} ------------------------");
 
                 var sourceProject = DeserializeDtproj(projectFilePath);
 
                 if (sourceProject.DeploymentModel != DeploymentModel.Project)
                 {
-                    _logger.LogError("This task only apply to the SSIS project deployment model. Exiting.");
-                    return;
+                    throw new Exception("This task only apply to the SSIS project deployment model. Exiting.");
                 }
 
                 var projectManifest = ExtractProjectManifest(sourceProject, password);
@@ -95,8 +96,7 @@ namespace SsisBuild
 
                 if (string.IsNullOrWhiteSpace(outputFileName))
                 {
-                    _logger.LogError("failed to set output file name.");
-                    return;
+                    throw new Exception("failed to set output file name.");
                 }
                 var outputFileDirectory = string.IsNullOrWhiteSpace(outputDirectory)
                     ? Path.Combine(sourceProjectDirectory, "bin", configuration.Name)
@@ -150,53 +150,53 @@ namespace SsisBuild
 
 
                 // read and assign project parameters
-                    var projectParametersFilePath = Path.Combine(sourceProjectDirectory, "Project.params");
-                    var projectParamsXml = new XmlDocument();
-                    projectParamsXml.Load(projectParametersFilePath);
+                var projectParametersFilePath = Path.Combine(sourceProjectDirectory, "Project.params");
+                var projectParamsXml = new XmlDocument();
+                projectParamsXml.Load(projectParametersFilePath);
 
-                    if (IsPasswordProtectedLevel(projectManifest.ProtectionLevel))
+                if (IsPasswordProtectedLevel(projectManifest.ProtectionLevel))
+                {
+                    Decryptor.DecryptXmlNode(projectParamsXml, projectManifest.ProtectionLevel, password);
+                }
+
+                var projectParamsXmlNamespaceManager = new XmlNamespaceManager(projectParamsXml.NameTable);
+                projectParamsXmlNamespaceManager.AddNamespace("SSIS", Constants.NsSsis);
+                var projectParamsParameterNodes = projectParamsXml.SelectNodes("//SSIS:Parameter",
+                    projectParamsXmlNamespaceManager);
+
+                if (projectParamsParameterNodes != null)
+                {
+                    foreach (var projectParamsParameterNode in projectParamsParameterNodes)
                     {
-                        Decryptor.DecryptXmlNode(projectParamsXml, projectManifest.ProtectionLevel, password);
-                    }
+                        var projectParamsParameterXmlNode = projectParamsParameterNode as XmlNode;
 
-                    var projectParamsXmlNamespaceManager = new XmlNamespaceManager(projectParamsXml.NameTable);
-                    projectParamsXmlNamespaceManager.AddNamespace("SSIS", Constants.NsSsis);
-                    var projectParamsParameterNodes = projectParamsXml.SelectNodes("//SSIS:Parameter",
-                        projectParamsXmlNamespaceManager);
 
-                    if (projectParamsParameterNodes != null)
-                    {
-                        foreach (var projectParamsParameterNode in projectParamsParameterNodes)
+                        if (projectParamsParameterXmlNode?.Attributes != null)
                         {
-                            var projectParamsParameterXmlNode = projectParamsParameterNode as XmlNode;
+                            var parameterName = projectParamsParameterXmlNode.Attributes["SSIS:Name"].Value;
 
+                            _logger.LogMessage($"Adding Project Parameter {parameterName}.");
 
-                            if (projectParamsParameterXmlNode?.Attributes != null)
-                            {
-                                var parameterName = projectParamsParameterXmlNode.Attributes["SSIS:Name"].Value;
-
-                                _logger.LogMessage($"Adding Project Parameter {parameterName}.");
-
-                                var parameter = outputProject.Parameters.Add(parameterName, TypeCode.Boolean);
-                                parameter.LoadFromXML(projectParamsParameterXmlNode, new DefaultEvents());
+                            var parameter = outputProject.Parameters.Add(parameterName, TypeCode.Boolean);
+                            parameter.LoadFromXML(projectParamsParameterXmlNode, new DefaultEvents());
                             // force sensitive
                             if (sensitiveParameters.ContainsKey(parameterName))
-                                    parameter.Sensitive = true;
+                                parameter.Sensitive = true;
 
-                                if (parameters.ContainsKey($"Project::{parameter.Name}"))
-                                {
-                                    parameter.Value = ConvertToObject(parameters[$"Project::{parameter.Name}"],
-                                        parameter.Value.GetType());
-                                    _logger.LogMessage(
-                                        $"Value of {parameter.Name} is set based on passed parameter to {parameter.Value}.");
+                            if (parameters.ContainsKey($"Project::{parameter.Name}"))
+                            {
+                                parameter.Value = ConvertToObject(parameters[$"Project::{parameter.Name}"],
+                                    parameter.Value.GetType());
+                                _logger.LogMessage(
+                                    $"Value of {parameter.Name} is set based on passed parameter to {parameter.Value}.");
 
-                                }
                             }
                         }
                     }
+                }
 
-                    // Read parameter values to be assigned from configuration
-                    var parameterSet = new Dictionary<string, ConfigurationSetting>();
+                // Read parameter values to be assigned from configuration
+                var parameterSet = new Dictionary<string, ConfigurationSetting>();
                 foreach (string key in configuration.Options.ParameterConfigurationValues.Keys)
                 {
                     // check if it's a GUID
@@ -214,28 +214,28 @@ namespace SsisBuild
                 }
 
                 // assign parameter values from configuration except for project parameters that have been assigned from build arguments
-                    SetParameterConfigurationValues(outputProject.Parameters, parameterSet);
+                SetParameterConfigurationValues(outputProject.Parameters, parameterSet);
 
-                    // Add connections to project
-                    foreach (var connectionManagerName in projectManifest.ConnectionManagers)
+                // Add connections to project
+                foreach (var connectionManagerName in projectManifest.ConnectionManagers)
+                {
+                    var connectionManagerFilePath = Path.Combine(sourceProjectDirectory, connectionManagerName);
+                    _logger.LogMessage($"Loading Connection Manager {connectionManagerFilePath}.");
+                    var connectionManagerXml = new XmlDocument();
+                    connectionManagerXml.Load(connectionManagerFilePath);
+                    var nsManager = new XmlNamespaceManager(connectionManagerXml.NameTable);
+                    nsManager.AddNamespace("DTS", Constants.NsDts);
+                    var connectionManagerXmlNode =
+                        connectionManagerXml.SelectSingleNode("DTS:ConnectionManager", nsManager) as XmlNode;
+                    if (connectionManagerXmlNode?.Attributes != null &&
+                        (connectionManagerXmlNode.Attributes.Count > 0))
                     {
-                        var connectionManagerFilePath = Path.Combine(sourceProjectDirectory, connectionManagerName);
-                        _logger.LogMessage($"Loading Connection Manager {connectionManagerFilePath}.");
-                        var connectionManagerXml = new XmlDocument();
-                        connectionManagerXml.Load(connectionManagerFilePath);
-                        var nsManager = new XmlNamespaceManager(connectionManagerXml.NameTable);
-                        nsManager.AddNamespace("DTS", Constants.NsDts);
-                        var connectionManagerXmlNode =
-                            connectionManagerXml.SelectSingleNode("DTS:ConnectionManager", nsManager) as XmlNode;
-                        if (connectionManagerXmlNode?.Attributes != null &&
-                            (connectionManagerXmlNode.Attributes.Count > 0))
-                        {
-                            var creationName = connectionManagerXmlNode.Attributes["DTS:CreationName"].Value;
-                            var connectionManager = outputProject.ConnectionManagerItems.Add(creationName,
-                                connectionManagerName);
-                            connectionManager.Load(null, File.OpenRead(connectionManagerFilePath));
-                        }
-                    
+                        var creationName = connectionManagerXmlNode.Attributes["DTS:CreationName"].Value;
+                        var connectionManager = outputProject.ConnectionManagerItems.Add(creationName,
+                            connectionManagerName);
+                        connectionManager.Load(null, File.OpenRead(connectionManagerFilePath));
+                    }
+
 
                     // Add packages to project
                     foreach (var packageItem in projectManifest.Packages)
@@ -282,27 +282,18 @@ namespace SsisBuild
                     {
                         if (File.Exists(releaseNotesFilePath))
                         {
-                            try
-                            {
-                                var releaseNotes = ReleaseNotesHelper.ParseReleaseNotes(releaseNotesFilePath);
-                                _logger.LogMessage($"Overriding Version to {releaseNotes.Version}");
-                                outputProject.VersionMajor = releaseNotes.Version.Major;
-                                outputProject.VersionMinor = releaseNotes.Version.Minor;
-                                outputProject.VersionBuild = releaseNotes.Version.Build;
+                            var releaseNotes = ReleaseNotesHelper.ParseReleaseNotes(releaseNotesFilePath);
+                            _logger.LogMessage($"Overriding Version to {releaseNotes.Version}");
+                            outputProject.VersionMajor = releaseNotes.Version.Major;
+                            outputProject.VersionMinor = releaseNotes.Version.Minor;
+                            outputProject.VersionBuild = releaseNotes.Version.Build;
 
-                                _logger.LogMessage($"Adding Release Notes {string.Join("\r\n", releaseNotes.Notes)}");
-                                outputProject.VersionComments = string.Join("\r\n", releaseNotes.Notes);
-                            }
-                            catch (Exception e)
-                            {
-                                _logger.LogError($"Failed with the following exception: {e.Message}");
-                                return;
-                            }
+                            _logger.LogMessage($"Adding Release Notes {string.Join("\r\n", releaseNotes.Notes)}");
+                            outputProject.VersionComments = string.Join("\r\n", releaseNotes.Notes);
                         }
                         else
                         {
-                            _logger.LogError($"Release notes file {releaseNotesFilePath} does not exist.");
-                            return;
+                            throw new Exception($"Release notes file {releaseNotesFilePath} does not exist.");
                         }
                     }
 
