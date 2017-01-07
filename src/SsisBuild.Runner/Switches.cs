@@ -17,16 +17,19 @@ namespace SsisBuild.Runner
         public string Password { get; set; }
         public string NewPassword { get; set; }
         public string Configuration { get; set; }
+        public string ReleaseNotesFilePath { get; set; }
         public IDictionary<string, string> Parameters { get; set; }
+        public IDictionary<string, string> SensitiveParameters { get; set; }
+
 
         public static Switches ProcessArgs(string[] args)
         {
             var switches = new Switches()
             {
-                Parameters = new Dictionary<string, string>()
+                Parameters = new Dictionary<string, string>(),
+                SensitiveParameters = new Dictionary<string, string>()
             };
 
-            var explicitProjectPath = false;
             string projectPath;
 
             var argsList = args.ToList();
@@ -88,11 +91,20 @@ namespace SsisBuild.Runner
                         switches.NewPassword = argsList[1];
                         break;
 
+                    case "-ReleaseNotesFilePath":
+                        switches.ReleaseNotesFilePath = argsList[1];
+                        break;
+
                     default:
                         if (argsList[0].Substring(0, 11) == "-Parameter:")
                         {
                             switches.Parameters.Add(argsList[0].Substring(11), argsList[1]);
                         }
+                        else if (argsList[0].Substring(0, 11) == "-SensitiveParameter:")
+                        {
+                            switches.SensitiveParameters.Add(argsList[0].Substring(11), argsList[1]);
+                        }
+
                         else
                         {
                             throw new ArgumentProcessingException($"Unknown switch \"{argsList[0]}\"");
@@ -104,6 +116,14 @@ namespace SsisBuild.Runner
 
             if (string.IsNullOrWhiteSpace(switches.Configuration))
                 throw new ArgumentProcessingException("Configuration name must be specified");
+
+            var overlappedParameters = 
+                switches.SensitiveParameters.Keys.Intersect(switches.Parameters.Keys);
+
+            var parameters = overlappedParameters as string[] ?? overlappedParameters.ToArray();
+
+            if (parameters.Length > 0)
+                throw new ArgumentProcessingException($"Duplicate parameters specified: {string.Join(", ", parameters)}");
 
             return switches;
         }

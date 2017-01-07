@@ -16,7 +16,6 @@ namespace SsisBuild.Logger
         public void LogError(string error)
         {
             Console.WriteLine(error);
-            throw new Exception(error);
         }
     }
 }
