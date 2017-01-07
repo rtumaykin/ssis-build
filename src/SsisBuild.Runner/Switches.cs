@@ -96,13 +96,13 @@ namespace SsisBuild.Runner
                         break;
 
                     default:
-                        if (argsList[0].Substring(0, 11) == "-Parameter:")
+                        if (argsList[0].StartsWith("-Parameter:"))
                         {
                             switches.Parameters.Add(argsList[0].Substring(11), argsList[1]);
                         }
-                        else if (argsList[0].Substring(0, 11) == "-SensitiveParameter:")
+                        else if (argsList[0].StartsWith("-SensitiveParameter:"))
                         {
-                            switches.SensitiveParameters.Add(argsList[0].Substring(11), argsList[1]);
+                            switches.SensitiveParameters.Add(argsList[0].Substring(20), argsList[1]);
                         }
 
                         else

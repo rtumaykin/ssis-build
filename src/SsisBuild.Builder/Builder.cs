@@ -182,7 +182,10 @@ namespace SsisBuild
                             parameter.LoadFromXML(projectParamsParameterXmlNode, new DefaultEvents());
                             // force sensitive
                             if (sensitiveParameters.ContainsKey(parameterName))
+                            {
                                 parameter.Sensitive = true;
+                                _logger.LogMessage($"Forcing {parameterName} Sensitive property to true.");
+                            }
 
                             if (parameters.ContainsKey($"Project::{parameter.Name}"))
                             {
@@ -272,6 +275,12 @@ namespace SsisBuild
                                 packageParameter.Value =
                                     ConvertToObject(parameters[parameterFullName],
                                         packageParameter.Value.GetType());
+
+                                if (sensitiveParameters.ContainsKey((parameterFullName)))
+                                {
+                                    packageParameter.Sensitive = true;
+                                    _logger.LogMessage($"Forcing {parameterFullName} Sensitive property to true.");
+                                }
 
                                 var parameterSetKeyToRemove = parameterSet.FirstOrDefault(ps => ps.Value.Name == parameterFullName).Key;
 
