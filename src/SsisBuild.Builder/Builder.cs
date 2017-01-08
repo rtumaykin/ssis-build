@@ -51,20 +51,6 @@ namespace SsisBuild
         {
             try
             {
-
-                // join sensitive parameters
-                if (parameters == null)
-                {
-                    parameters = sensitiveParameters;
-                }
-                else if (sensitiveParameters != null)
-                {
-                    foreach (var sensitiveParameter in sensitiveParameters)
-                    {
-                        parameters.Add(sensitiveParameter.Key, sensitiveParameter.Value);
-                    }
-                }
-
                 LogParametersUsed(projectFilePath, protectionLevel, password, newPassword, outputDirectory,
                     configurationName, parameters, sensitiveParameters);
 
@@ -92,6 +78,8 @@ namespace SsisBuild
                 var configuration = GetProjectConfiguration(sourceProject, configurationName);
                 MergeUserOptions(projectFilePath, configuration);
 
+                var consolidatedParameters = ConsolidateBuildParameters(parameters, sensitiveParameters);
+
                 var outputFileName = Path.GetFileName(Path.ChangeExtension(projectFilePath, "ispac"));
 
                 if (string.IsNullOrWhiteSpace(outputFileName))
@@ -115,133 +103,28 @@ namespace SsisBuild
 
                 outputProject.OfflineMode = true;
 
-                SetProjectPropertiesFromManifest(outputProject, projectManifest);
+                SetProjectProperties(outputProject, projectManifest.Properties);
 
-                // dealing with encryption
-                var finalProtectionLevel = string.IsNullOrWhiteSpace(protectionLevel)
-                    ? projectManifest.ProtectionLevel
-                    : (DTSProtectionLevel) Enum.Parse(typeof(DTSProtectionLevel), protectionLevel, true);
+                var finalProtectionLevel = GetFinalProtectionLevel(protectionLevel, projectManifest.ProtectionLevel);
 
-                _logger.LogMessage($"Original project protection level is {projectManifest.ProtectionLevel}.");
-                _logger.LogMessage($"Destination project protection level is {finalProtectionLevel}.");
+                var encryptionPassword = GetEncryptionPassword(password, newPassword, finalProtectionLevel,
+                    projectManifest);
 
                 outputProject.ProtectionLevel = finalProtectionLevel;
-
-                string encryptionPassword = null;
-
                 if (IsPasswordProtectedLevel(finalProtectionLevel))
-                {
-                    encryptionPassword = IsPasswordProtectedLevel(projectManifest.ProtectionLevel)
-                        ? (string.IsNullOrEmpty(newPassword) ? password : newPassword)
-                        : newPassword;
-
-                    if (string.IsNullOrWhiteSpace(encryptionPassword))
-                    {
-                        throw new Exception(
-                            $"<NewPassword> switch is required to change project to Protection Level {finalProtectionLevel} from {projectManifest.ProtectionLevel}");
-                    }
-
-                    if (encryptionPassword == password)
-                    {
-                        _logger.LogMessage("Using the original password to encrypt project contents.");
-                    }
-
                     outputProject.Password = encryptionPassword;
-                }
 
+                AddProjectParameters(password, sourceProjectDirectory, projectManifest.ProtectionLevel, outputProject);
 
-                // read and assign project parameters
-                var projectParametersFilePath = Path.Combine(sourceProjectDirectory, "Project.params");
-                var projectParamsXml = new XmlDocument();
-                projectParamsXml.Load(projectParametersFilePath);
+                UpdateConsolidatedParametersFromProjectParameters(outputProject.Parameters, consolidatedParameters);
 
-                if (IsPasswordProtectedLevel(projectManifest.ProtectionLevel))
-                {
-                    Decryptor.DecryptXmlNode(projectParamsXml, projectManifest.ProtectionLevel, password);
-                }
+                UpdateParameterDetailsFromConfiguration(configuration, consolidatedParameters);
 
-                var projectParamsXmlNamespaceManager = new XmlNamespaceManager(projectParamsXml.NameTable);
-                projectParamsXmlNamespaceManager.AddNamespace("SSIS", Constants.NsSsis);
-                var projectParamsParameterNodes = projectParamsXml.SelectNodes("//SSIS:Parameter",
-                    projectParamsXmlNamespaceManager);
+                SetParameterFinalValues(outputProject.Parameters, consolidatedParameters, "Project");
 
-                if (projectParamsParameterNodes != null)
-                {
-                    foreach (var projectParamsParameterNode in projectParamsParameterNodes)
-                    {
-                        var projectParamsParameterXmlNode = projectParamsParameterNode as XmlNode;
+                AddProjectConnections(projectManifest.ConnectionManagers, sourceProjectDirectory, outputProject);
 
-
-                        if (projectParamsParameterXmlNode?.Attributes != null)
-                        {
-                            var parameterName = projectParamsParameterXmlNode.Attributes["SSIS:Name"].Value;
-
-                            _logger.LogMessage($"Adding Project Parameter {parameterName}.");
-
-                            var parameter = outputProject.Parameters.Add(parameterName, TypeCode.Boolean);
-                            parameter.LoadFromXML(projectParamsParameterXmlNode, new DefaultEvents());
-                            // force sensitive
-                            if (sensitiveParameters.ContainsKey(parameterName))
-                            {
-                                parameter.Sensitive = true;
-                                _logger.LogMessage($"Forcing {parameterName} Sensitive property to true.");
-                            }
-
-                            if (parameters.ContainsKey($"Project::{parameter.Name}"))
-                            {
-                                parameter.Value = ConvertToObject(parameters[$"Project::{parameter.Name}"],
-                                    parameter.Value.GetType());
-                                _logger.LogMessage(
-                                    $"Value of {parameter.Name} is set based on passed parameter to {parameter.Value}.");
-
-                            }
-                        }
-                    }
-                }
-
-                // Read parameter values to be assigned from configuration
-                var parameterSet = new Dictionary<string, ConfigurationSetting>();
-                foreach (string key in configuration.Options.ParameterConfigurationValues.Keys)
-                {
-                    // check if it's a GUID
-                    Guid guid;
-                    if (Guid.TryParse(key, out guid))
-                    {
-                        var setting = configuration.Options.ParameterConfigurationValues[key];
-                        // Project parameters  only if it has not been assigned above from parameter
-                        if (!parameters.ContainsKey(setting.Name) || !setting.Name.StartsWith("Project::"))
-                        {
-                            parameterSet.Add(key, setting);
-                        }
-
-                    }
-                }
-
-                // assign parameter values from configuration except for project parameters that have been assigned from build arguments
-                SetParameterConfigurationValues(outputProject.Parameters, parameterSet);
-
-                // Add connections to project
-                foreach (var connectionManagerName in projectManifest.ConnectionManagers)
-                {
-                    var connectionManagerFilePath = Path.Combine(sourceProjectDirectory, connectionManagerName);
-                    _logger.LogMessage($"Loading Connection Manager {connectionManagerFilePath}.");
-                    var connectionManagerXml = new XmlDocument();
-                    connectionManagerXml.Load(connectionManagerFilePath);
-                    var nsManager = new XmlNamespaceManager(connectionManagerXml.NameTable);
-                    nsManager.AddNamespace("DTS", Constants.NsDts);
-                    var connectionManagerXmlNode =
-                        connectionManagerXml.SelectSingleNode("DTS:ConnectionManager", nsManager) as XmlNode;
-                    if (connectionManagerXmlNode?.Attributes != null &&
-                        (connectionManagerXmlNode.Attributes.Count > 0))
-                    {
-                        var creationName = connectionManagerXmlNode.Attributes["DTS:CreationName"].Value;
-                        var connectionManager = outputProject.ConnectionManagerItems.Add(creationName,
-                            connectionManagerName);
-                        connectionManager.Load(null, File.OpenRead(connectionManagerFilePath));
-                    }
-                }
-
-                _logger.LogMessage("");
+                _logger.LogMessage("----------------------------------------------------------------------");
 
                 // Add packages to project
                 foreach (var packageItem in projectManifest.Packages)
@@ -264,37 +147,7 @@ namespace SsisBuild
                         package.PackagePassword = encryptionPassword;
                     }
 
-                    // set package parameters
-                    if (parameterSet.Count > 0)
-                    {
-                        foreach (Parameter packageParameter in package.Parameters)
-                        {
-                            var parameterFullName = $"{package.Name}::{packageParameter.Name}";
-                            if (parameters.ContainsKey(parameterFullName))
-                            {
-                                packageParameter.Value =
-                                    ConvertToObject(parameters[parameterFullName],
-                                        packageParameter.Value.GetType());
-
-                                if (sensitiveParameters.ContainsKey((parameterFullName)))
-                                {
-                                    packageParameter.Sensitive = true;
-                                    _logger.LogMessage($"Forcing {parameterFullName} Sensitive property to true.");
-                                }
-
-                                var parameterSetKeyToRemove = parameterSet.FirstOrDefault(ps => ps.Value.Name == parameterFullName).Key;
-
-                                if (parameterSetKeyToRemove != null)
-                                {
-                                    parameterSet.Remove(parameterSetKeyToRemove);
-                                }
-
-                                _logger.LogMessage($"Value of {parameterFullName} is set based on passed parameter to {packageParameter.Value}.");
-                            }
-                        }
-
-                        SetParameterConfigurationValues(package.Parameters, parameterSet);
-                    }
+                    SetParameterFinalValues(package.Parameters, consolidatedParameters, package.Name);
 
 
                     outputProject.PackageItems.Add(package, packageItem.Name);
@@ -302,24 +155,7 @@ namespace SsisBuild
                     outputProject.PackageItems[packageItem.Name].Package.ComputeExpressions(true);
                 }
 
-                if (!string.IsNullOrWhiteSpace(releaseNotesFilePath))
-                {
-                    if (File.Exists(releaseNotesFilePath))
-                    {
-                        var releaseNotes = ReleaseNotesHelper.ParseReleaseNotes(releaseNotesFilePath);
-                        _logger.LogMessage($"Overriding Version to {releaseNotes.Version}");
-                        outputProject.VersionMajor = releaseNotes.Version.Major;
-                        outputProject.VersionMinor = releaseNotes.Version.Minor;
-                        outputProject.VersionBuild = releaseNotes.Version.Build;
-
-                        _logger.LogMessage($"Adding Release Notes {string.Join("\r\n", releaseNotes.Notes)}");
-                        outputProject.VersionComments = string.Join("\r\n", releaseNotes.Notes);
-                    }
-                    else
-                    {
-                        throw new Exception($"Release notes file {releaseNotesFilePath} does not exist.");
-                    }
-                }
+                SetVersionInfoFromReleaseNotes(releaseNotesFilePath, outputProject);
 
                 // Save project
                 _logger.LogMessage($"Saving project to: {outputFilePath}.");
@@ -335,8 +171,334 @@ namespace SsisBuild
             }
         }
 
-        private void LogParametersUsed(string projectFilePath, string protectionLevel, string password, string newPassword,
-            string outputDirectory, string configurationName, IDictionary<string, string> parameters, IDictionary<string, string> sensitiveParameters)
+        /// <summary>
+        /// Parses release notes and assigns Version data
+        /// </summary>
+        /// <param name="releaseNotesFilePath"></param>
+        /// <param name="outputProject"></param>
+        private void SetVersionInfoFromReleaseNotes(string releaseNotesFilePath, Project outputProject)
+        {
+            if (!string.IsNullOrWhiteSpace(releaseNotesFilePath))
+            {
+                if (File.Exists(releaseNotesFilePath))
+                {
+                    var releaseNotes = ReleaseNotesHelper.ParseReleaseNotes(releaseNotesFilePath);
+                    _logger.LogMessage($"Overriding Version to {releaseNotes.Version}");
+                    outputProject.VersionMajor = releaseNotes.Version.Major;
+                    outputProject.VersionMinor = releaseNotes.Version.Minor;
+                    outputProject.VersionBuild = releaseNotes.Version.Build;
+
+                    _logger.LogMessage($"Adding Release Notes {string.Join("\r\n", releaseNotes.Notes)}");
+                    outputProject.VersionComments = string.Join("\r\n", releaseNotes.Notes);
+                }
+                else
+                {
+                    throw new Exception($"Release notes file {releaseNotesFilePath} does not exist.");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determines the encryption password
+        /// </summary>
+        /// <param name="passwordParameterValue"></param>
+        /// <param name="newPasswordParameterValue"></param>
+        /// <param name="finalProtectionLevel"></param>
+        /// <param name="projectManifest"></param>
+        /// <returns></returns>
+        private string GetEncryptionPassword(string passwordParameterValue, string newPasswordParameterValue,
+            DTSProtectionLevel finalProtectionLevel,
+            ProjectManifest projectManifest)
+        {
+            string encryptionPassword = null;
+
+            if (IsPasswordProtectedLevel(finalProtectionLevel))
+            {
+                encryptionPassword = IsPasswordProtectedLevel(projectManifest.ProtectionLevel)
+                    ? (string.IsNullOrEmpty(newPasswordParameterValue) ? passwordParameterValue : newPasswordParameterValue)
+                    : newPasswordParameterValue;
+
+                if (string.IsNullOrWhiteSpace(encryptionPassword))
+                {
+                    throw new Exception(
+                        $"<NewPassword> switch is required to change project to Protection Level {finalProtectionLevel} from {projectManifest.ProtectionLevel}");
+                }
+
+                if (encryptionPassword == passwordParameterValue)
+                {
+                    _logger.LogMessage("Using the original password to encrypt project contents.");
+                }
+            }
+            return encryptionPassword;
+        }
+
+        /// <summary>
+        /// Determines the final protection level
+        /// </summary>
+        /// <param name="protectionLevelParameterValue"></param>
+        /// <param name="sourceProtectionLevel"></param>
+        /// <returns></returns>
+        private DTSProtectionLevel GetFinalProtectionLevel(string protectionLevelParameterValue, DTSProtectionLevel sourceProtectionLevel)
+        {
+            var finalProtectionLevel = string.IsNullOrWhiteSpace(protectionLevelParameterValue)
+                ? sourceProtectionLevel
+                : (DTSProtectionLevel) Enum.Parse(typeof(DTSProtectionLevel), protectionLevelParameterValue, true);
+
+            _logger.LogMessage($"Original project protection level is {sourceProtectionLevel}.");
+            _logger.LogMessage($"Destination project protection level is {finalProtectionLevel}.");
+            return finalProtectionLevel;
+        }
+
+        /// <summary>
+        /// Reads project.params file and loads all parameters info into the output project
+        /// </summary>
+        /// <param name="decryptionPassword"></param>
+        /// <param name="sourceProjectDirectory"></param>
+        /// <param name="sourceProtectionLevel"></param>
+        /// <param name="outputProject"></param>
+        private void AddProjectParameters(string decryptionPassword, string sourceProjectDirectory,
+            DTSProtectionLevel sourceProtectionLevel,
+            Project outputProject)
+        {
+            // read and assign project parameters
+            var projectParametersFilePath = Path.Combine(sourceProjectDirectory, "Project.params");
+            var projectParamsXml = new XmlDocument();
+            projectParamsXml.Load(projectParametersFilePath);
+
+            if (IsPasswordProtectedLevel(sourceProtectionLevel))
+            {
+                Decryptor.DecryptXmlNode(projectParamsXml, sourceProtectionLevel, decryptionPassword);
+            }
+
+            var projectParamsXmlNamespaceManager = new XmlNamespaceManager(projectParamsXml.NameTable);
+            projectParamsXmlNamespaceManager.AddNamespace("SSIS", Constants.NsSsis);
+            var projectParamsParameterNodes = projectParamsXml.SelectNodes("//SSIS:Parameter",
+                projectParamsXmlNamespaceManager);
+
+            if (projectParamsParameterNodes != null)
+            {
+                foreach (var projectParamsParameterNode in projectParamsParameterNodes)
+                {
+                    var projectParamsParameterXmlNode = projectParamsParameterNode as XmlNode;
+
+
+                    if (projectParamsParameterXmlNode?.Attributes != null)
+                    {
+                        var parameterName = projectParamsParameterXmlNode.Attributes["SSIS:Name"].Value;
+
+                        _logger.LogMessage($"Adding Project Parameter {parameterName}.");
+
+                        var parameter = outputProject.Parameters.Add(parameterName, TypeCode.Boolean);
+                        parameter.LoadFromXML(projectParamsParameterXmlNode, new DefaultEvents());
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Parses connection managers data and adds resulting info to the output project
+        /// </summary>
+        /// <param name="connectionManagers"></param>
+        /// <param name="sourceProjectDirectory"></param>
+        /// <param name="outputProject"></param>
+        private void AddProjectConnections(IList<string> connectionManagers, string sourceProjectDirectory,
+            Project outputProject)
+        {
+            // Add connections to project
+            foreach (var connectionManagerName in connectionManagers)
+            {
+                var connectionManagerFilePath = Path.Combine(sourceProjectDirectory, connectionManagerName);
+                _logger.LogMessage($"Loading Connection Manager {connectionManagerFilePath}.");
+                var connectionManagerXml = new XmlDocument();
+                connectionManagerXml.Load(connectionManagerFilePath);
+                var nsManager = new XmlNamespaceManager(connectionManagerXml.NameTable);
+                nsManager.AddNamespace("DTS", Constants.NsDts);
+                var connectionManagerXmlNode =
+                    connectionManagerXml.SelectSingleNode("DTS:ConnectionManager", nsManager) as XmlNode;
+                if (connectionManagerXmlNode?.Attributes != null &&
+                    (connectionManagerXmlNode.Attributes.Count > 0))
+                {
+                    var creationName = connectionManagerXmlNode.Attributes["DTS:CreationName"].Value;
+                    var connectionManager = outputProject.ConnectionManagerItems.Add(creationName,
+                        connectionManagerName);
+                    connectionManager.Load(null, File.OpenRead(connectionManagerFilePath));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates Consolidated parameters with data extracted from active configuration
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <param name="consolidatedParametersData"></param>
+        private static void UpdateParameterDetailsFromConfiguration(DataTransformationsConfiguration configuration,
+            IList<ParameterDetail> consolidatedParametersData)
+        {
+            // Read parameter values to be assigned from configuration
+            foreach (string key in configuration.Options.ParameterConfigurationValues.Keys)
+            {
+                // check if it's a GUID
+                Guid parameterId;
+                if (Guid.TryParse(key, out parameterId))
+                {
+                    var parameterConfigurationValue = configuration.Options.ParameterConfigurationValues[key];
+                    var parameterDetail = consolidatedParametersData.FirstOrDefault(d => d.Id == parameterId);
+
+                    if (parameterDetail != null)
+                    {
+                        parameterDetail.IsInConfiguration = true;
+                        parameterDetail.ConfigurationValue = parameterConfigurationValue.Value;
+                        parameterDetail.ConfigurationName = configuration.Name;
+                    }
+                    else
+                    {
+                        consolidatedParametersData.Add(new ParameterDetail()
+                        {
+                            FullName = parameterConfigurationValue.Name,
+                            ConfigurationValue = parameterConfigurationValue.Value,
+                            Id = parameterId,
+                            IsInConfiguration = true,
+                            ConfigurationName = configuration.Name
+                        });
+                    }
+                }
+            }
+
+            // Read parameter values to be assigned from user configuration
+            // values in dtproj.user are encrypted using user ke so there is no way to decrypt it on a build server ==> Value = null
+            foreach (string key in configuration.Options.ParameterConfigurationSensitiveValues.Keys)
+            {
+                // check if it's a GUID
+                Guid parameterId;
+                if (Guid.TryParse(key, out parameterId))
+                {
+                    var parameterConfigurationValue = configuration.Options.ParameterConfigurationSensitiveValues[key];
+                    var parameterDetail = consolidatedParametersData.FirstOrDefault(d => d.Id == parameterId);
+
+                    if (parameterDetail != null)
+                    {
+                        parameterDetail.IsInConfiguration = true;
+                        parameterDetail.IsSensitive = true;
+                    }
+                    else
+                    {
+                        consolidatedParametersData.Add(new ParameterDetail()
+                        {
+                            FullName = parameterConfigurationValue.Name,
+                            IsSensitive = true,
+                            Id = parameterId,
+                            IsInConfiguration = true
+                        });
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates Consolidated parameters with data from extracted project parameters
+        /// </summary>
+        /// <param name="outputProjectParameters"></param>
+        /// <param name="consolidatedParametersData"></param>
+        private static void UpdateConsolidatedParametersFromProjectParameters(Parameters outputProjectParameters,
+            IList<ParameterDetail> consolidatedParametersData)
+        {
+            var parameterId = Guid.Empty;
+
+            foreach (Parameter parameter in outputProjectParameters)
+            {
+                var detailToUpdate =
+                    consolidatedParametersData.FirstOrDefault(
+                        d =>
+                            d.FullName == $"Project::{parameter.Name}" &&
+                            Guid.TryParse(parameter.ID, out parameterId));
+
+                if (detailToUpdate != null)
+                {
+                    detailToUpdate.Parameter = parameter;
+                    detailToUpdate.Id = parameterId;
+                    detailToUpdate.IsSensitive = parameter.Sensitive;
+                    detailToUpdate.OriginalValue = parameter.Value;
+                }
+                else
+                {
+                    consolidatedParametersData.Add(new ParameterDetail()
+                    {
+                        Parameter = parameter,
+                        FullName = parameter.Name,
+                        Id = parameterId,
+                        IsSensitive = parameter.Sensitive,
+                        OriginalValue = parameter.Value
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Consolidates regular build parameter arguments and sensitive build parameers
+        /// </summary>
+        /// <param name="parameters">Regular build parameters</param>
+        /// <param name="sensitiveParameters">Sensitive build parameters</param>
+        /// <returns></returns>
+        private IList<ParameterDetail> ConsolidateBuildParameters(IDictionary<string, string> parameters,
+            IDictionary<string, string> sensitiveParameters)
+        {
+            // Check that there is no overlap
+            if (parameters != null && sensitiveParameters != null)
+            {
+                var overlappedParameters =
+                    sensitiveParameters.Keys.Intersect(parameters.Keys);
+
+
+                var overlappedParametersArray = overlappedParameters as string[] ?? overlappedParameters.ToArray();
+
+                if (overlappedParametersArray.Length > 0)
+                    throw new Exception(
+                        $"Duplicate parameters specified: {string.Join(", ", overlappedParametersArray)}");
+            }
+
+            var combinedParameters = new List<ParameterDetail>();
+
+            if (parameters != null)
+            {
+                combinedParameters.AddRange(parameters.Select(p => new ParameterDetail()
+                {
+                    FullName = p.Key,
+                    BuildParameterValue = p.Value,
+                    ForceSensitive = false,
+                    IsInBuldParameters = true
+                }));
+            }
+
+            // join sensitive parameters
+            if (sensitiveParameters != null)
+            {
+                combinedParameters.AddRange(sensitiveParameters.Select(p => new ParameterDetail()
+                {
+                    FullName = p.Key,
+                    BuildParameterValue = p.Value,
+                    ForceSensitive = true,
+                    IsInBuldParameters = true
+                }));
+            }
+
+            return combinedParameters;
+        }
+
+        /// <summary>
+        /// Logs parameters passed to build
+        /// </summary>
+        /// <param name="projectFilePath"></param>
+        /// <param name="protectionLevel"></param>
+        /// <param name="password"></param>
+        /// <param name="newPassword"></param>
+        /// <param name="outputDirectory"></param>
+        /// <param name="configurationName"></param>
+        /// <param name="parameters"></param>
+        /// <param name="sensitiveParameters"></param>
+        private void LogParametersUsed(string projectFilePath, string protectionLevel, string password,
+            string newPassword,
+            string outputDirectory, string configurationName, IDictionary<string, string> parameters,
+            IDictionary<string, string> sensitiveParameters)
         {
             _logger.LogMessage("SSIS Build Engine");
             _logger.LogMessage("Copyright (c) 2017 Roman Tumaykin");
@@ -373,25 +535,53 @@ namespace SsisBuild
             foreach (var parameter in parameters)
             {
                 _logger.LogMessage(
-                    $"  {parameter.Key} (Sensitive = {sensitiveParameters.Keys.Contains(parameter.Key)}): {parameter.Value}");
+                    $"  {parameter.Key} (Sensitive = false): {parameter.Value}");
+            }
+            foreach (var sensitiveParameter in sensitiveParameters)
+            {
+                _logger.LogMessage(
+                    $"  {sensitiveParameter.Key} (Sensitive = true): {sensitiveParameter.Value}");
             }
         }
 
+        /// <summary>
+        /// Converts a string value to a requested type
+        /// </summary>
+        /// <param name="value">string value to convert</param>
+        /// <param name="type">type to convert to</param>
+        /// <returns></returns>
         private static object ConvertToObject(string value, Type type)
         {
             var converter = TypeDescriptor.GetConverter(type);
             return converter.ConvertFromString(value);
         }
 
-        private static readonly DTSProtectionLevel[] PasswordProtectionLevels = {DTSProtectionLevel.EncryptAllWithPassword, DTSProtectionLevel.EncryptSensitiveWithPassword};
+        /// <summary>
+        /// Password protected levels
+        /// </summary>
+        private static readonly DTSProtectionLevel[] PasswordProtectionLevels =
+        {
+            DTSProtectionLevel.EncryptAllWithPassword, DTSProtectionLevel.EncryptSensitiveWithPassword
+        };
 
+        /// <summary>
+        /// Detects whether a specific DTS Protection level is password protected
+        /// </summary>
+        /// <param name="protectionLevel">DTS Protection Level</param>
+        /// <returns></returns>
         private static bool IsPasswordProtectedLevel(DTSProtectionLevel protectionLevel)
         {
             return PasswordProtectionLevels.Contains(protectionLevel);
         }
 
+        /// <summary>
+        /// Loads package from a dtsx file.
+        /// </summary>
+        /// <param name="packagePath">path to a dtsx file</param>
+        /// <returns></returns>
         private static Package LoadPackage(string packagePath)
         {
+            // todo: check how to implement security here since the encryption is stored differently on a package level 
             Package package;
 
             try
@@ -414,30 +604,60 @@ namespace SsisBuild
             return package;
         }
 
-        private void SetParameterConfigurationValues(Parameters parameters,
-            IDictionary<string, ConfigurationSetting> set)
+        /// <summary>
+        /// Assigns parameter (project/package) values based on whether the value was passed as a Build Parameter Argument, 
+        /// or exists in an active Configuration, or, keeps an original value
+        /// </summary>
+        /// <param name="parameters">Parameters collection</param>
+        /// <param name="consolidatedParametersData">Consolidated parameters data</param>
+        /// <param name="parameterScope">Either "Project" for project parameters, or package name for package parameters</param>
+        private void SetParameterFinalValues(Parameters parameters,
+            IList<ParameterDetail> consolidatedParametersData,
+            string parameterScope)
         {
             foreach (Parameter parameter in parameters)
             {
-                if (set.ContainsKey(parameter.ID))
+                Guid parameterId;
+                if (Guid.TryParse(parameter.ID, out parameterId))
                 {
-                    var configSetting = set[parameter.ID];
-                    parameter.Value = configSetting.Value;
-
-                    _logger.LogMessage($"Value of {parameter.Name} is set based on active configuration to {configSetting.Value}.");
-
-                    // remove parameter
-                    set.Remove(parameter.ID);
-
-                    if (set.Count == 0)
+                    var parameterDetail = consolidatedParametersData.FirstOrDefault(d => d.FullName == $"{parameterScope}::{parameter.Name}");
+                    if (parameterDetail != null)
                     {
-                        break;
+                        // Build Parameter Argument wins.
+                        if (parameterDetail.IsInBuldParameters)
+                        {
+                            parameter.Value = ConvertToObject(parameterDetail.BuildParameterValue,
+                                parameter.Value.GetType());
+                            _logger.LogMessage(
+                                $"Using Build Parameter Argument to set {parameter.Name} value to {parameterDetail.BuildParameterValue}.");
+                        }
+                        else if (parameterDetail.IsInConfiguration)
+                        {
+                            if (parameterDetail.IsSensitive && parameterDetail.ConfigurationValue == null)
+                            {
+                                throw new Exception(
+                                    $"Sensitive parameter {parameterDetail.FullName} configuration value is encrypted by the user key and is not decryptable. Either pass the value via a Build Parameter Argument of remove it from configurations.");
+                            }
+                            parameter.Value = parameterDetail.ConfigurationValue;
+                            _logger.LogMessage(
+                                $"Using Configuration {parameterDetail.ConfigurationName} to set {parameter.Name} value to {parameterDetail.ConfigurationValue}.");
+                        }
+                        else
+                        {
+                            _logger.LogMessage(
+                                $"Using original {parameter.Name} value {parameterDetail.OriginalValue}.");
+                        }
                     }
                 }
             }
         }
 
-        private static ProjectSerialization DeserializeDtproj(string project)
+        /// <summary>
+        /// Deserializes source project from a dtproj file
+        /// </summary>
+        /// <param name="sourceProjectFilePath"></param>
+        /// <returns></returns>
+        private static ProjectSerialization DeserializeDtproj(string sourceProjectFilePath)
         {
             var xmlOverrides = new XmlAttributeOverrides();
             ProjectConfigurationOptions.PrepareSerializationOverrides(
@@ -446,17 +666,19 @@ namespace SsisBuild
             // Read project file
             var serializer = new XmlSerializer(typeof(ProjectSerialization), xmlOverrides);
 
-            var fileStream = File.OpenRead(project);
+            var fileStream = File.OpenRead(sourceProjectFilePath);
             return serializer.Deserialize(fileStream) as ProjectSerialization;
         }
 
         /// <summary>
-        /// Reads the dtproj.user file to find sensitive parameter that are included in configurations
+        /// Reads the dtproj.user file to find sensitive parameter that are included in configurations and merges them 
+        /// with the active configuration options
         /// </summary>
         /// <param name="projectFilePath"></param>
         /// <param name="activeConfiguration"></param>
         /// <returns></returns>
-        private static void MergeUserOptions(string projectFilePath, DataTransformationsConfiguration activeConfiguration)
+        private static void MergeUserOptions(string projectFilePath,
+            DataTransformationsConfiguration activeConfiguration)
         {
             var userProjectFilePath = $"{projectFilePath}.user";
 
@@ -483,12 +705,13 @@ namespace SsisBuild
         }
 
         /// <summary>
-        /// Reads Project Manifest from deserialized project
+        /// Reads Project Manifest from deserialized source project
         /// </summary>
-        /// <param name="sourceProject"></param>
-        /// <param name="decryptionPassword"></param>
+        /// <param name="sourceProject">Deserialized source project</param>
+        /// <param name="decryptionPassword">Password to decrypt encrypted values</param>
         /// <returns></returns>
-        private static ProjectManifest ExtractProjectManifest(ProjectSerialization sourceProject, string decryptionPassword)
+        private static ProjectManifest ExtractProjectManifest(ProjectSerialization sourceProject,
+            string decryptionPassword)
         {
             var manifest = new ProjectManifest()
             {
@@ -604,12 +827,20 @@ namespace SsisBuild
             return manifest;
         }
 
-        private static DataTransformationsConfiguration GetProjectConfiguration(ProjectSerialization sourceProject, string configurationName)
+        /// <summary>
+        /// Extracts Configuration from deserialized source project
+        /// </summary>
+        /// <param name="sourceProject">Deserialized source project</param>
+        /// <param name="configurationName">Name of configuration to extract</param>
+        /// <returns>Project Configuration</returns>
+        private static DataTransformationsConfiguration GetProjectConfiguration(ProjectSerialization sourceProject,
+            string configurationName)
         {
             foreach (var configurationObject in sourceProject.Configurations)
             {
                 var configuration = configurationObject as DataTransformationsConfiguration;
-                if (configuration != null && configuration.Name.Equals(configurationName, StringComparison.OrdinalIgnoreCase))
+                if (configuration != null &&
+                    configuration.Name.Equals(configurationName, StringComparison.OrdinalIgnoreCase))
                 {
                     return configuration;
                 }
@@ -618,27 +849,32 @@ namespace SsisBuild
             throw new Exception($"Configuration {configurationName} does not exist in the project");
         }
 
-        private static void SetProjectPropertiesFromManifest(Project project, ProjectManifest manifest)
+        /// <summary>
+        /// Assigns output project properties from source project manifest
+        /// </summary>
+        /// <param name="outputProject">Output project</param>
+        /// <param name="manifestProperties">Properties dictionary from source project manifest</param>
+        private static void SetProjectProperties(Project outputProject, IDictionary<string, string> manifestProperties)
         {
             // set the properties we care about
-            foreach (var property in manifest.Properties.Keys)
+            foreach (var property in manifestProperties.Keys)
             {
                 switch (property)
                 {
                     case "Name":
-                        project.Name = manifest.Properties[property];
+                        outputProject.Name = manifestProperties[property];
                         break;
                     case "VersionMajor":
-                        project.VersionMajor = int.Parse(manifest.Properties[property]);
+                        outputProject.VersionMajor = int.Parse(manifestProperties[property]);
                         break;
                     case "VersionMinor":
-                        project.VersionMinor = int.Parse(manifest.Properties[property]);
+                        outputProject.VersionMinor = int.Parse(manifestProperties[property]);
                         break;
                     case "VersionBuild":
-                        project.VersionBuild = int.Parse(manifest.Properties[property]);
+                        outputProject.VersionBuild = int.Parse(manifestProperties[property]);
                         break;
                     case "VersionComments":
-                        project.VersionComments = manifest.Properties[property];
+                        outputProject.VersionComments = manifestProperties[property];
                         break;
                 }
             }
