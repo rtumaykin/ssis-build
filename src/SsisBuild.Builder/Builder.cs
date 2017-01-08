@@ -124,36 +124,7 @@ namespace SsisBuild
 
                 AddProjectConnections(projectManifest.ConnectionManagers, sourceProjectDirectory, outputProject);
 
-                _logger.LogMessage("----------------------------------------------------------------------");
-
-                // Add packages to project
-                foreach (var packageItem in projectManifest.Packages)
-                {
-                    var packagePath = Path.Combine(sourceProjectDirectory, packageItem.Name);
-                    _logger.LogMessage($"Loading package {packagePath}");
-                    var package = LoadPackage(packagePath);
-
-                    if (package.ProtectionLevel != finalProtectionLevel)
-                    {
-                        _logger.LogMessage(
-                            $"Original package {packageItem.Name} protection level is {package.ProtectionLevel}.");
-                        _logger.LogMessage(
-                            $"Setting package {packageItem.Name} protection level to {finalProtectionLevel}.");
-                    }
-
-                    package.ProtectionLevel = finalProtectionLevel;
-                    if (IsPasswordProtectedLevel(finalProtectionLevel))
-                    {
-                        package.PackagePassword = encryptionPassword;
-                    }
-
-                    SetParameterFinalValues(package.Parameters, consolidatedParameters, package.Name);
-
-
-                    outputProject.PackageItems.Add(package, packageItem.Name);
-                    outputProject.PackageItems[packageItem.Name].EntryPoint = packageItem.EntryPoint;
-                    outputProject.PackageItems[packageItem.Name].Package.ComputeExpressions(true);
-                }
+                LoadPackages(password, projectManifest.Packages, sourceProjectDirectory, projectManifest.ProtectionLevel, finalProtectionLevel, encryptionPassword, consolidatedParameters, outputProject);
 
                 SetVersionInfoFromReleaseNotes(releaseNotesFilePath, outputProject);
 
@@ -168,6 +139,45 @@ namespace SsisBuild
             {
                 _logger.LogError(e.Message);
                 throw;
+            }
+        }
+
+        private void LoadPackages(string passwordArgumentValue, IList<PackageManifest> packages, string sourceProjectDirectory,
+            DTSProtectionLevel sourceProtectionLevel,
+            DTSProtectionLevel finalProtectionLevel, string encryptionPassword,
+            IList<ParameterDetail> consolidatedParameters,
+            Project outputProject)
+        {
+            _logger.LogMessage("----------------------------------------------------------------------");
+
+            // Add packages to project
+            foreach (var packageItem in packages)
+            {
+                var packagePath = Path.Combine(sourceProjectDirectory, packageItem.Name);
+                _logger.LogMessage($"Loading package {packagePath}");
+                var package = LoadPackage(packagePath,
+                    IsPasswordProtectedLevel(sourceProtectionLevel) ? passwordArgumentValue : null);
+
+                if (package.ProtectionLevel != finalProtectionLevel)
+                {
+                    _logger.LogMessage(
+                        $"Original package {packageItem.Name} protection level is {package.ProtectionLevel}.");
+                    _logger.LogMessage(
+                        $"Setting package {packageItem.Name} protection level to {finalProtectionLevel}.");
+                }
+
+                package.ProtectionLevel = finalProtectionLevel;
+                if (IsPasswordProtectedLevel(finalProtectionLevel))
+                {
+                    package.PackagePassword = encryptionPassword;
+                }
+
+                SetParameterFinalValues(package.Parameters, consolidatedParameters, package.Name);
+
+
+                outputProject.PackageItems.Add(package, packageItem.Name);
+                outputProject.PackageItems[packageItem.Name].EntryPoint = packageItem.EntryPoint;
+                outputProject.PackageItems[packageItem.Name].Package.ComputeExpressions(true);
             }
         }
 
@@ -579,7 +589,7 @@ namespace SsisBuild
         /// </summary>
         /// <param name="packagePath">path to a dtsx file</param>
         /// <returns></returns>
-        private static Package LoadPackage(string packagePath)
+        private static Package LoadPackage(string packagePath, string decryptionPassword)
         {
             // todo: check how to implement security here since the encryption is stored differently on a package level 
             Package package;
@@ -594,6 +604,9 @@ namespace SsisBuild
                     CheckSignatureOnLoad = false,
                     OfflineMode = true
                 };
+                if (!string.IsNullOrWhiteSpace(decryptionPassword))
+                    package.PackagePassword = decryptionPassword;
+
                 package.LoadFromXML(xml, null);
             }
             catch (Exception e)
@@ -629,7 +642,7 @@ namespace SsisBuild
                             parameter.Value = ConvertToObject(parameterDetail.BuildParameterValue,
                                 parameter.Value.GetType());
                             _logger.LogMessage(
-                                $"Using Build Parameter Argument to set {parameter.Name} value to {parameterDetail.BuildParameterValue}.");
+                                $"Using Build Parameter Argument to set {parameterDetail.FullName} value to {parameterDetail.BuildParameterValue}.");
                         }
                         else if (parameterDetail.IsInConfiguration)
                         {
@@ -640,13 +653,18 @@ namespace SsisBuild
                             }
                             parameter.Value = parameterDetail.ConfigurationValue;
                             _logger.LogMessage(
-                                $"Using Configuration {parameterDetail.ConfigurationName} to set {parameter.Name} value to {parameterDetail.ConfigurationValue}.");
+                                $"Using Configuration {parameterDetail.ConfigurationName} to set {parameterDetail.FullName} value to {parameterDetail.ConfigurationValue}.");
                         }
                         else
                         {
                             _logger.LogMessage(
-                                $"Using original {parameter.Name} value {parameterDetail.OriginalValue}.");
+                                $"Using original {parameterScope}::{parameter.Name} value {parameter.Value}.");
                         }
+                    }
+                    else
+                    {
+                        _logger.LogMessage(
+                            $"Using original {parameterScope}::{parameter.Name} value {parameter.Value}.");
                     }
                 }
             }
