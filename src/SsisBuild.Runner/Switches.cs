@@ -9,19 +9,8 @@ using System.Threading.Tasks;
 
 namespace SsisBuild.Runner
 {
-    internal class Switches
+    internal class Switches : BuildArguments
     {
-        public string ProjectPath { get; set; }
-        public string OutputFolder { get; set; }
-        public string ProtectionLevel { get; set; }
-        public string Password { get; set; }
-        public string NewPassword { get; set; }
-        public string Configuration { get; set; }
-        public string ReleaseNotesFilePath { get; set; }
-        public IDictionary<string, string> Parameters { get; set; }
-        public IDictionary<string, string> SensitiveParameters { get; set; }
-
-
         public static Switches ProcessArgs(string[] args)
         {
             var switches = new Switches()
@@ -66,7 +55,7 @@ namespace SsisBuild.Runner
                 switch (argsList[0])
                 {
                     case "-Configuration":
-                        switches.Configuration = argsList[1];
+                        switches.ConfigurationName = argsList[1];
                         break;
 
                     case "-OutputFolder":
@@ -91,7 +80,7 @@ namespace SsisBuild.Runner
                         switches.NewPassword = argsList[1];
                         break;
 
-                    case "-ReleaseNotesFilePath":
+                    case "-ReleaseNotes":
                         switches.ReleaseNotesFilePath = argsList[1];
                         break;
 
@@ -114,7 +103,7 @@ namespace SsisBuild.Runner
                 argsList.RemoveRange(0, 2);
             }
 
-            if (string.IsNullOrWhiteSpace(switches.Configuration))
+            if (string.IsNullOrWhiteSpace(switches.ConfigurationName))
                 throw new ArgumentProcessingException("Configuration name must be specified");
 
             var overlappedParameters = 

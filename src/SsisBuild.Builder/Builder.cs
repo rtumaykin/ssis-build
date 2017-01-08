@@ -28,71 +28,52 @@ namespace SsisBuild
         /// <summary>
         /// Builds an ispac file based on dtproj file and overrides
         /// </summary>
-        /// <param name="projectFilePath">A full path to a dtproj file</param>
-        /// <param name="outputDirectory">Output directory where an ispac file will be created.</param>
-        /// <param name="protectionLevel"></param>
-        /// <param name="password"></param>
-        /// <param name="newPassword"></param>
-        /// <param name="configurationName"></param>
-        /// <param name="releaseNotesFilePath"></param>
-        /// <param name="parameters"></param>
-        /// <param name="sensitiveParameters"></param>
-        public void Execute(
-            string projectFilePath,
-            string protectionLevel,
-            string password,
-            string newPassword,
-            string outputDirectory,
-            string configurationName,
-            string releaseNotesFilePath,
-            IDictionary<string, string> parameters,
-            IDictionary<string, string> sensitiveParameters
-        )
+        /// <param name="buildArguments"></param>
+        public void Execute(BuildArguments buildArguments)
         {
             try
             {
-                LogParametersUsed(projectFilePath, protectionLevel, password, newPassword, outputDirectory,
-                    configurationName, parameters, sensitiveParameters);
+                LogParametersUsed(buildArguments);
 
-                var sourceProjectDirectory = Path.GetDirectoryName(projectFilePath);
+                var sourceProjectDirectory = Path.GetDirectoryName(buildArguments.ProjectPath);
 
                 if (string.IsNullOrWhiteSpace(sourceProjectDirectory) || !Directory.Exists(sourceProjectDirectory))
                     throw new Exception($"Empty or invalid project directory {sourceProjectDirectory}");
 
-                if (!File.Exists(projectFilePath))
-                    throw new Exception($"Project file {projectFilePath} does not exist.");
+                if (!File.Exists(buildArguments.ProjectPath))
+                    throw new Exception($"Project file {buildArguments.ProjectPath} does not exist.");
 
                 _logger.LogMessage("");
                 _logger.LogMessage(
-                    $"----------- Starting Build. Project file: {projectFilePath} ------------------------");
+                    $"----------- Starting Build. Project file: {buildArguments.ProjectPath} ------------------------");
 
-                var sourceProject = DeserializeDtproj(projectFilePath);
+                var sourceProject = DeserializeDtproj(buildArguments.ProjectPath);
 
                 if (sourceProject.DeploymentModel != DeploymentModel.Project)
                 {
                     throw new Exception("This task only apply to the SSIS project deployment model. Exiting.");
                 }
 
-                var projectManifest = ExtractProjectManifest(sourceProject, password);
+                var projectManifest = ExtractProjectManifest(sourceProject, buildArguments.Password);
 
-                var configuration = GetProjectConfiguration(sourceProject, configurationName);
-                MergeUserOptions(projectFilePath, configuration);
+                var configuration = GetProjectConfiguration(sourceProject, buildArguments.ConfigurationName);
+                MergeUserOptions(buildArguments.ProjectPath, configuration);
 
-                var consolidatedParameters = ConsolidateBuildParameters(parameters, sensitiveParameters);
+                var consolidatedParameters = ConsolidateBuildParameters(buildArguments.Parameters, buildArguments.SensitiveParameters);
 
-                var outputFileName = Path.GetFileName(Path.ChangeExtension(projectFilePath, "ispac"));
+                var outputFileName = Path.GetFileName(Path.ChangeExtension(buildArguments.ProjectPath, "ispac"));
 
                 if (string.IsNullOrWhiteSpace(outputFileName))
                 {
                     throw new Exception("failed to set output file name.");
                 }
-                var outputFileDirectory = string.IsNullOrWhiteSpace(outputDirectory)
+                var outputFolder = string.IsNullOrWhiteSpace(buildArguments.OutputFolder)
                     ? Path.Combine(sourceProjectDirectory, "bin", configuration.Name)
-                    : outputDirectory;
+                    : buildArguments.OutputFolder;
 
-                Directory.CreateDirectory(outputFileDirectory);
+                Directory.CreateDirectory(outputFolder);
 
-                var outputFilePath = Path.Combine(outputFileDirectory, outputFileName);
+                var outputFilePath = Path.Combine(outputFolder, outputFileName);
 
                 _logger.LogMessage($"Setting output file path to {outputFilePath}");
 
@@ -105,16 +86,16 @@ namespace SsisBuild
 
                 SetProjectProperties(outputProject, projectManifest.Properties);
 
-                var finalProtectionLevel = GetFinalProtectionLevel(protectionLevel, projectManifest.ProtectionLevel);
+                var finalProtectionLevel = GetFinalProtectionLevel(buildArguments.ProtectionLevel, projectManifest.ProtectionLevel);
 
-                var encryptionPassword = GetEncryptionPassword(password, newPassword, finalProtectionLevel,
+                var encryptionPassword = GetEncryptionPassword(buildArguments.Password, buildArguments.NewPassword, finalProtectionLevel,
                     projectManifest);
 
                 outputProject.ProtectionLevel = finalProtectionLevel;
                 if (IsPasswordProtectedLevel(finalProtectionLevel))
                     outputProject.Password = encryptionPassword;
 
-                AddProjectParameters(password, sourceProjectDirectory, projectManifest.ProtectionLevel, outputProject);
+                AddProjectParameters(buildArguments.Password, sourceProjectDirectory, projectManifest.ProtectionLevel, outputProject);
 
                 UpdateConsolidatedParametersFromProjectParameters(outputProject.Parameters, consolidatedParameters);
 
@@ -124,9 +105,9 @@ namespace SsisBuild
 
                 AddProjectConnections(projectManifest.ConnectionManagers, sourceProjectDirectory, outputProject);
 
-                LoadPackages(password, projectManifest.Packages, sourceProjectDirectory, projectManifest.ProtectionLevel, finalProtectionLevel, encryptionPassword, consolidatedParameters, outputProject);
+                LoadPackages(buildArguments.Password, projectManifest.Packages, sourceProjectDirectory, projectManifest.ProtectionLevel, finalProtectionLevel, encryptionPassword, consolidatedParameters, outputProject);
 
-                SetVersionInfoFromReleaseNotes(releaseNotesFilePath, outputProject);
+                SetVersionInfoFromReleaseNotes(buildArguments.ReleaseNotesFilePath, outputProject);
 
                 // Save project
                 _logger.LogMessage($"Saving project to: {outputFilePath}.");
@@ -142,6 +123,17 @@ namespace SsisBuild
             }
         }
 
+        /// <summary>
+        /// Loads project packages
+        /// </summary>
+        /// <param name="passwordArgumentValue"></param>
+        /// <param name="packages"></param>
+        /// <param name="sourceProjectDirectory"></param>
+        /// <param name="sourceProtectionLevel"></param>
+        /// <param name="finalProtectionLevel"></param>
+        /// <param name="encryptionPassword"></param>
+        /// <param name="consolidatedParameters"></param>
+        /// <param name="outputProject"></param>
         private void LoadPackages(string passwordArgumentValue, IList<PackageManifest> packages, string sourceProjectDirectory,
             DTSProtectionLevel sourceProtectionLevel,
             DTSProtectionLevel finalProtectionLevel, string encryptionPassword,
@@ -497,57 +489,49 @@ namespace SsisBuild
         /// <summary>
         /// Logs parameters passed to build
         /// </summary>
-        /// <param name="projectFilePath"></param>
-        /// <param name="protectionLevel"></param>
-        /// <param name="password"></param>
-        /// <param name="newPassword"></param>
-        /// <param name="outputDirectory"></param>
-        /// <param name="configurationName"></param>
-        /// <param name="parameters"></param>
-        /// <param name="sensitiveParameters"></param>
-        private void LogParametersUsed(string projectFilePath, string protectionLevel, string password,
-            string newPassword,
-            string outputDirectory, string configurationName, IDictionary<string, string> parameters,
-            IDictionary<string, string> sensitiveParameters)
+        private void LogParametersUsed(BuildArguments buildArguments)
         {
             _logger.LogMessage("SSIS Build Engine");
             _logger.LogMessage("Copyright (c) 2017 Roman Tumaykin");
             _logger.LogMessage("");
             _logger.LogMessage("Executing SSIS Build with the following switches:");
-            _logger.LogMessage($"Project File: {projectFilePath}");
-            if (!string.IsNullOrWhiteSpace(protectionLevel))
+            _logger.LogMessage($"Project File: {buildArguments.ProjectPath}");
+            if (!string.IsNullOrWhiteSpace(buildArguments.ProtectionLevel))
             {
-                _logger.LogMessage($"-ProtectionLevel: {protectionLevel}");
+                _logger.LogMessage($"-ProtectionLevel: {buildArguments.ProtectionLevel}");
             }
 
-            if (!string.IsNullOrWhiteSpace(password))
+            if (!string.IsNullOrWhiteSpace(buildArguments.Password))
             {
-                _logger.LogMessage($"-Password: {password}");
+                _logger.LogMessage($"-Password: (hidden)");
             }
 
-            if (!string.IsNullOrWhiteSpace(newPassword))
+            if (!string.IsNullOrWhiteSpace(buildArguments.NewPassword))
             {
-                _logger.LogMessage($"-NewPassword: {newPassword}");
+                _logger.LogMessage($"-NewPassword: {buildArguments.NewPassword}");
             }
 
-            if (!string.IsNullOrWhiteSpace(outputDirectory))
+            if (!string.IsNullOrWhiteSpace(buildArguments.OutputFolder))
             {
-                _logger.LogMessage($"-OutputFolder: {outputDirectory}");
+                _logger.LogMessage($"-OutputFolder: {buildArguments.OutputFolder}");
             }
 
-            if (!string.IsNullOrWhiteSpace(configurationName))
+            if (!string.IsNullOrWhiteSpace(buildArguments.ConfigurationName))
             {
-                _logger.LogMessage($"-Configuration: {configurationName}");
+                _logger.LogMessage($"-Configuration: {buildArguments.ConfigurationName}");
             }
-
+            if (!string.IsNullOrWhiteSpace(buildArguments.ReleaseNotesFilePath))
+            {
+                _logger.LogMessage($"-ReleaseNotes: {buildArguments.ReleaseNotesFilePath}");
+            }
             _logger.LogMessage("");
             _logger.LogMessage("Project parameters:");
-            foreach (var parameter in parameters)
+            foreach (var parameter in buildArguments.Parameters)
             {
                 _logger.LogMessage(
                     $"  {parameter.Key} (Sensitive = false): {parameter.Value}");
             }
-            foreach (var sensitiveParameter in sensitiveParameters)
+            foreach (var sensitiveParameter in buildArguments.SensitiveParameters)
             {
                 _logger.LogMessage(
                     $"  {sensitiveParameter.Key} (Sensitive = true): {sensitiveParameter.Value}");

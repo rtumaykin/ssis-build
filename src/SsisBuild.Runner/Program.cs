@@ -12,26 +12,23 @@ namespace SsisBuild.Runner
     {
         static void Main(string[] args)
         {
-            Switches switches;
             try
             {
-                switches = Switches.ProcessArgs(args);
+                var switches = Switches.ProcessArgs(args);
+                var builder = new Builder(new ConsoleLogger());
+                builder.Execute(switches);
             }
             catch (ArgumentProcessingException x)
             {
                 Console.WriteLine(x.Message);
                 Usage();
-                return;
+                Environment.Exit(1);
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(e.Message);
-                return;
+                Environment.Exit(1);
             }
 
-            var builder = new Builder(new ConsoleLogger());
-            builder.Execute(switches.ProjectPath, switches.ProtectionLevel, switches.Password, switches.NewPassword,
-                switches.OutputFolder, switches.Configuration, switches.ReleaseNotesFilePath, switches.Parameters, switches.SensitiveParameters);
         }
 
         private static void Usage()
@@ -67,6 +64,7 @@ namespace SsisBuild.Runner
             Console.WriteLine("");
             Console.WriteLine("  -SensitiveParameter: Project or Package parameter forced to be sensitive. Name is a standard full parameter name including the scope. For example Project::Parameter1. During the build,");
             Console.WriteLine("                       these values will replace existing values regardless of what these values were originally.");
+            Console.WriteLine("  -ReleaseNotes:       Path to a release notes file. File can have simple or complex release notes format.");
             Console.WriteLine("");
             Console.WriteLine("Example:");
             Console.WriteLine("     ssisbuild example.dtproj -Configuration Release -Parameter:SampleParameter \"some value\"");
