@@ -494,7 +494,7 @@ namespace SsisBuild
             _logger.LogMessage("SSIS Build Engine");
             _logger.LogMessage("Copyright (c) 2017 Roman Tumaykin");
             _logger.LogMessage("");
-            _logger.LogMessage("Executing SSIS Build with the following switches:");
+            _logger.LogMessage("Executing SSIS Build with the following arguments:");
             _logger.LogMessage($"Project File: {buildArguments.ProjectPath}");
             if (!string.IsNullOrWhiteSpace(buildArguments.ProtectionLevel))
             {
