@@ -59,6 +59,7 @@
     <Compile Include="Decryptor.cs" />
     <Compile Include="InvalidPaswordException.cs" />
     <Compile Include="ParameterDetail.cs" />
+    <Compile Include="PasswordEventListener.cs" />
     <Compile Include="ProjectManifest.cs" />
     <Compile Include="PackageManifest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

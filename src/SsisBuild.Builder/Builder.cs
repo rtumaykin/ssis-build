@@ -588,6 +588,7 @@ namespace SsisBuild
         /// Loads package from a dtsx file.
         /// </summary>
         /// <param name="packagePath">path to a dtsx file</param>
+        /// <param name="decryptionPassword"></param>
         /// <returns></returns>
         private static Package LoadPackage(string packagePath, string decryptionPassword)
         {
@@ -606,8 +607,16 @@ namespace SsisBuild
                 };
                 if (!string.IsNullOrWhiteSpace(decryptionPassword))
                     package.PackagePassword = decryptionPassword;
-
-                package.LoadFromXML(xml, null);
+                var passwordEventListener = new PasswordEventListener();
+                package.LoadFromXML(xml, passwordEventListener);
+                if (passwordEventListener.NeedPassword)
+                {
+                    if (string.IsNullOrWhiteSpace(decryptionPassword))
+                    {
+                        throw new Exception("Decryption password is required");
+                    }
+                    throw new Exception("Package password is different from Project password");
+                }
             }
             catch (Exception e)
             {
