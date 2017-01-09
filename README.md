@@ -2,7 +2,7 @@
 ### A command line utility that builds an ispac file from an Visual Studio SSIS project (project deployment model only). 
 ####**Syntax**
 
-	ssisbuild [Project File] [-<Switch Name> <Value>] [...[-<Switch Name> <Value>]] [-Parameter:<Name> <Value>] [...[-Parameter: <Name> <Value>]]
+`ssisbuild [Project File] [-<Switch Name> <Value>] [...[-<Switch Name> <Value>]] [-Parameter:<Name> <Value>] [...[-Parameter: <Name> <Value>]] [-SensitiveParameter:<Name> <Value>] [...[-SensitiveParameter: <Name> <Value>]]`
 
 ####**Switches**
 - **Project File:**
