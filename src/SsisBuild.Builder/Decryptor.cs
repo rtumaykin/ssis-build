@@ -15,6 +15,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -55,10 +56,19 @@ namespace SsisBuild
                     break;
 
                 case DTSProtectionLevel.EncryptAllWithPassword:
-
-                    DecryptByPassword(xmlNode, projectPassword);
+                    var encryptedNodes = GetEncryptedNodes(xmlNode);
+                    foreach (XmlNode encryptedNode in encryptedNodes)
+                    {
+                        DecryptByPassword(encryptedNode, projectPassword);
+                    }
                     break;
             }
+        }
+
+        private static XmlNodeList GetEncryptedNodes(XmlNode rootNode)
+        {
+            return rootNode.SelectNodes("//*[@Salt or @SSIS:Salt]",
+                GetNameSpaceManager(rootNode));
         }
 
         private static XmlAttribute GetNamedItem(XmlNode rootNode, string name)

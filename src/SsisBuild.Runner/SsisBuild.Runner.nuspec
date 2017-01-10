@@ -1,22 +1,22 @@
 <?xml version="1.0"?>
 <package>
   <metadata>
-    <id>SSISBuild</id>
+    <id>ssisbuild</id>
     <version>1.1.0</version>
-    <title>SSIS Build</title>
+    <title>ssisbuild</title>
     <authors>Roman Tumaykin</authors>
     <owners>Roman Tumaykin</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <projectUrl>https://github.com/rtumaykin/ssis-build/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A command line utility that builds an ispac file from an Visual Studio SSIS project (project deployment model only)</description>
-    <releaseNotes>Initial release. Tested only for SQL 2012 projeect deployment model and EncryptSensitiveWithPassword</releaseNotes>
+    <description>A command line utility that builds an ispac file from a Visual Studio SSIS project (project deployment model only)</description>
+    <releaseNotes>Changed the plugin distribution package structure. All assemblies that a plugin needs now should be placed into an "impromptu" folder within a Nuget package.</releaseNotes>
     <copyright>Copyright © 2017 Roman Tumaykin</copyright>
-    <tags>SSIS Build Tools</tags>
+    <tags>SSIS build tools</tags>
   </metadata>
   <files>
-    <file src="bin\$configuration$\*.dll" target="app" />
-    <file src="bin\$configuration$\ssisbuild.exe" target="app" />
-    <file src="bin\$configuration$\ssisbuild.exe.config" target="app" />
-</files>
+    <file src="bin\$configuration$\*.dll" target="tools" />
+    <file src="bin\$configuration$\ssisbuild.exe" target="tools" />
+    <file src="bin\$configuration$\ssisbuild.exe.config" target="tools" />
+  </files>
 </package>
