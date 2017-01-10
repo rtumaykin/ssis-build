@@ -100,7 +100,9 @@ Target "AssemblyInfo" <| fun _ ->
         Attribute.FileVersion version ] <| AssemblyInfoFileConfig(false)
 
 Target "CreatePackage" (fun _ ->
-    let project = "ssisbuild"
+    let project = "SSISBuild"
+    let title = "SSIS Build"
+
 
     mkdir buildDir
 
@@ -108,7 +110,7 @@ Target "CreatePackage" (fun _ ->
 
     XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/id" project
     XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/version" release.NugetVersion
-    XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/title" project
+    XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/title" title
     XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/authors" (authors |> String.concat " ")
     XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/owners" (authors |> String.concat " ")
     XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/description" description
@@ -129,7 +131,7 @@ Target "CreatePackage" (fun _ ->
             Summary = description
             Version = release.NugetVersion
             Tags = tags |> String.concat " "
-            Title = project
+            Title = title
             ProjectFile = @"src\SsisBuild.Runner\SsisBuild.Runner.csproj"
             SymbolPackage = NugetSymbolPackage.ProjectFile
             WorkingDir = @"src\SsisBuild.Runner\bin\Release"
