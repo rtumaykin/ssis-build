@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-//Copyright 2017 Roman Tumaykin
+//   Copyright 2017 Roman Tumaykin
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -13,11 +13,13 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 //-----------------------------------------------------------------------
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Xml;
 using System.Xml.Serialization;
 using Microsoft.DataTransformationServices.Project;
@@ -163,7 +165,8 @@ namespace SsisBuild
                 var packagePath = Path.Combine(sourceProjectDirectory, packageItem.Name);
                 _logger.LogMessage($"Loading package {packagePath}");
                 var package = LoadPackage(packagePath,
-                    IsPasswordProtectedLevel(sourceProtectionLevel) ? passwordArgumentValue : null);
+                    IsPasswordProtectedLevel(sourceProtectionLevel) ? passwordArgumentValue : null,
+                    outputProject.TargetServerVersion);
 
                 if (package.ProtectionLevel != finalProtectionLevel)
                 {
@@ -183,6 +186,15 @@ namespace SsisBuild
 
 
                 outputProject.PackageItems.Add(package, packageItem.Name);
+
+                // I've exhausted all legal methods of making the package load correctly
+                var targetServerVersionProperty =
+                    outputProject.PackageItems[packageItem.Name].GetType().GetRuntimeProperties().FirstOrDefault(p => p.Name == "TargetServerVersion");
+
+                // Don't know what this property does, but setting it just in case. Using reflection because Microsoft hides this property
+                if (targetServerVersionProperty != null)
+                    targetServerVersionProperty.SetValue(outputProject.PackageItems[packageItem.Name], outputProject.TargetServerVersion);
+
                 outputProject.PackageItems[packageItem.Name].EntryPoint = packageItem.EntryPoint;
                 outputProject.PackageItems[packageItem.Name].Package.ComputeExpressions(true);
             }
@@ -588,26 +600,36 @@ namespace SsisBuild
         /// </summary>
         /// <param name="packagePath">path to a dtsx file</param>
         /// <param name="decryptionPassword"></param>
+        /// <param name="targetVersion"></param>
         /// <returns></returns>
-        private static Package LoadPackage(string packagePath, string decryptionPassword)
+        private static Package LoadPackage(string packagePath, string decryptionPassword,
+            DTSTargetServerVersion targetVersion)
         {
-            // todo: check how to implement security here since the encryption is stored differently on a package level 
-            Package package;
-
             try
             {
                 var xml = File.ReadAllText(packagePath);
 
-                package = new Package
+
+                var app = new Application()
                 {
-                    IgnoreConfigurationsOnLoad = true,
-                    CheckSignatureOnLoad = false,
-                    OfflineMode = true
+                    CheckSignatureOnLoad = false
                 };
+
+
+
                 if (!string.IsNullOrWhiteSpace(decryptionPassword))
-                    package.PackagePassword = decryptionPassword;
+                    app.PackagePassword = decryptionPassword;
                 var passwordEventListener = new PasswordEventListener();
-                package.LoadFromXML(xml, passwordEventListener);
+
+                var package = app.LoadPackage(packagePath, passwordEventListener);
+
+                // I've exhausted all legal methods of making the package load correctly
+                var targetServerVersionProperty =
+                    package.GetType().GetRuntimeProperties().FirstOrDefault(p => p.Name == "TargetServerVersion");
+
+                if (targetServerVersionProperty != null)
+                    targetServerVersionProperty.SetValue(package, targetVersion);
+
                 if (passwordEventListener.NeedPassword)
                 {
                     if (string.IsNullOrWhiteSpace(decryptionPassword))
@@ -616,13 +638,13 @@ namespace SsisBuild
                     }
                     throw new Exception("Package password is different from Project password");
                 }
+
+                return package;
             }
             catch (Exception e)
             {
                 throw new Exception($"Error while loading package {packagePath} : {e.Message}.");
             }
-
-            return package;
         }
 
         /// <summary>

@@ -3,10 +3,15 @@ param (
     [Parameter(Mandatory=$true)][string]$SSISCatalog,
     [Parameter(Mandatory=$true)][string]$SSISDeploymentFolder,
     [Parameter(Mandatory=$true)][string]$SSISProjectName,
+    [Parameter(Mandatory=$true)][string]$Password,
     [string]$SourceDBName,
     [string]$SourceDBServer,
     [string]$ReleaseNotesFilePath
 )
+# Clean
+Remove-Item -Path "build" -Recurse
+Remove-Item -Path "packages\SSISBuild" -Recurse
+
 # Make sure we have Nuget.exe
 .\ensureNuget.ps1
 
@@ -14,7 +19,9 @@ param (
 $nugetExe = [System.IO.Path]::Combine($Env:LOCALAPPDATA, "Nuget", "Nuget.exe")
 & $nugetExe install SSISBuild -OutputDirectory "packages" -ExcludeVersion
 
-packages\SSISBuild\app\ssisbuild 'SampleSSISProject\SampleSSISProject.dtproj' -Configuration Deployment -OutputFolder "build" -ReleaseNotes "$ReleaseNotesFilePath" "-Parameter:Project::SourceDBServer" "$SourceDBServer" "-Parameter:Project::SourceDBName" "$SourceDBName"
+
+
+packages\SSISBuild\app\ssisbuild 'SampleSSISProject\SampleSSISProject.dtproj' -Configuration Deployment -Password "$Password" -OutputFolder "build" -ReleaseNotes "$ReleaseNotesFilePath" "-Parameter:Project::SourceDBServer" "$SourceDBServer" "-Parameter:Project::SourceDBName" "$SourceDBName"
 
 # Copy deploy.ps1 to the artifacts folder
 

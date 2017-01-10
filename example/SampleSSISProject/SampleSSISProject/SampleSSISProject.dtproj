@@ -12,11 +12,11 @@
   <DataSourceViews />
   <DeploymentModelSpecificContent>
     <Manifest>
-      <SSIS:Project SSIS:ProtectionLevel="EncryptSensitiveWithUserKey" xmlns:SSIS="www.microsoft.com/SqlServer/SSIS">
+      <SSIS:Project SSIS:ProtectionLevel="EncryptSensitiveWithPassword" xmlns:SSIS="www.microsoft.com/SqlServer/SSIS">
         <SSIS:Properties>
           <SSIS:Property SSIS:Name="ID">{623e2444-6a15-4b2a-83ef-0de2bb47e8a2}</SSIS:Property>
           <SSIS:Property SSIS:Name="Name">SampleSSISProject</SSIS:Property>
-          <SSIS:Property SSIS:Name="VersionMajor">1</SSIS:Property>
+          <SSIS:Property SSIS:Name="VersionMajor">0</SSIS:Property>
           <SSIS:Property SSIS:Name="VersionMinor">0</SSIS:Property>
           <SSIS:Property SSIS:Name="VersionBuild">0</SSIS:Property>
           <SSIS:Property SSIS:Name="VersionComments">
@@ -24,32 +24,31 @@
           <SSIS:Property SSIS:Name="CreationDate">2017-01-09T09:29:27.4855569-08:00</SSIS:Property>
           <SSIS:Property SSIS:Name="CreatorName">RTUMAYKIN-S\rtumaykin</SSIS:Property>
           <SSIS:Property SSIS:Name="CreatorComputerName">RTUMAYKIN-S</SSIS:Property>
-          <SSIS:Property SSIS:Name="Description">
-          </SSIS:Property>
-          <SSIS:Property SSIS:Name="PasswordVerifier" SSIS:Sensitive="1">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAATY0fGn4dokeII0K0sWrh4QAAAAACAAAAAAAQZgAAAAEAACAAAADrSHntAg6+/hvliUVIZyyy6VWizvk85SzpyXpuDlcmDgAAAAAOgAAAAAIAACAAAABp66ZzyStlmb8vfdHVMeePgQZy020IvEk6aKeQWcPGV5AAAABMj0mQAl4lU/UqGGZdm5yPoeP9cQhjETS6i7yKwDywzTRCSmyi8LbF3kHzcy4jeL7w3b1XYR3gZFyn9ltflPysphlA6GGDaS0fYmD1rpoZvzxiPMpOT/6NSfUoJprzEWH75kDLlCwF1taZQ2cRTK3HyF3akn6ziDtNtnSz6mTmPko/aXxgfwHJkaTN5E+tMYNAAAAAMrWxIPUF2XhweGHJIBWe+YBUnC/t6nBVku/hXcsS5xSjPosPYGuLgjH/nCqq4xPWhgEbGWmA3FQMxhPm80n/ng==</SSIS:Property>
+          <SSIS:Property SSIS:Name="Description">password = ssis123</SSIS:Property>
+          <SSIS:Property SSIS:Name="PasswordVerifier" SSIS:Sensitive="1" SSIS:Salt="UoxX+sGwjw==" SSIS:IV="ULJcWm8kPFE=">c1kUm9HmTEgB51CYFietD1iDq7AKtAVCcbTJ1NLB3hcXcWlsHRznnWohJpHzS17rtFiJbfHdQjWkb2hfj8ODq0ozeZGBaPghDi3VAYFjLxXHd4NU/5Jj6NN7a9GaCWznbJl4h4DZqOA7O8s4/s1n7jE+AKNKIDuhieADBn4LvB6ACMzvAfdQBA==</SSIS:Property>
           <SSIS:Property SSIS:Name="FormatVersion">1</SSIS:Property>
         </SSIS:Properties>
         <SSIS:Packages>
-          <SSIS:Package SSIS:Name="Package.dtsx" SSIS:EntryPoint="1" />
+          <SSIS:Package SSIS:Name="Package 221.dtsx" SSIS:EntryPoint="1" />
         </SSIS:Packages>
         <SSIS:ConnectionManagers />
         <SSIS:DeploymentInfo>
           <SSIS:ProjectConnectionParameters />
           <SSIS:PackageInfo>
-            <SSIS:PackageMetaData SSIS:Name="Package.dtsx">
+            <SSIS:PackageMetaData SSIS:Name="Package 221.dtsx">
               <SSIS:Properties>
-                <SSIS:Property SSIS:Name="ID">{883D5D8C-C35D-472A-82B4-66C38E99D12F}</SSIS:Property>
-                <SSIS:Property SSIS:Name="Name">Package</SSIS:Property>
+                <SSIS:Property SSIS:Name="ID">{CE0932B9-8020-42E9-B34B-372A8EE414B2}</SSIS:Property>
+                <SSIS:Property SSIS:Name="Name">Package 221</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionMajor">1</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionMinor">0</SSIS:Property>
-                <SSIS:Property SSIS:Name="VersionBuild">7</SSIS:Property>
+                <SSIS:Property SSIS:Name="VersionBuild">20</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionComments">
                 </SSIS:Property>
-                <SSIS:Property SSIS:Name="VersionGUID">{9E8D674A-41E7-4566-BCBE-031C6E335EDD}</SSIS:Property>
+                <SSIS:Property SSIS:Name="VersionGUID">{BFED245D-AEEA-4AE7-9C00-F0ED628FCD17}</SSIS:Property>
                 <SSIS:Property SSIS:Name="PackageFormatVersion">6</SSIS:Property>
                 <SSIS:Property SSIS:Name="Description">
                 </SSIS:Property>
-                <SSIS:Property SSIS:Name="ProtectionLevel">1</SSIS:Property>
+                <SSIS:Property SSIS:Name="ProtectionLevel">2</SSIS:Property>
               </SSIS:Properties>
               <SSIS:Parameters>
                 <SSIS:Parameter SSIS:Name="CM.dest.AlwaysCheckForRowDelimiters">
@@ -184,6 +183,8 @@
                     <SSIS:Property SSIS:Name="IncludeInDebugDump">0</SSIS:Property>
                     <SSIS:Property SSIS:Name="Required">0</SSIS:Property>
                     <SSIS:Property SSIS:Name="Sensitive">0</SSIS:Property>
+                    <SSIS:Property SSIS:Name="Value">
+                    </SSIS:Property>
                     <SSIS:Property SSIS:Name="DataType">18</SSIS:Property>
                   </SSIS:Properties>
                 </SSIS:Parameter>

@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-//Copyright 2017 Roman Tumaykin
+//   Copyright 2017 Roman Tumaykin
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.IO;
+using Microsoft.Win32;
 using SsisBuild.Logger;
 
 namespace SsisBuild.Runner
 {
     class Program
     {
+
         static void Main(string[] args)
         {
             try
@@ -39,7 +42,6 @@ namespace SsisBuild.Runner
             {
                 Environment.Exit(1);
             }
-
         }
 
         private static void Usage()
