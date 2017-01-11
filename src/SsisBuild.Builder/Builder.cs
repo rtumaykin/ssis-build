@@ -108,9 +108,24 @@ namespace SsisBuild
                 var encryptionPassword = GetEncryptionPassword(buildArguments.Password, buildArguments.NewPassword, finalProtectionLevel,
                     projectManifest);
 
-                outputProject.ProtectionLevel = finalProtectionLevel;
-                if (IsPasswordProtectedLevel(finalProtectionLevel))
-                    outputProject.Password = encryptionPassword;
+                outputProject.ProtectionLevel = projectManifest.ProtectionLevel;
+
+                // Set password in order to properly load project items
+                if (IsPasswordProtectedLevel(projectManifest.ProtectionLevel))
+                {
+                    outputProject.Password = buildArguments.Password;
+
+                    // Another example of a problem. SSIS team created a property that is used for decryption, 
+                    // but made it internal and/or private and no way to set it outside of their other private methods.
+                    var savedPasswordProperty = outputProject.GetType().GetRuntimeProperties().FirstOrDefault(p => p.Name == "SavedPassword"); ;
+                    if (savedPasswordProperty != null)
+                        savedPasswordProperty.SetValue(outputProject, buildArguments.Password);
+
+                    var savedProtectionLevelProperty = outputProject.GetType().GetRuntimeFields().FirstOrDefault(f => f.Name == "m_savedProtectionLevel"); ;
+                    if (savedProtectionLevelProperty != null)
+                        savedProtectionLevelProperty.SetValue(outputProject, projectManifest.ProtectionLevel);
+                }
+
 
                 AddProjectParameters(buildArguments.Password, sourceProjectDirectory, projectManifest.ProtectionLevel, outputProject);
 
@@ -120,12 +135,32 @@ namespace SsisBuild
 
                 SetParameterFinalValues(outputProject.Parameters, consolidatedParameters, "Project");
 
-                AddProjectConnections(projectManifest.ConnectionManagers, sourceProjectDirectory, outputProject);
+                AddProjectConnections(projectManifest.ConnectionManagers, sourceProjectDirectory, outputProject, buildArguments.Password, projectManifest.ProtectionLevel);
 
-                LoadPackages(buildArguments.Password, projectManifest.Packages, sourceProjectDirectory, projectManifest.ProtectionLevel, finalProtectionLevel, encryptionPassword, consolidatedParameters, outputProject);
+                LoadPackages(buildArguments.Password, projectManifest.Packages, sourceProjectDirectory, projectManifest.ProtectionLevel, consolidatedParameters, outputProject);
 
                 SetVersionInfoFromReleaseNotes(buildArguments.ReleaseNotesFilePath, outputProject);
 
+                // now we should change the password to encrypt correctly
+                if (IsPasswordProtectedLevel(finalProtectionLevel))
+                {
+                    if (outputProject.ProtectionLevel != finalProtectionLevel)
+                        _logger.LogMessage(
+                            $"Setting project protection level to {finalProtectionLevel}.");
+
+                    outputProject.ProtectionLevel = finalProtectionLevel;
+                    outputProject.Password = encryptionPassword;
+                    foreach (var package in outputProject.PackageItems)
+                    {
+                        if (package.Package.ProtectionLevel != finalProtectionLevel)
+                        {
+                            _logger.LogMessage(
+                                $"Setting package {package.Package.Name} protection level to {finalProtectionLevel}.");
+                        }
+                        package.Package.ProtectionLevel = finalProtectionLevel;
+                        package.Package.PackagePassword = encryptionPassword;
+                    }
+                }
                 // Save project
                 _logger.LogMessage($"Saving project to: {outputFilePath}.");
 
@@ -153,7 +188,6 @@ namespace SsisBuild
         /// <param name="outputProject"></param>
         private void LoadPackages(string passwordArgumentValue, IList<PackageManifest> packages, string sourceProjectDirectory,
             DTSProtectionLevel sourceProtectionLevel,
-            DTSProtectionLevel finalProtectionLevel, string encryptionPassword,
             IList<ParameterDetail> consolidatedParameters,
             Project outputProject)
         {
@@ -168,19 +202,8 @@ namespace SsisBuild
                     IsPasswordProtectedLevel(sourceProtectionLevel) ? passwordArgumentValue : null,
                     outputProject.TargetServerVersion);
 
-                if (package.ProtectionLevel != finalProtectionLevel)
-                {
-                    _logger.LogMessage(
-                        $"Original package {packageItem.Name} protection level is {package.ProtectionLevel}.");
-                    _logger.LogMessage(
-                        $"Setting package {packageItem.Name} protection level to {finalProtectionLevel}.");
-                }
-
-                package.ProtectionLevel = finalProtectionLevel;
-                if (IsPasswordProtectedLevel(finalProtectionLevel))
-                {
-                    package.PackagePassword = encryptionPassword;
-                }
+                _logger.LogMessage(
+                    $"Original package {packageItem.Name} protection level is {package.ProtectionLevel}.");
 
                 SetParameterFinalValues(package.Parameters, consolidatedParameters, package.Name);
 
@@ -331,7 +354,7 @@ namespace SsisBuild
         /// <param name="sourceProjectDirectory"></param>
         /// <param name="outputProject"></param>
         private void AddProjectConnections(IList<string> connectionManagers, string sourceProjectDirectory,
-            Project outputProject)
+            Project outputProject, string decryptionPassword, DTSProtectionLevel protectionLevel)
         {
             // Add connections to project
             foreach (var connectionManagerName in connectionManagers)
@@ -343,14 +366,21 @@ namespace SsisBuild
                 var nsManager = new XmlNamespaceManager(connectionManagerXml.NameTable);
                 nsManager.AddNamespace("DTS", Constants.NsDts);
                 var connectionManagerXmlNode =
-                    connectionManagerXml.SelectSingleNode("DTS:ConnectionManager", nsManager) as XmlNode;
+                    connectionManagerXml.SelectSingleNode("DTS:ConnectionManager", nsManager);
+                //Decryptor.DecryptXmlNode(connectionManagerXmlNode, protectionLevel, decryptionPassword);
+
                 if (connectionManagerXmlNode?.Attributes != null &&
                     (connectionManagerXmlNode.Attributes.Count > 0))
                 {
                     var creationName = connectionManagerXmlNode.Attributes["DTS:CreationName"].Value;
                     var connectionManager = outputProject.ConnectionManagerItems.Add(creationName,
                         connectionManagerName);
-                    connectionManager.Load(null, File.OpenRead(connectionManagerFilePath));
+
+                    var xmlStream = new MemoryStream();
+                    connectionManagerXml.Save(xmlStream);
+                    xmlStream.Position = 0;
+                    var events = new PasswordEventListener();
+                    connectionManager.Load(events, xmlStream);
                 }
             }
         }
@@ -923,6 +953,9 @@ namespace SsisBuild
                         break;
                     case "VersionComments":
                         outputProject.VersionComments = manifestProperties[property];
+                        break;
+                    case "Description":
+                        outputProject.Description = manifestProperties[property];
                         break;
                 }
             }
