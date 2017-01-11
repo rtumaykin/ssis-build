@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>SSISBuild</id>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
     <title>SSIS Build</title>
     <authors>Roman Tumaykin</authors>
     <owners>Roman Tumaykin</owners>
@@ -10,10 +10,7 @@
     <projectUrl>https://github.com/rtumaykin/ssis-build/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A command line utility that builds an ispac file from a Visual Studio SSIS project (project deployment model only)</description>
-    <releaseNotes>Fixed an issue with EncryptAllByPassword not finding encrypted node
-Added FAKE build
-Added RELEASE_NOTES
-Changed nuget package folder from app to tools</releaseNotes>
+    <releaseNotes>Fixed an issue with Project connections decryption.</releaseNotes>
     <copyright>Copyright © 2017 Roman Tumaykin</copyright>
     <tags>SSIS build tools</tags>
   </metadata>
