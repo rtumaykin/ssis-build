@@ -565,7 +565,7 @@ namespace SsisBuild
 
             if (!string.IsNullOrWhiteSpace(buildArguments.NewPassword))
             {
-                _logger.LogMessage($"-NewPassword: {buildArguments.NewPassword}");
+                _logger.LogMessage($"-NewPassword: (hidden)");
             }
 
             if (!string.IsNullOrWhiteSpace(buildArguments.OutputFolder))
