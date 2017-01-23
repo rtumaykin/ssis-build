@@ -29,5 +29,10 @@ namespace SsisBuild.Logger
         {
             Console.WriteLine($"ERROR>>>>{error}");
         }
+
+        public void LogWarning(string warning)
+        {
+            Console.WriteLine($"WARNING>>>>{warning}");
+        }
     }
 }

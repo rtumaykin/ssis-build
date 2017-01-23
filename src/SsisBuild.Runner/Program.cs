@@ -38,7 +38,7 @@ namespace SsisBuild.Runner
                 Usage();
                 Environment.Exit(1);
             }
-            catch
+            catch (Exception e)
             {
                 Environment.Exit(1);
             }
@@ -77,8 +77,6 @@ namespace SsisBuild.Runner
                 "  -Parameter:          Project or Package parameter. Name is a standard full parameter name including the scope. For example Project::Parameter1. During the build,",
                 "                       these values will replace existing values regardless of what these values were originally.",
                 "",
-                "  -SensitiveParameter: Project or Package parameter forced to be sensitive. Name is a standard full parameter name including the scope. For example Project::Parameter1. During the build,",
-                "                       these values will replace existing values regardless of what these values were originally.",
                 "  -ReleaseNotes:       Path to a release notes file. File can have simple or complex release notes format.",
                 "",
                 "Example:",

@@ -20,5 +20,6 @@ namespace SsisBuild.Logger
     {
         void LogMessage(string message);
         void LogError(string error);
+        void LogWarning(string warning);
     }
 }

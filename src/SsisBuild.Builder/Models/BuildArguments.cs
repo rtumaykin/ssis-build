@@ -14,23 +14,19 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-using Microsoft.SqlServer.Dts.Runtime;
+using System.Collections.Generic;
 
-namespace SsisBuild
+namespace SsisBuild.Models
 {
-    internal class ParameterDetail
+    public class BuildArguments
     {
-        public string FullName { get; set; }
-        public Guid Id { get; set; }
-        public bool IsSensitive { get; set; }
-        public object OriginalValue { get; set; }
-        public bool IsInConfiguration { get; set; }
+        public string ProjectPath { get; set; }
+        public string OutputFolder { get; set; }
+        public string ProtectionLevel { get; set; }
+        public string Password { get; set; }
+        public string NewPassword { get; set; }
         public string ConfigurationName { get; set; }
-        public object ConfigurationValue { get; set; }
-        public bool IsInBuldParameters { get; set; }
-        public string BuildParameterValue { get; set; }
-        public bool ForceSensitive { get; set; }
-        public Parameter Parameter { get; set; }
+        public string ReleaseNotesFilePath { get; set; }
+        public IDictionary<string, string> Parameters { get; set; }
     }
 }

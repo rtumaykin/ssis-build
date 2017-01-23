@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using SsisBuild.Models;
 
 namespace SsisBuild.Runner
 {
@@ -27,8 +28,7 @@ namespace SsisBuild.Runner
         {
             var switches = new Switches()
             {
-                Parameters = new Dictionary<string, string>(),
-                SensitiveParameters = new Dictionary<string, string>()
+                Parameters = new Dictionary<string, string>()
             };
 
             string projectPath;
@@ -101,11 +101,6 @@ namespace SsisBuild.Runner
                         {
                             switches.Parameters.Add(argsList[0].Substring(11), argsList[1]);
                         }
-                        else if (argsList[0].StartsWith("-SensitiveParameter:"))
-                        {
-                            switches.SensitiveParameters.Add(argsList[0].Substring(20), argsList[1]);
-                        }
-
                         else
                         {
                             throw new ArgumentProcessingException($"Unknown switch \"{argsList[0]}\"");
@@ -117,14 +112,6 @@ namespace SsisBuild.Runner
 
             if (string.IsNullOrWhiteSpace(switches.ConfigurationName))
                 throw new ArgumentProcessingException("Configuration name must be specified");
-
-            var overlappedParameters = 
-                switches.SensitiveParameters.Keys.Intersect(switches.Parameters.Keys);
-
-            var parameters = overlappedParameters as string[] ?? overlappedParameters.ToArray();
-
-            if (parameters.Length > 0)
-                throw new ArgumentProcessingException($"Duplicate parameters specified: {string.Join(", ", parameters)}");
 
             return switches;
         }
