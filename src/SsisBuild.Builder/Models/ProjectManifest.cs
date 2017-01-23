@@ -10,11 +10,61 @@ namespace SsisBuild.Models
     {
         public ProtectionLevel ProtectonLevel { get; private set; }
 
+        private XmlElement _versionMajor;
+        private XmlElement _versionMinor;
+        private XmlElement _versionBuild;
+        private XmlElement _versionComments;
+
+        public string VersionMajor
+        {
+            get { return _versionMajor?.InnerText; }
+            set
+            {
+                if (_versionMajor != null)
+                _versionMajor.InnerText = value;
+            }
+        }
+
+        public string VersionMinor
+        {
+            get { return _versionMinor?.InnerText; }
+            set
+            {
+                if (_versionMinor != null)
+                    _versionMinor.InnerText = value;
+            }
+        }
+
+        public string VersionBuild
+        {
+            get { return _versionBuild?.InnerText; }
+            set
+            {
+                if (_versionBuild != null)
+                    _versionBuild.InnerText = value;
+            }
+        }
+
+        public string VersionComments
+        {
+            get { return _versionComments?.InnerText; }
+            set
+            {
+                if (_versionComments != null)
+                    _versionComments.InnerText = value;
+            }
+        }
+
+
         protected override void PostInitialize()
         {
             ProtectonLevel = ExtractProtectionLevel();
             PackageNames = ExtractPackageNames();
             ConnectionManagerNames = ExtractConnectionManagerNames();
+            _versionMajor = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMajor\"]", NamespaceManager) as XmlElement;
+            _versionMinor = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMinor\"]", NamespaceManager) as XmlElement;
+            _versionBuild = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionBuild\"]", NamespaceManager) as XmlElement;
+            _versionComments = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionComments\"]", NamespaceManager) as XmlElement;
         }
 
         private string[] ExtractPackageNames()

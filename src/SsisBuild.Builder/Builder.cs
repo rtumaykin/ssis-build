@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.IO.Packaging;
@@ -60,6 +61,30 @@ namespace SsisBuild
             foreach (var buildArgumentsParameter in buildArguments.Parameters)
             {
                 project.UpdateParameter(buildArgumentsParameter.Key, buildArgumentsParameter.Value, ParameterSource.Manual);
+            }
+
+            if (!string.IsNullOrWhiteSpace(buildArguments.ReleaseNotesFilePath))
+            {
+                if (File.Exists(buildArguments.ReleaseNotesFilePath))
+                {
+                    _logger.LogMessage("");
+                    _logger.LogMessage("Processing Release Notes.");
+                    var releaseNotes = ReleaseNotesHelper.ParseReleaseNotes(buildArguments.ReleaseNotesFilePath);
+                    _logger.LogMessage($"   Overriding Version to {releaseNotes.Version}");
+
+                    var manifest = 
+
+                    project.VersionMajor = releaseNotes.Version.Major.ToString(CultureInfo.InvariantCulture);
+                    project.VersionMinor = releaseNotes.Version.Minor.ToString(CultureInfo.InvariantCulture);
+                    project.VersionBuild = releaseNotes.Version.Build.ToString(CultureInfo.InvariantCulture);
+
+                    _logger.LogMessage($"   Adding Release Notes {string.Join("\r\n", releaseNotes.Notes)}");
+                    project.VersionComments = string.Join("\r\n", releaseNotes.Notes);
+                }
+                else
+                {
+                    throw new Exception($"Release notes file {buildArguments.ReleaseNotesFilePath} does not exist.");
+                }
             }
 
             _logger.LogMessage("");

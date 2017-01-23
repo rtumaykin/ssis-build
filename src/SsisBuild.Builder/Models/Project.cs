@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
 using System.IO.Packaging;
-using System.Linq;
 using System.Xml;
 using SsisBuild.Helpers;
 
@@ -12,15 +11,57 @@ namespace SsisBuild.Models
 {
     public class Project
     {
-        public ProtectionLevel ProtectionLevel => (_projectManifest as ProjectManifest)?.ProtectonLevel ?? ProtectionLevel.DontSaveSensitive;
+        public ProtectionLevel ProtectionLevel => ProjectManifest?.ProtectonLevel ?? ProtectionLevel.DontSaveSensitive;
+
+        public string VersionMajor
+        {
+            get { return ProjectManifest?.VersionMajor; }
+            set
+            {
+                if (ProjectManifest != null)
+                    ProjectManifest.VersionMajor = value;
+            }
+        }
+
+        public string VersionMinor
+        {
+            get { return ProjectManifest?.VersionMinor; }
+            set
+            {
+                if (ProjectManifest != null)
+                    ProjectManifest.VersionMinor = value;
+            }
+        }
+
+        public string VersionBuild
+        {
+            get { return ProjectManifest?.VersionBuild; }
+            set
+            {
+                if (ProjectManifest != null)
+                    ProjectManifest.VersionBuild = value;
+            }
+        }
+
+        public string VersionComments
+        {
+            get { return ProjectManifest?.VersionComments; }
+            set
+            {
+                if (ProjectManifest != null)
+                    ProjectManifest.VersionComments = value;
+            }
+        }
+
+        private ProjectManifest ProjectManifest => (_projectManifest as ProjectManifest);
 
         protected readonly IDictionary<string, Parameter> _parameters;
         public IReadOnlyDictionary<string, Parameter> Parameters { get; }
 
         private ProjectFile _projectManifest;
         private ProjectFile _projectParameters;
-        private IDictionary<string, ProjectFile> _projectConnections;
-        private IDictionary<string, ProjectFile> _packages;
+        private readonly IDictionary<string, ProjectFile> _projectConnections;
+        private readonly IDictionary<string, ProjectFile> _packages;
 
         private Project()
         {
@@ -94,12 +135,12 @@ namespace SsisBuild.Models
 
             project._projectParameters = new ProjectParams().Initialize(Path.Combine(projectDirectory, "Project.params"), password);
 
-            foreach (var connectionManagerName in (project._projectManifest as ProjectManifest).ConnectionManagerNames)
+            foreach (var connectionManagerName in project.ProjectManifest.ConnectionManagerNames)
             {
                 project._projectConnections.Add(connectionManagerName, new ProjectConnection().Initialize(Path.Combine(projectDirectory, connectionManagerName), password));
             }
 
-            foreach (var packageName in (project._projectManifest as ProjectManifest).PackageNames)
+            foreach (var packageName in project.ProjectManifest.PackageNames)
             {
                 project._packages.Add(packageName, new Package().Initialize(Path.Combine(projectDirectory, packageName), password));
             }
