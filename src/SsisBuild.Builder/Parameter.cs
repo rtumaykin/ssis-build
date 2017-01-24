@@ -1,14 +1,31 @@
-﻿using System;
-using System.Xml;
-using SsisBuild.Helpers;
+﻿//-----------------------------------------------------------------------
+//   Copyright 2017 Roman Tumaykin
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//-----------------------------------------------------------------------
 
-namespace SsisBuild.Models
+using System;
+using System.Xml;
+using SsisBuild.Core.Helpers;
+
+namespace SsisBuild.Core
 {
     public class Parameter
     {
         public string Name { get; }
         public string Value { get; private set; }
         public ParameterSource Source { get; private set; }
+        public bool Sensitive { get; private set; }
 
         private readonly XmlElement _valueElement;
         private readonly XmlElement _parentElement;
@@ -31,13 +48,13 @@ namespace SsisBuild.Models
             Source = source;
 
             _parentElement = parentElement;
+            Sensitive = _parentElement.SelectSingleNode("./SSIS:Property[@SSIS:Name = \"Sensitive\"]", _parentElement.GetNameSpaceManager())?.InnerText == "1";
 
             if (valueElement == null)
             {
                 _valueElement = _parentElement.GetDocument().CreateElement("SSIS:Property", XmlHelpers.Schemas.SSIS);
                 _valueElement.SetAttribute("Name", XmlHelpers.Schemas.SSIS, "Value");
-                var sensitive = _parentElement.SelectSingleNode("./SSIS:Property[@SSIS:Name = \"Sensitive\"]", _parentElement.GetNameSpaceManager())?.InnerText;
-                if (sensitive == "1")
+                if (Sensitive)
                     _valueElement.SetAttribute("Sensitive", XmlHelpers.Schemas.SSIS, "1");
             }
             else

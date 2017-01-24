@@ -7,7 +7,7 @@
     <ProjectGuid>{8B1B1E18-1BA7-4593-AFE2-76064BD213C4}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SsisBuild.Runner</RootNamespace>
+    <RootNamespace>SsisBuild</RootNamespace>
     <AssemblyName>ssisbuild</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -48,7 +48,8 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="ArgumentProcessingException.cs" />
-    <Compile Include="Switches.cs" />
+    <Compile Include="BuildArguments.cs" />
+    <Compile Include="Builder.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -56,9 +57,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SsisBuild.Builder\SsisBuild.Builder.csproj">
+    <ProjectReference Include="..\SsisBuild.Builder\SsisBuild.Core.csproj">
       <Project>{01657a26-be3b-4a6e-a193-e175096f54ba}</Project>
-      <Name>SsisBuild.Builder</Name>
+      <Name>SsisBuild.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\SsisBuild.Logger\SsisBuild.Logger.csproj">
       <Project>{6fadb9e9-cf51-4caf-8b82-b4b93fd367eb}</Project>

@@ -14,19 +14,9 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System.Collections.Generic;
-
-namespace SsisBuild.Models
+namespace SsisBuild.Core
 {
-    public class BuildArguments
+    public class ProjectConnection : ProjectFile
     {
-        public string ProjectPath { get; set; }
-        public string OutputFolder { get; set; }
-        public string ProtectionLevel { get; set; }
-        public string Password { get; set; }
-        public string NewPassword { get; set; }
-        public string ConfigurationName { get; set; }
-        public string ReleaseNotesFilePath { get; set; }
-        public IDictionary<string, string> Parameters { get; set; }
     }
 }

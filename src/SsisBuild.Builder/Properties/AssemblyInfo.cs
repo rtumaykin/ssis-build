@@ -20,8 +20,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("SSISBuild.Builder")]
-[assembly: AssemblyDescription("Main SSISBuild library that implements all building logic for SSISBuild")]
+[assembly: AssemblyTitle("SSISBuild.Core")]
+[assembly: AssemblyDescription("Implementation of core methods of working with dtproj and ispac files")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyProduct("SsisBuild.Builder")]
 [assembly: AssemblyCulture("")]

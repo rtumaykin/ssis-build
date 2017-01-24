@@ -18,15 +18,23 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using SsisBuild.Models;
 
-namespace SsisBuild.Runner
+namespace SsisBuild
 {
-    internal class Switches : BuildArguments
+    public class BuildArguments
     {
-        public static Switches ProcessArgs(string[] args)
+        public string ProjectPath { get; set; }
+        public string OutputFolder { get; set; }
+        public string ProtectionLevel { get; set; }
+        public string Password { get; set; }
+        public string NewPassword { get; set; }
+        public string ConfigurationName { get; set; }
+        public string ReleaseNotesFilePath { get; set; }
+        public IDictionary<string, string> Parameters { get; set; }
+
+        public static BuildArguments ProcessArgs(string[] args)
         {
-            var switches = new Switches()
+            var buildArguments = new BuildArguments()
             {
                 Parameters = new Dictionary<string, string>()
             };
@@ -55,7 +63,7 @@ namespace SsisBuild.Runner
                 throw new ArgumentProcessingException($"Project file \"{projectPath}\" does not exist.");
             }
 
-            switches.ProjectPath = projectPath;
+            buildArguments.ProjectPath = projectPath;
 
             while (argsList.Count > 0)
             {
@@ -67,39 +75,39 @@ namespace SsisBuild.Runner
                 switch (argsList[0])
                 {
                     case "-Configuration":
-                        switches.ConfigurationName = argsList[1];
+                        buildArguments.ConfigurationName = argsList[1];
                         break;
 
                     case "-OutputFolder":
-                        switches.OutputFolder = argsList[1];
+                        buildArguments.OutputFolder = argsList[1];
                         break;
 
                     case "-ProtectionLevel":
                         if (
-                            !(new[] {"DontSaveSensitive", "EncryptAllWithPassword", "EncryptSensitiveWithPassword"}
-                                .Contains(argsList[1])))
+                            !(new[] { "DontSaveSensitive", "EncryptAllWithPassword", "EncryptSensitiveWithPassword" }
+                                .Contains(argsList[1], StringComparer.InvariantCultureIgnoreCase)))
                         {
                             throw new ArgumentProcessingException($"Unknown Protection Level: \"{argsList[1]}\"");
                         }
-                        switches.ProtectionLevel = argsList[1];
+                        buildArguments.ProtectionLevel = argsList[1];
                         break;
 
                     case "-Password":
-                        switches.Password = argsList[1];
+                        buildArguments.Password = argsList[1];
                         break;
 
                     case "-NewPassword":
-                        switches.NewPassword = argsList[1];
+                        buildArguments.NewPassword = argsList[1];
                         break;
 
                     case "-ReleaseNotes":
-                        switches.ReleaseNotesFilePath = argsList[1];
+                        buildArguments.ReleaseNotesFilePath = argsList[1];
                         break;
 
                     default:
                         if (argsList[0].StartsWith("-Parameter:"))
                         {
-                            switches.Parameters.Add(argsList[0].Substring(11), argsList[1]);
+                            buildArguments.Parameters.Add(argsList[0].Substring(11), argsList[1]);
                         }
                         else
                         {
@@ -110,10 +118,10 @@ namespace SsisBuild.Runner
                 argsList.RemoveRange(0, 2);
             }
 
-            if (string.IsNullOrWhiteSpace(switches.ConfigurationName))
+            if (string.IsNullOrWhiteSpace(buildArguments.ConfigurationName))
                 throw new ArgumentProcessingException("Configuration name must be specified");
 
-            return switches;
+            return buildArguments;
         }
     }
 }

@@ -14,11 +14,15 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-
 namespace SsisBuild.Core
 {
-    public class InvalidPaswordException : Exception
+    public enum ProtectionLevel
     {
+        DontSaveSensitive,
+        EncryptSensitiveWithUserKey,
+        EncryptSensitiveWithPassword,
+        EncryptAllWithPassword,
+        EncryptAllWithUserKey,
+        ServerStorage
     }
 }

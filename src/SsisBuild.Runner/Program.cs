@@ -15,11 +15,9 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.IO;
-using Microsoft.Win32;
 using SsisBuild.Logger;
 
-namespace SsisBuild.Runner
+namespace SsisBuild
 {
     class Program
     {
@@ -28,9 +26,9 @@ namespace SsisBuild.Runner
         {
             try
             {
-                var switches = Switches.ProcessArgs(args);
+                var buildArguments = BuildArguments.ProcessArgs(args);
                 var builder = new Builder(new ConsoleLogger());
-                builder.Execute(switches);
+                builder.Execute(buildArguments);
             }
             catch (ArgumentProcessingException x)
             {
@@ -53,7 +51,7 @@ namespace SsisBuild.Runner
                 "",
                 "Syntax:                ssisbuild [Project File] [-<Switch Name> <Value>] [...[-<Switch Name> <Value>]] [-Parameter:<Name> <Value>] [...[-Parameter:<Name> <Value>]]",
                 "",
-                "Description:           Builds an SSIS project into an ispac file.",
+                "Description:           Builds an SSIS project into an ispac file. Project must not be encrypted by a user key.",
                 "",
                 "Switches:",
                 "",

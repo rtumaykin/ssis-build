@@ -1,13 +1,29 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+//   Copyright 2017 Roman Tumaykin
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//-----------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
 using System.IO.Packaging;
 using System.Xml;
-using SsisBuild.Helpers;
+using SsisBuild.Core.Helpers;
 
-namespace SsisBuild.Models
+namespace SsisBuild.Core
 {
     public class Project
     {
@@ -92,7 +108,47 @@ namespace SsisBuild.Models
             if (!filePath.EndsWith(".ispac", StringComparison.OrdinalIgnoreCase))
                 throw new Exception($"File {filePath} does not have an .ispac extension.");
 
-            throw new NotImplementedException();
+            var project = new Project();
+
+            using (var ispacStream = new FileStream(filePath, FileMode.Open))
+            {
+                using (var ispacArchive = new ZipArchive(ispacStream, ZipArchiveMode.Read))
+                {
+                    foreach (var ispacArchiveEntry in ispacArchive.Entries)
+                    {
+                        var fileName = ispacArchiveEntry.FullName;
+                        using (var fileStream = ispacArchiveEntry.Open())
+                        {
+                            switch (Path.GetExtension(fileName))
+                            {
+                                case ".manifest":
+                                    project._projectManifest = new ProjectManifest().Initialize(fileStream, password);
+                                    break;
+
+                                case ".params":
+                                    project._projectParameters = new ProjectParams().Initialize(fileStream, password);
+                                    break;
+
+                                case ".dtsx":
+                                    project._packages.Add(fileName, new Package().Initialize(fileStream, password));
+                                    break;
+
+                                case ".conmgr":
+                                    project._projectConnections.Add(fileName, new ProjectConnection().Initialize(fileStream, password));
+                                    break;
+
+                                case ".xml":
+                                    break;
+
+                                default: 
+                                    throw new Exception($"Unexpected file {fileName} in {filePath}.");
+                            }
+                        }
+                    }
+                }
+            }
+
+            return project;
         }
 
         public static Project LoadFromDtproj(string filePath, string configurationName, string password)

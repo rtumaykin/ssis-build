@@ -7,8 +7,8 @@
     <ProjectGuid>{01657A26-BE3B-4A6E-A193-E175096F54BA}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SsisBuild</RootNamespace>
-    <AssemblyName>SsisBuild.Builder</AssemblyName>
+    <RootNamespace>SsisBuild.Core</RootNamespace>
+    <AssemblyName>SsisBuild.Core</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -53,23 +53,20 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Models\BuildArguments.cs" />
-    <Compile Include="Builder.cs" />
-    <Compile Include="Helpers\XmlHelpers.cs" />
+    <Compile Include="Helpers\XmlHelper.cs" />
     <Compile Include="InvalidPaswordException.cs" />
-    <Compile Include="Models\Configuration.cs" />
-    <Compile Include="Models\DataType.cs" />
-    <Compile Include="Models\Package.cs" />
-    <Compile Include="Models\Parameter.cs" />
-    <Compile Include="Models\ParameterSource.cs" />
-    <Compile Include="Models\Project.cs" />
-    <Compile Include="Models\ProjectConnection.cs" />
-    <Compile Include="Models\ProjectFile.cs" />
-    <Compile Include="Models\ProjectManifest.cs" />
-    <Compile Include="Models\ProjectParams.cs" />
-    <Compile Include="Models\ProtectionLevel.cs" />
-    <Compile Include="Models\TargetServerVersion.cs" />
-    <Compile Include="Models\UserConfiguration.cs" />
+    <Compile Include="Configuration.cs" />
+    <Compile Include="DataType.cs" />
+    <Compile Include="Package.cs" />
+    <Compile Include="Parameter.cs" />
+    <Compile Include="ParameterSource.cs" />
+    <Compile Include="Project.cs" />
+    <Compile Include="ProjectConnection.cs" />
+    <Compile Include="ProjectFile.cs" />
+    <Compile Include="ProjectManifest.cs" />
+    <Compile Include="ProjectParams.cs" />
+    <Compile Include="ProtectionLevel.cs" />
+    <Compile Include="UserConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReleaseNotesHelper.cs" />
   </ItemGroup>

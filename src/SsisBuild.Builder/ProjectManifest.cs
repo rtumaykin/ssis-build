@@ -1,10 +1,26 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+//   Copyright 2017 Roman Tumaykin
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//-----------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
-using SsisBuild.Helpers;
+using SsisBuild.Core.Helpers;
 
-namespace SsisBuild.Models
+namespace SsisBuild.Core
 {
     public class ProjectManifest : ProjectFile
     {
@@ -102,7 +118,12 @@ namespace SsisBuild.Models
 
             ProtectionLevel protectionLevel;
             if (Enum.TryParse(manifestXml.Attributes["SSIS:ProtectionLevel"].Value, out protectionLevel))
+            {
+                if (protectionLevel == ProtectionLevel.EncryptAllWithUserKey || protectionLevel == ProtectionLevel.EncryptSensitiveWithUserKey)
+                    throw new Exception($"Original project can't be encrypted with user key since it is not decryptable by a build agent.");
+
                 return protectionLevel;
+            }
 
             throw new Exception($"Invalid Protection Level {protectionLevelString}.");
         }

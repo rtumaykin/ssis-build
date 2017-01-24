@@ -16,7 +16,7 @@
 
 using System;
 
-namespace SsisBuild.Runner
+namespace SsisBuild
 {
     public class ArgumentProcessingException : Exception
     {

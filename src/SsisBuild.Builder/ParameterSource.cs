@@ -14,11 +14,12 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-
 namespace SsisBuild.Core
 {
-    public class InvalidPaswordException : Exception
+    public enum ParameterSource
     {
+        Original,
+        Configuration,
+        Manual
     }
 }
