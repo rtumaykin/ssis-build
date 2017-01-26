@@ -1,46 +1,137 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+//   Copyright 2017 Roman Tumaykin
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//-----------------------------------------------------------------------
 
-namespace ssis_deploy
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data.SqlClient;
+using System.IO;
+using System.Linq;
+using SsisBuild.Core;
+
+namespace SsisDeploy
 {
     class Program
     {
+        private enum ObjectTypes : short
+        {
+            Project = 20,
+            Package = 30
+        }
+
+        private class SensitiveParameter
+        {
+            public string Name { get; set; }
+            public Type DataType { get; set; }
+            public string Value { get; set; }
+        }
+
         static void Main(string[] args)
         {
-            //    public Operation DeployProject(string projectName, byte[] projectStream)
-            //{
-            //    if (projectName == null)
-            //        throw new ArgumentNullException("projectName");
-            //    if (projectStream == null)
-            //        throw new ArgumentNullException("projectStream");
-            //    string cmdText = string.Format((IFormatProvider)CultureInfo.InvariantCulture, "[{0}].[catalog].[deploy_project]", new object[1]
-            //    {
-            //(object) Helpers.GetEscapedName(this.Parent.Name)
-            //    });
-            //    SqlParameter[] parameters = new SqlParameter[4]
-            //    {
-            //new SqlParameter("folder_name", (object) this.Name),
-            //new SqlParameter("project_name", (object) projectName),
-            //new SqlParameter("project_stream", (object) projectStream),
-            //new SqlParameter("operation_id", SqlDbType.BigInt)
-            //    };
-            //    parameters[3].Direction = ParameterDirection.InputOutput;
-            //    CatalogFolder.tc.Assert(this.GetDomain() != null);
-            //    SqlHelper.ExecuteSQLCommand(((Microsoft.SqlServer.Management.IntegrationServices.IntegrationServices)this.GetDomain()).Connection, CommandType.StoredProcedure, cmdText, parameters, ExecuteType.ExecuteNonQuery, 300);
-            //    long id = (long)parameters[3].Value;
-            //    CatalogFolder.tc.Assert(id > 0L);
-            //    Operation operation = new Operation(this.Parent, id);
-            //    operation.Refresh();
-            //    while (!operation.Completed)
-            //    {
-            //        Thread.Sleep(1000);
-            //        operation.Refresh();
-            //    }
-            //    return operation;
-            //}
+            try
+            {
+                var deploymentArguments = DeployArguments.ProcessArgs(args);
+
+                var project = Project.LoadFromIspac(deploymentArguments.DeploymentFilePath, deploymentArguments.ProjectPassword);
+
+                var sensitiveParameters = project.Parameters.Where(p => p.Value.Sensitive && p.Value.Value != null)
+                    .ToDictionary(p => string.Copy(p.Key), v => new SensitiveParameter()
+                    {
+                        DataType = v.Value.ParameterDataType,
+                        Name = string.Copy(v.Key),
+                        Value = string.Copy(v.Value.Value)
+                    });
+
+
+                var deploymentProtectionLevel = deploymentArguments.EraseSensitiveInfo ? ProtectionLevel.DontSaveSensitive : ProtectionLevel.ServerStorage;
+
+                var cs = new SqlConnectionStringBuilder()
+                {
+                    ApplicationName = "SSIS Deploy",
+                    DataSource = deploymentArguments.ServerInstance,
+                    InitialCatalog = deploymentArguments.Catalog,
+                    IntegratedSecurity = true
+                };
+
+                using (var zipStream = new MemoryStream())
+                {
+                    project.Save(zipStream, deploymentProtectionLevel, deploymentArguments.ProjectPassword);
+                    zipStream.Flush();
+
+
+
+                    Data.ExecutionScope.ConnectionString = cs.ConnectionString;
+
+                    try
+                    {
+                        Data.Executables.catalog.create_folder.Execute(deploymentArguments.Folder, null);
+                    }
+                    catch (SqlException e)
+                    {
+                        // Ignore if the folder already there
+                        if (e.Number != 27190)
+                            throw;
+                    }
+
+                    Data.Executables.catalog.deploy_project.Execute(deploymentArguments.Folder, deploymentArguments.ProjectName, zipStream.ToArray(), null);
+
+                    if (deploymentArguments.EraseSensitiveInfo)
+                    {
+                        foreach (var sensitiveParameter in sensitiveParameters)
+                        {
+                            var parameterSplit = sensitiveParameter.Key.Split(new[] {"::"}, StringSplitOptions.None);
+                            if (parameterSplit.Length == 2)
+                            {
+                                var objectType = parameterSplit[0].ToLowerInvariant() == "project" ? ObjectTypes.Project : ObjectTypes.Package;
+                                var value = ConvertToObject(sensitiveParameter.Value.Value, sensitiveParameter.Value.DataType);
+                                Data.Executables.catalog.set_object_parameter_value.Execute(
+                                    (short) objectType,
+                                    deploymentArguments.Folder,
+                                    deploymentArguments.ProjectName,
+                                    parameterSplit[1],
+                                    value,
+                                    objectType == ObjectTypes.Project ? parameterSplit[0] : null,
+                                    "V");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (InvalidArgumentException x)
+            {
+                Console.WriteLine(x.Message);
+                Usage();
+                Environment.Exit(1);
+            }
+            catch (Exception e)
+            {
+
+                Environment.Exit(1);
+            }
+        }
+
+        private static void Usage()
+        {
+            
+        }
+
+        private static object ConvertToObject(string value, Type type)
+        {
+            var converter = TypeDescriptor.GetConverter(type);
+            return converter.ConvertFromString(value);
         }
     }
 }

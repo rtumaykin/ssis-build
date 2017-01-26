@@ -131,7 +131,13 @@ namespace SsisBuild.Core
             var xmlToSave = new XmlDocument();
             xmlToSave.LoadXml(FileXmlDocument.OuterXml);
 
-            if (protectionLevel != ProtectionLevel.DontSaveSensitive && protectionLevel != ProtectionLevel.EncryptSensitiveWithPassword)
+            if (!new []
+            {
+                ProtectionLevel.DontSaveSensitive,
+                ProtectionLevel.EncryptAllWithPassword,
+                ProtectionLevel.EncryptSensitiveWithPassword,
+                ProtectionLevel.ServerStorage
+            }.Contains(protectionLevel))
                 throw new Exception($"Invalid Protection Level for Deployment Package: {protectionLevel}.");
 
             if (protectionLevel == ProtectionLevel.EncryptSensitiveWithPassword && string.IsNullOrWhiteSpace(password))
@@ -139,6 +145,7 @@ namespace SsisBuild.Core
 
 
             SetProtectionLevel(xmlToSave, protectionLevel);
+
             if (protectionLevel == ProtectionLevel.EncryptAllWithPassword)
             {
                 EncryptNode(xmlToSave.DocumentElement, password);
@@ -224,7 +231,7 @@ namespace SsisBuild.Core
             // Package has an old way of dealing with it.
             var sensitiveNodesStringAttributeValue =
                 rootNode.SelectNodes(
-                    "//DTS:PackageParameter[@DTS:Sensitive=\"True\"]/DTS:Property[@DTS:Name=\"ParameterValue\"]/DTS:Property[@DTS:Name=\"ParameterValue\"]",
+                    "//DTS:PackageParameter[@DTS:Sensitive=\"True\"]/DTS:Property[@DTS:Name=\"ParameterValue\"]",
                     NamespaceManager);
 
             if (sensitiveNodesStringAttributeValue != null)

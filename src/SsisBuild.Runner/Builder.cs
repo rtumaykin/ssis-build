@@ -137,13 +137,13 @@ namespace SsisBuild
                 var releaseNotes = ReleaseNotesHelper.ParseReleaseNotes(releaseNotesFilePath);
                 _logger.LogMessage($"   Overriding Version to {releaseNotes.Version}");
 
-                var manifest =
-                    project.VersionMajor = releaseNotes.Version.Major.ToString(CultureInfo.InvariantCulture);
+
+                project.VersionMajor = releaseNotes.Version.Major.ToString(CultureInfo.InvariantCulture);
                 project.VersionMinor = releaseNotes.Version.Minor.ToString(CultureInfo.InvariantCulture);
                 project.VersionBuild = releaseNotes.Version.Build.ToString(CultureInfo.InvariantCulture);
-
                 _logger.LogMessage($"   Adding Release Notes {string.Join("\r\n", releaseNotes.Notes)}");
                 project.VersionComments = string.Join("\r\n", releaseNotes.Notes);
+                project.Description = string.Join("\r\n", releaseNotes.Notes);
             }
             else
             {

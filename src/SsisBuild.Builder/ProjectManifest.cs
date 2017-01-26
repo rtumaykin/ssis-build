@@ -30,6 +30,9 @@ namespace SsisBuild.Core
         private XmlElement _versionMinor;
         private XmlElement _versionBuild;
         private XmlElement _versionComments;
+        private XmlElement _description;
+
+
 
         public string VersionMajor
         {
@@ -71,6 +74,15 @@ namespace SsisBuild.Core
             }
         }
 
+        public string Description
+        {
+            get { return _description?.InnerText; }
+            set
+            {
+                if (_description != null)
+                    _description.InnerText = value;
+            }
+        }
 
         protected override void PostInitialize()
         {
@@ -81,6 +93,7 @@ namespace SsisBuild.Core
             _versionMinor = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMinor\"]", NamespaceManager) as XmlElement;
             _versionBuild = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionBuild\"]", NamespaceManager) as XmlElement;
             _versionComments = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionComments\"]", NamespaceManager) as XmlElement;
+            _description = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"Description\"]", NamespaceManager) as XmlElement;
         }
 
         private string[] ExtractPackageNames()
@@ -110,22 +123,32 @@ namespace SsisBuild.Core
             if (manifestXml?.Attributes == null || manifestXml.Attributes.Count == 0 || manifestXml.Attributes["SSIS:ProtectionLevel"] == null)
                 throw new Exception("Invalid project file. SSIS:Project node must contain a SSIS:ProtectionLevel attribute.");
 
-            var protectionLevelString = manifestXml.Attributes["SSIS:ProtectionLevel"].Value;
+            var protectionLevelString = manifestXml.Attributes["SSIS:ProtectionLevel"]?.Value;
 
             if (string.IsNullOrWhiteSpace(protectionLevelString))
                 throw new Exception("Empty SSIS:ProtectionLevel attribute");
 
 
             ProtectionLevel protectionLevel;
-            if (Enum.TryParse(manifestXml.Attributes["SSIS:ProtectionLevel"].Value, out protectionLevel))
+            if (Enum.TryParse(protectionLevelString, out protectionLevel))
             {
                 if (protectionLevel == ProtectionLevel.EncryptAllWithUserKey || protectionLevel == ProtectionLevel.EncryptSensitiveWithUserKey)
-                    throw new Exception($"Original project can't be encrypted with user key since it is not decryptable by a build agent.");
+                    throw new Exception("Original project can\'t be encrypted with user key since it is not decryptable by a build agent.");
 
                 return protectionLevel;
             }
 
             throw new Exception($"Invalid Protection Level {protectionLevelString}.");
+        }
+
+        protected override void SetProtectionLevel(XmlDocument protectedXmlDocument, ProtectionLevel protectionLevel)
+        {
+            var manifestXml = protectedXmlDocument.DocumentElement;
+
+            if (manifestXml?.Attributes == null || manifestXml.Attributes.Count == 0 || manifestXml.Attributes["SSIS:ProtectionLevel"] == null)
+                throw new Exception("Invalid project file. SSIS:Project node must contain a SSIS:ProtectionLevel attribute.");
+
+            manifestXml.Attributes["SSIS:ProtectionLevel"].Value = protectionLevel.ToString();
         }
 
         protected override IList<Parameter> ExtractParameters()

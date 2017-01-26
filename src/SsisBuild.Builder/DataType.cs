@@ -19,14 +19,17 @@ namespace SsisBuild.Core
     public enum DataType
     {
         Boolean = 3,
-        SByte = 5,
         Byte = 6,
-        Int32 = 9,
-        Uint32 = 10,
-        Uint64 = 12,
-        Single = 13,
-        Double = 14,
         DateTime = 16,
-        String = 18
+        Decimal = 15,
+        Double = 14,
+        Int16 = 7,
+        Int32 = 9,
+        Int64 = 11,
+        SByte = 5,
+        Single = 13,
+        String = 18,
+        UInt32 = 10,
+        UInt64 = 12
     }
 }

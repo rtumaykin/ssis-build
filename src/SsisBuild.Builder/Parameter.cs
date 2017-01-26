@@ -25,7 +25,9 @@ namespace SsisBuild.Core
         public string Name { get; }
         public string Value { get; private set; }
         public ParameterSource Source { get; private set; }
-        public bool Sensitive { get; private set; }
+        public bool Sensitive { get; }
+
+        public Type ParameterDataType { get; }
 
         private readonly XmlElement _valueElement;
         private readonly XmlElement _parentElement;
@@ -49,6 +51,69 @@ namespace SsisBuild.Core
 
             _parentElement = parentElement;
             Sensitive = _parentElement.SelectSingleNode("./SSIS:Property[@SSIS:Name = \"Sensitive\"]", _parentElement.GetNameSpaceManager())?.InnerText == "1";
+            DataType parameterDataType;
+            if (Enum.TryParse(_parentElement.SelectSingleNode("./SSIS:Property[@SSIS:Name = \"DataType\"]", _parentElement.GetNameSpaceManager())?.InnerText, out parameterDataType))
+            {
+                switch (parameterDataType)
+                {
+                    case DataType.Boolean:
+                        ParameterDataType = typeof(bool);
+                        break;
+
+                    case DataType.Byte:
+                        ParameterDataType = typeof(byte);
+                        break;
+
+                    case DataType.DateTime:
+                        ParameterDataType = typeof(DateTime);
+                        break;
+
+                    case DataType.Decimal:
+                        ParameterDataType = typeof(decimal);
+                        break;
+
+                    case DataType.Double:
+                        ParameterDataType = typeof(double);
+                        break;
+
+                    case DataType.Int16:
+                        ParameterDataType = typeof(short);
+                        break;
+
+                    case DataType.Int32:
+                        ParameterDataType = typeof(int);
+                        break;
+
+                    case DataType.Int64:
+                        ParameterDataType = typeof(long);
+                        break;
+
+                    case DataType.SByte:
+                        ParameterDataType = typeof(sbyte);
+                        break;
+
+                    case DataType.Single:
+                        ParameterDataType = typeof(float);
+                        break;
+
+                    case DataType.String:
+                        ParameterDataType = typeof(string);
+                        break;
+
+                    case DataType.UInt32:
+                        ParameterDataType = typeof(uint);
+                        break;
+
+                    case DataType.UInt64:
+                        ParameterDataType = typeof(ulong);
+                        break;
+
+                    default:
+                        ParameterDataType = null;
+                        break;
+                }
+
+            }
 
             if (valueElement == null)
             {

@@ -1,0 +1,11 @@
+﻿<?xml version="1.0"?>
+<DTS:ConnectionManager xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:ObjectName="SMTP Connection Manager"
+  DTS:DTSID="{A626724A-AA7B-4B8B-8800-F154B5B26F3F}"
+  DTS:Description="sss"
+  DTS:CreationName="SMTP">
+  <DTS:ObjectData>
+    <SmtpConnectionManager
+      ConnectionString="SmtpServer=mail.yahoo.com;UseWindowsAuthentication=True;EnableSsl=True;Timeout=22;" />
+  </DTS:ObjectData>
+</DTS:ConnectionManager>

@@ -72,7 +72,7 @@ namespace SsisBuild.Core
             {
                 Type = EncryptedXml.XmlEncElementUrl,
                 EncryptionMethod = new EncryptionMethod(EncryptedXml.XmlEncTripleDESUrl),
-                CipherData = { CipherValue = encryptedElement }
+                CipherData = {CipherValue = encryptedElement}
             };
 
 
@@ -81,10 +81,15 @@ namespace SsisBuild.Core
             var replacementElement = elementToEncrypt.FirstChild as XmlElement;
             var parentNode = elementToEncrypt.ParentNode;
 
-            if (parentNode != null && replacementElement != null)
+            if (replacementElement == null)
+                throw new Exception("Encryption failed");
+
+            replacementElement.SetAttribute("Salt", Convert.ToBase64String(rgbSalt));
+            replacementElement.SetAttribute("IV", Convert.ToBase64String(cryptoServiceProvider.IV));
+
+
+            if (parentNode != null && parentNode.GetAttribute("Sensitive")?.Value == null)
             {
-                replacementElement.SetAttribute("Salt", Convert.ToBase64String(rgbSalt));
-                replacementElement.SetAttribute("IV", Convert.ToBase64String(cryptoServiceProvider.IV));
                 parentNode.RemoveChild(elementToEncrypt);
                 parentNode.AppendChild(replacementElement);
             }
@@ -93,7 +98,7 @@ namespace SsisBuild.Core
 
         protected override void SetProtectionLevel(XmlDocument protectedXmlDocument, ProtectionLevel protectionLevel)
         {
-            var protectionLevelAttribute = FileXmlDocument.SelectSingleNode("/DTS:Executable", NamespaceManager)?.Attributes?["DTS:ProtectionLevel"];
+            var protectionLevelAttribute = protectedXmlDocument.SelectSingleNode("/DTS:Executable", NamespaceManager)?.Attributes?["DTS:ProtectionLevel"];
             if (protectionLevelAttribute != null)
                 protectionLevelAttribute.Value = ((int) protectionLevel).ToString(CultureInfo.InvariantCulture);
         }
@@ -151,10 +156,14 @@ namespace SsisBuild.Core
             cryptoServiceProvider.Key = passwordDeriveBytes.CryptDeriveKey("TripleDES", "SHA1", 192,
                 cryptoServiceProvider.IV);
 
+            // weird edge case - if this is a parameter value, then it must replace one more parent level up
+            var elementToReplace = encryptedElement.ParentNode?.Name == "DTS:Property" && (encryptedElement.ParentNode as XmlElement) != null && encryptedElement.ParentNode?.ParentNode?.Name == "DTS:PackageParameter"
+                ? (XmlElement) encryptedElement.ParentNode
+                : encryptedElement;
 
             var exml = new EncryptedXml();
             var output = exml.DecryptData(encryptedData, cryptoServiceProvider);
-            exml.ReplaceData(encryptedElement, output);
+            exml.ReplaceData(elementToReplace, output);
         }
     }
 }

@@ -69,6 +69,15 @@ namespace SsisBuild.Core
             }
         }
 
+        public string Description
+        {
+            get { return ProjectManifest?.Description; }
+            set
+            {
+                if (ProjectManifest != null)
+                    ProjectManifest.Description = value;
+            }
+        }
         private ProjectManifest ProjectManifest => (_projectManifest as ProjectManifest);
 
         protected readonly IDictionary<string, Parameter> _parameters;
@@ -103,7 +112,7 @@ namespace SsisBuild.Core
         public static Project LoadFromIspac(string filePath, string password)
         {
             if (!File.Exists(filePath))
-                throw new Exception($"File {filePath} does not exist.");
+                throw new FileNotFoundException($"File {filePath} does not exist or you don't have permissions to access it.", filePath);
 
             if (!filePath.EndsWith(".ispac", StringComparison.OrdinalIgnoreCase))
                 throw new Exception($"File {filePath} does not have an .ispac extension.");
@@ -147,6 +156,8 @@ namespace SsisBuild.Core
                     }
                 }
             }
+
+            project.LoadParameters();
 
             return project;
         }
@@ -254,54 +265,59 @@ namespace SsisBuild.Core
 
             using (var ispacStream = new FileStream(destinationFilePath, FileMode.Create))
             {
-                using (var ispacArchive = new ZipArchive(ispacStream, ZipArchiveMode.Create))
-                {
-                    var manifest = ispacArchive.CreateEntry("@Project.manifest");
-                    using (var stream = manifest.Open())
-                    {
-                        _projectManifest.Save(stream, protectionLevel, password);
-                    }
-
-                    var projectParams = ispacArchive.CreateEntry("Project.params");
-                    using (var stream = projectParams.Open())
-                    {
-                        _projectParameters.Save(stream, protectionLevel, password);
-                    }
-
-                    var contentTypes = ispacArchive.CreateEntry("[Content_Types].xml");
-                    using (var stream = contentTypes.Open())
-                    {
-                        using (var writer = new StreamWriter(stream))
-                        {
-                            writer.WriteLine(
-                                "<?xml version=\"1.0\" encoding=\"utf-8\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"dtsx\" ContentType=\"text/xml\" /><Default Extension=\"conmgr\" ContentType=\"text/xml\" /><Default Extension=\"params\" ContentType=\"text/xml\" /><Default Extension=\"manifest\" ContentType=\"text/xml\" /></Types>");
-                        }
-                    }
-
-                    foreach (var package in _packages)
-                    {
-                        var name = PackUriHelper.CreatePartUri(new Uri(package.Key, UriKind.Relative)).OriginalString.Substring(1);
-                        var packageEntry = ispacArchive.CreateEntry(name);
-                        using (var stream = packageEntry.Open())
-                        {
-                            package.Value.Save(stream, protectionLevel, password);
-                        }
-                    }
-
-                    foreach (var projectConnection in _projectConnections)
-                    {
-                        var name = PackUriHelper.CreatePartUri(new Uri(projectConnection.Key, UriKind.Relative)).OriginalString.Substring(1);
-                        var projectConnectionEntry = ispacArchive.CreateEntry(name);
-                        using (var stream = projectConnectionEntry.Open())
-                        {
-                            projectConnection.Value.Save(stream, protectionLevel, password);
-                        }
-                    }
-                }
+                Save(ispacStream, protectionLevel, password);
             }
 
         }
 
         public void Save(string destinationFilePath) => Save(destinationFilePath, ProtectionLevel.DontSaveSensitive, null);
+
+        public void Save(Stream destinationStream, ProtectionLevel protectionLevel, string password)
+        {
+            using (var ispacArchive = new ZipArchive(destinationStream, ZipArchiveMode.Create))
+            {
+                var manifest = ispacArchive.CreateEntry("@Project.manifest");
+                using (var stream = manifest.Open())
+                {
+                    _projectManifest.Save(stream, protectionLevel, password);
+                }
+
+                var projectParams = ispacArchive.CreateEntry("Project.params");
+                using (var stream = projectParams.Open())
+                {
+                    _projectParameters.Save(stream, protectionLevel, password);
+                }
+
+                var contentTypes = ispacArchive.CreateEntry("[Content_Types].xml");
+                using (var stream = contentTypes.Open())
+                {
+                    using (var writer = new StreamWriter(stream))
+                    {
+                        writer.WriteLine(
+                            "<?xml version=\"1.0\" encoding=\"utf-8\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"dtsx\" ContentType=\"text/xml\" /><Default Extension=\"conmgr\" ContentType=\"text/xml\" /><Default Extension=\"params\" ContentType=\"text/xml\" /><Default Extension=\"manifest\" ContentType=\"text/xml\" /></Types>");
+                    }
+                }
+
+                foreach (var package in _packages)
+                {
+                    var name = PackUriHelper.CreatePartUri(new Uri(package.Key, UriKind.Relative)).OriginalString.Substring(1);
+                    var packageEntry = ispacArchive.CreateEntry(name);
+                    using (var stream = packageEntry.Open())
+                    {
+                        package.Value.Save(stream, protectionLevel, password);
+                    }
+                }
+
+                foreach (var projectConnection in _projectConnections)
+                {
+                    var name = PackUriHelper.CreatePartUri(new Uri(projectConnection.Key, UriKind.Relative)).OriginalString.Substring(1);
+                    var projectConnectionEntry = ispacArchive.CreateEntry(name);
+                    using (var stream = projectConnectionEntry.Open())
+                    {
+                        projectConnection.Value.Save(stream, protectionLevel, password);
+                    }
+                }
+            }
+        }
     }
 }
