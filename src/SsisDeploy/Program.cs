@@ -45,7 +45,7 @@ namespace SsisDeploy
             {
                 var deploymentArguments = DeployArguments.ProcessArgs(args);
 
-                var project = Project.LoadFromIspac(deploymentArguments.DeploymentFilePath, deploymentArguments.ProjectPassword);
+                var project = new ProjectFactory().LoadFromIspac(deploymentArguments.DeploymentFilePath, deploymentArguments.ProjectPassword);
 
                 var sensitiveParameters = project.Parameters.Where(p => p.Value.Sensitive && p.Value.Value != null)
                     .ToDictionary(p => string.Copy(p.Key), v => new SensitiveParameter()

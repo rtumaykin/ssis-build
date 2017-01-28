@@ -16,7 +16,6 @@
 
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -28,12 +27,12 @@ namespace SsisBuild
     public class Builder
     {
         private readonly ILogger _logger;
+        private readonly IProjectFactory _projectFactory;
 
-        public Builder(ILogger logger)
+        public Builder(ILogger logger, IProjectFactory projectFactory)
         {
-            if (logger == null)
-                throw new ArgumentNullException(nameof(logger));
-            _logger = logger;
+            _logger = logger ?? new ConsoleLogger();
+            _projectFactory = projectFactory ?? new ProjectFactory();
         }
 
         public void Execute(BuildArguments buildArguments)
@@ -44,7 +43,7 @@ namespace SsisBuild
             _logger.LogMessage($"Starting build. Loading project files from {buildArguments.ProjectPath}.");
 
             // Load and process project
-            var project = Project.LoadFromDtproj(buildArguments.ProjectPath, buildArguments.Configuration, buildArguments.Password);
+            var project = _projectFactory.LoadFromDtproj(buildArguments.ProjectPath, buildArguments.Configuration, buildArguments.Password);
 
             // replace parameter values
             foreach (var buildArgumentsParameter in buildArguments.Parameters)
