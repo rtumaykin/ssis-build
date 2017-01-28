@@ -14,13 +14,12 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-
-namespace SsisDeploy
+namespace SsisBuild
 {
-    public class InvalidArgumentException : Exception
+    public class ProjectFileNotFoundException : ArgumentsProcessingException
     {
-        public InvalidArgumentException(string argumentName) : base ($"Invalid argument {argumentName}.")
-        {}
+        public ProjectFileNotFoundException(string currentFolder) : base($"Unable find any project file in {currentFolder}.")
+        {
+        }
     }
 }

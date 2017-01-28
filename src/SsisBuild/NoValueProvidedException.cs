@@ -14,13 +14,12 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-
-namespace SsisDeploy
+namespace SsisBuild
 {
-    public class InvalidArgumentException : Exception
+    public class NoValueProvidedException : ArgumentsProcessingException
     {
-        public InvalidArgumentException(string argumentName) : base ($"Invalid argument {argumentName}.")
-        {}
+        public NoValueProvidedException(string argumentName) : base($"No value provided for an argument {argumentName}.")
+        {
+        }
     }
 }

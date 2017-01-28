@@ -20,7 +20,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace SsisBuild.Core
+namespace SsisBuild.Core.Helpers
 {
     public enum ReleaseNotesType
     {

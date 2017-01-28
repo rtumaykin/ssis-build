@@ -16,11 +16,12 @@
 
 using System;
 
-namespace SsisDeploy
+namespace SsisBuild
 {
-    public class InvalidArgumentException : Exception
+    public class ArgumentsProcessingException : Exception
     {
-        public InvalidArgumentException(string argumentName) : base ($"Invalid argument {argumentName}.")
-        {}
+        public ArgumentsProcessingException(string message) : base (message)
+        {
+        }
     }
 }

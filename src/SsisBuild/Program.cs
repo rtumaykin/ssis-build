@@ -35,7 +35,7 @@ namespace SsisBuild
                 builder = builder ?? new Builder();
                 builder.Execute(buildArguments);
             }
-            catch (InvalidArgumentException x)
+            catch (ArgumentsProcessingException x)
             {
                 Console.WriteLine(x.Message);
                 Usage();

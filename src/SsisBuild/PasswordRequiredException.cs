@@ -14,13 +14,10 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-
-namespace SsisDeploy
+namespace SsisBuild
 {
-    public class InvalidArgumentException : Exception
+    public class PasswordRequiredException : ArgumentsProcessingException
     {
-        public InvalidArgumentException(string argumentName) : base ($"Invalid argument {argumentName}.")
-        {}
+        public PasswordRequiredException (string protectionLevel) : base ($"NewPassword or Password argument is required when argument ProtectionLevel is {protectionLevel}") { }
     }
 }

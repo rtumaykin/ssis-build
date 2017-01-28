@@ -14,22 +14,13 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-
 namespace SsisBuild
 {
-    public class InvalidArgumentException : Exception
+    public class InvalidArgumentException : ArgumentsProcessingException
     {
-        public override string Message { get; }
-
-        public InvalidArgumentException(string message, string argument, string value)
+        public InvalidArgumentException(string argument, object value) : base($"Invalid value for argument [{argument}]: {value ?? "(no value)"}")
         {
-            Message = $"{message} [{argument}]: {value ?? "(no value)"}";
         }
 
-        public InvalidArgumentException(string message)
-        {
-            Message = message;
-        }
     }
 }

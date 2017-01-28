@@ -14,13 +14,10 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-
-namespace SsisDeploy
+namespace SsisBuild
 {
-    public class InvalidArgumentException : Exception
+    public class DontSaveSensitiveWithPasswordException : ArgumentsProcessingException
     {
-        public InvalidArgumentException(string argumentName) : base ($"Invalid argument {argumentName}.")
-        {}
+        public DontSaveSensitiveWithPasswordException () : base ("NewPassword argument should not be specified when ProtectionLevel is DontSaveSensitive.") { }
     }
 }

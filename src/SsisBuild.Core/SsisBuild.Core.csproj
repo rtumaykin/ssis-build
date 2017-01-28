@@ -71,7 +71,7 @@
     <Compile Include="ProtectionLevel.cs" />
     <Compile Include="UserConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReleaseNotesHelper.cs" />
+    <Compile Include="Helpers\ReleaseNotesHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SsisBuild.Logger\SsisBuild.Logger.csproj">

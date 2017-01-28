@@ -72,7 +72,7 @@ namespace SsisBuild
                 var argValue = argPos == args.Length - 1 ? null : args[argPos + 1];
 
                 if (!argName.StartsWith("-"))
-                    throw new InvalidArgumentException($"Invalid token \"{argName}\"");
+                    throw new InvalidTokenException(argName);
 
                 var lookupArgName = ParameterNames.FirstOrDefault(n => n.Equals(argName.Substring(1), StringComparison.InvariantCultureIgnoreCase)) ?? argName.Substring(1);
                 // var lookupArgName = (_parameterNames.FirstOrDefault(n => n.Substring(1).Equals(argName, StringComparison.InvariantCultureIgnoreCase)) ?? argName).Substring(1);
@@ -110,35 +110,35 @@ namespace SsisBuild
                         }
                         else
                         {
-                            throw new InvalidArgumentException($"Invalid token \"{argName}\"");
+                            throw new InvalidTokenException(argName);
                         }
                         break;
                 }
 
                 if (argValue == null)
-                    throw new InvalidArgumentException("No value provided for an argument", lookupArgName, null);
+                    throw new NoValueProvidedException(lookupArgName);
             }
         }
 
         private void Validate()
         {
             if (string.IsNullOrWhiteSpace(ProjectPath))
-                throw new InvalidArgumentException($"Unable find any project file in {Environment.CurrentDirectory}.");
+                throw new ProjectFileNotFoundException(Environment.CurrentDirectory);
 
             if (!File.Exists(ProjectPath))
                 throw new FileNotFoundException("Project file not found.", ProjectPath);
 
             if (ProtectionLevel != null && !(new[] { "DontSaveSensitive", "EncryptAllWithPassword", "EncryptSensitiveWithPassword" }.Contains(ProtectionLevel ?? string.Empty, StringComparer.InvariantCultureIgnoreCase)))
-                throw new InvalidArgumentException("Invalid value for argument", nameof(ProtectionLevel), ProtectionLevel);
+                throw new InvalidArgumentException(nameof(ProtectionLevel), ProtectionLevel);
 
             if (Configuration == null)
-                throw new InvalidArgumentException("Configuration is a required argument.");
+                throw new MissingRequiredArgumentException(nameof(Configuration));
 
             if (new[] { "EncryptAllWithPassword", "EncryptSensitiveWithPassword" }.Contains(ProtectionLevel) && string.IsNullOrWhiteSpace(NewPassword ?? Password))
-                throw new InvalidArgumentException($"NewPassword or Password argument is required when argument ProtectionLevel is {ProtectionLevel}");
+                throw new PasswordRequiredException(ProtectionLevel);
 
             if (ProtectionLevel == "DontSaveSensitive" && !string.IsNullOrWhiteSpace(NewPassword))
-                throw new InvalidArgumentException("NewPassword argument should not be specified when ProtectionLevel is DontSaveSensitive.");
+                throw new DontSaveSensitiveWithPasswordException();
 
         }
 

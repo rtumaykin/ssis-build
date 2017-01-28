@@ -47,12 +47,19 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="DontSaveSensitiveWithPasswordException.cs" />
     <Compile Include="IBuildArguments.cs" />
     <Compile Include="IBuilder.cs" />
-    <Compile Include="InvalidArgumentException.cs" />
+    <Compile Include="ArgumentsProcessingException.cs" />
     <Compile Include="BuildArguments.cs" />
     <Compile Include="Builder.cs" />
+    <Compile Include="InvalidArgumentException.cs" />
+    <Compile Include="InvalidTokenException.cs" />
+    <Compile Include="MissingRequiredArgumentException.cs" />
+    <Compile Include="NoValueProvidedException.cs" />
+    <Compile Include="PasswordRequiredException.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="ProjectFileNotFoundException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

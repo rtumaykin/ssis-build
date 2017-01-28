@@ -135,8 +135,10 @@ namespace SsisBuild.Tests
             if (exception is TargetInvocationException)
                 exception = exception.InnerException;
 
-            Assert.IsType<InvalidArgumentException>(exception);
-            Assert.Equal(exception.Message, $"No value provided for an argument [{nameof(BuildArguments.Password)}]: (no value)", StringComparer.InvariantCultureIgnoreCase);
+            Assert.IsType<NoValueProvidedException>(exception);
+
+            var testException = new NoValueProvidedException(nameof(BuildArguments.Password));
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
         [Theory]
@@ -157,8 +159,9 @@ namespace SsisBuild.Tests
             if (exception is TargetInvocationException)
                 exception = exception.InnerException;
 
-            Assert.IsType<InvalidArgumentException>(exception);
-            Assert.Equal(exception.Message, $"Invalid token \"{token}\"");
+            Assert.IsType<InvalidTokenException>(exception);
+            var testException = new InvalidTokenException(token);
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
         #endregion // Resolve tests
 
@@ -191,9 +194,9 @@ namespace SsisBuild.Tests
             if (exception is TargetInvocationException)
                 exception = exception.InnerException;
 
-            Assert.IsType<InvalidArgumentException>(exception);
-            // ensure that it is a missing file exception
-            Assert.Equal(exception.Message, $"Unable find any project file in {Environment.CurrentDirectory}.");
+            Assert.IsType<ProjectFileNotFoundException>(exception);
+            var testException = new ProjectFileNotFoundException(Environment.CurrentDirectory);
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
         [Fact]
@@ -231,8 +234,10 @@ namespace SsisBuild.Tests
             if (exception is TargetInvocationException)
                 exception = exception.InnerException;
 
-            Assert.IsType<InvalidArgumentException>(exception);
-            Assert.Equal(exception.Message, "Configuration is a required argument.");
+            Assert.IsType<MissingRequiredArgumentException>(exception);
+            var testException = new MissingRequiredArgumentException(nameof(buildArguments.Configuration));
+
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
         [Theory]
@@ -264,7 +269,8 @@ namespace SsisBuild.Tests
                 exception = exception.InnerException;
 
             Assert.IsType<InvalidArgumentException>(exception);
-            Assert.Equal(exception.Message, $"Invalid value for argument [ProtectionLevel]: {protectionLevel}");
+            var testException = new InvalidArgumentException(nameof(buildArguments.ProtectionLevel), protectionLevel);
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
         [Theory]
@@ -357,8 +363,9 @@ namespace SsisBuild.Tests
             if (exception is TargetInvocationException)
                 exception = exception.InnerException;
 
-            Assert.IsType<InvalidArgumentException>(exception);
-            Assert.Equal(exception.Message, $"NewPassword or Password argument is required when argument ProtectionLevel is {protectionLevel}");
+            Assert.IsType<PasswordRequiredException>(exception);
+            var testException = new PasswordRequiredException(protectionLevel);
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
         [Theory]
@@ -391,8 +398,9 @@ namespace SsisBuild.Tests
             if (exception is TargetInvocationException)
                 exception = exception.InnerException;
 
-            Assert.IsType<InvalidArgumentException>(exception);
-            Assert.Equal(exception.Message, "NewPassword argument should not be specified when ProtectionLevel is DontSaveSensitive.");
+            Assert.IsType<DontSaveSensitiveWithPasswordException>(exception);
+            var testException = new DontSaveSensitiveWithPasswordException();
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
         #endregion // Validate tests
 
