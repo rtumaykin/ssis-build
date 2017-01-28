@@ -15,7 +15,6 @@
 //-----------------------------------------------------------------------
 
 using System;
-using SsisBuild.Logger;
 
 namespace SsisBuild
 {
@@ -24,10 +23,16 @@ namespace SsisBuild
 
         static void Main(string[] args)
         {
+            MainInternal(args, null, null);
+        }
+
+        internal static void MainInternal(string[] args, IBuilder builder, IBuildArguments buildArguments)
+        {
             try
             {
-                var buildArguments = BuildArguments.ProcessArgs(args);
-                var builder = new Builder(new ConsoleLogger());
+                buildArguments = buildArguments ?? new BuildArguments();
+                buildArguments.ProcessArgs(args);
+                builder = builder ?? new Builder();
                 builder.Execute(buildArguments);
             }
             catch (InvalidArgumentException x)
@@ -38,6 +43,7 @@ namespace SsisBuild
             }
             catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 Environment.Exit(1);
             }
         }

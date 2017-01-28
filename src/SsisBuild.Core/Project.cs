@@ -25,7 +25,7 @@ using SsisBuild.Core.Helpers;
 
 namespace SsisBuild.Core
 {
-    public class Project
+    public sealed class Project : IProject
     {
         public ProtectionLevel ProtectionLevel => ProjectManifest?.ProtectonLevel ?? ProtectionLevel.DontSaveSensitive;
 
@@ -78,45 +78,47 @@ namespace SsisBuild.Core
                     ProjectManifest.Description = value;
             }
         }
-        internal ProjectManifest ProjectManifest => (ManifestProjectFile as ProjectManifest);
+        private ProjectManifest ProjectManifest => (_projectManifest as ProjectManifest);
 
-        protected readonly IDictionary<string, Parameter> _parameters;
+        private readonly IDictionary<string, Parameter> _parameters;
         public IReadOnlyDictionary<string, Parameter> Parameters { get; }
 
-        internal ProjectFile ManifestProjectFile;
-        internal ProjectFile ParametersProjectFile;
-        internal readonly IDictionary<string, ProjectFile> ConnectionsProjectFiles;
-        internal readonly IDictionary<string, ProjectFile> PackagesProjectFiles;
+        private ProjectFile _projectManifest;
+        private ProjectFile _projectParams;
+        private readonly IDictionary<string, ProjectFile> _projectConnections;
+        private readonly IDictionary<string, ProjectFile> _packages;
 
-        internal Project()
+        private bool _isLoaded;
+
+        public Project()
         {
             _parameters = new Dictionary<string, Parameter>();
 
             Parameters = new ReadOnlyDictionary<string, Parameter>(_parameters);
 
-            PackagesProjectFiles = new Dictionary<string, ProjectFile>();
-            ConnectionsProjectFiles = new Dictionary<string, ProjectFile>();
+            _packages = new Dictionary<string, ProjectFile>();
+            _projectConnections = new Dictionary<string, ProjectFile>();
+
+            _isLoaded = false;
         }
 
         public void UpdateParameter(string parameterName, string value, ParameterSource source)
         {
+            if (!_isLoaded)
+                throw new ProjectNotLoadedException();
+
             if (_parameters.ContainsKey(parameterName))
                 _parameters[parameterName].SetValue(value, source);
         }
 
-        internal void AddParameter(Parameter parameter)
+        private void LoadParameters()
         {
-            _parameters.Add(parameter.Name, parameter);
-        }
-
-        internal void LoadParameters()
-        {
-            foreach (var projectParametersParameter in ParametersProjectFile.Parameters)
+            foreach (var projectParametersParameter in _projectParams.Parameters)
             {
                 _parameters.Add(projectParametersParameter.Key, projectParametersParameter.Value);
             }
 
-            foreach (var projectManifestParameter in ManifestProjectFile.Parameters)
+            foreach (var projectManifestParameter in _projectManifest.Parameters)
             {
                 _parameters.Add(projectManifestParameter.Key, projectManifestParameter.Value);
             }
@@ -125,6 +127,9 @@ namespace SsisBuild.Core
 
         public void Save(string destinationFilePath, ProtectionLevel protectionLevel, string password)
         {
+            if (!_isLoaded)
+                throw new ProjectNotLoadedException();
+
             if (Path.GetExtension(destinationFilePath) != ".ispac")
                 throw new Exception($"Destination file name must have an ispac extension. Currently: {destinationFilePath}");
 
@@ -144,18 +149,21 @@ namespace SsisBuild.Core
 
         public void Save(Stream destinationStream, ProtectionLevel protectionLevel, string password)
         {
+            if (!_isLoaded)
+                throw new ProjectNotLoadedException();
+
             using (var ispacArchive = new ZipArchive(destinationStream, ZipArchiveMode.Create))
             {
                 var manifest = ispacArchive.CreateEntry("@Project.manifest");
                 using (var stream = manifest.Open())
                 {
-                    ManifestProjectFile.Save(stream, protectionLevel, password);
+                    _projectManifest.Save(stream, protectionLevel, password);
                 }
 
                 var projectParams = ispacArchive.CreateEntry("Project.params");
                 using (var stream = projectParams.Open())
                 {
-                    ParametersProjectFile.Save(stream, protectionLevel, password);
+                    _projectParams.Save(stream, protectionLevel, password);
                 }
 
                 var contentTypes = ispacArchive.CreateEntry("[Content_Types].xml");
@@ -168,7 +176,7 @@ namespace SsisBuild.Core
                     }
                 }
 
-                foreach (var package in PackagesProjectFiles)
+                foreach (var package in _packages)
                 {
                     var name = PackUriHelper.CreatePartUri(new Uri(package.Key, UriKind.Relative)).OriginalString.Substring(1);
                     var packageEntry = ispacArchive.CreateEntry(name);
@@ -178,7 +186,7 @@ namespace SsisBuild.Core
                     }
                 }
 
-                foreach (var projectConnection in ConnectionsProjectFiles)
+                foreach (var projectConnection in _projectConnections)
                 {
                     var name = PackUriHelper.CreatePartUri(new Uri(projectConnection.Key, UriKind.Relative)).OriginalString.Substring(1);
                     var projectConnectionEntry = ispacArchive.CreateEntry(name);
@@ -188,6 +196,131 @@ namespace SsisBuild.Core
                     }
                 }
             }
+        }
+        public void LoadFromIspac(string filePath, string password)
+        {
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"File {filePath} does not exist or you don't have permissions to access it.", filePath);
+
+            if (!filePath.EndsWith(".ispac", StringComparison.OrdinalIgnoreCase))
+                throw new Exception($"File {filePath} does not have an .ispac extension.");
+
+            using (var ispacStream = new FileStream(filePath, FileMode.Open))
+            {
+                using (var ispacArchive = new ZipArchive(ispacStream, ZipArchiveMode.Read))
+                {
+                    foreach (var ispacArchiveEntry in ispacArchive.Entries)
+                    {
+                        var fileName = ispacArchiveEntry.FullName;
+                        using (var fileStream = ispacArchiveEntry.Open())
+                        {
+                            switch (Path.GetExtension(fileName))
+                            {
+                                case ".manifest":
+                                    _projectManifest = new ProjectManifest().Initialize(fileStream, password);
+                                    break;
+
+                                case ".params":
+                                    _projectParams = new ProjectParams().Initialize(fileStream, password);
+                                    break;
+
+                                case ".dtsx":
+                                    _packages.Add(fileName, new Package().Initialize(fileStream, password));
+                                    break;
+
+                                case ".conmgr":
+                                    _projectConnections.Add(fileName, new ProjectConnection().Initialize(fileStream, password));
+                                    break;
+
+                                case ".xml":
+                                    break;
+
+                                default:
+                                    throw new Exception($"Unexpected file {fileName} in {filePath}.");
+                            }
+                        }
+                    }
+                }
+            }
+
+            LoadParameters();
+
+            _isLoaded = true;
+        }
+
+        public void LoadFromDtproj(string filePath, string configurationName, string password)
+        {
+            if (!File.Exists(filePath))
+                throw new Exception($"File {filePath} does not exist.");
+
+            if (!filePath.EndsWith(".dtproj", StringComparison.OrdinalIgnoreCase))
+                throw new Exception($"File {filePath} does not have an .dtproj extension.");
+
+            var dtprojXmlDoc = new XmlDocument();
+            dtprojXmlDoc.Load(filePath);
+            ValidateDeploymentMode(dtprojXmlDoc);
+
+            var nsManager = dtprojXmlDoc.GetNameSpaceManager();
+
+            var projectXmlNode = dtprojXmlDoc.SelectSingleNode("/Project/DeploymentModelSpecificContent/Manifest/SSIS:Project", nsManager);
+
+            if (projectXmlNode == null)
+                throw new Exception("Project Manifest Node was not found.");
+
+            var projectDirectory = Path.GetDirectoryName(filePath);
+
+            if (string.IsNullOrWhiteSpace(projectDirectory))
+                throw new Exception("Failed to retrieve directory of the source project.");
+
+            using (var stream = new MemoryStream())
+            {
+                using (var writer = new StreamWriter(stream))
+                {
+                    writer.Write(projectXmlNode.OuterXml);
+                    writer.Flush();
+                    stream.Position = 0;
+
+                    _projectManifest = new ProjectManifest().Initialize(stream, password);
+                }
+            }
+
+            _projectParams = new ProjectParams().Initialize(Path.Combine(projectDirectory, "Project.params"), password);
+
+            foreach (var connectionManagerName in ProjectManifest.ConnectionManagerNames)
+            {
+                _projectConnections.Add(connectionManagerName, new ProjectConnection().Initialize(Path.Combine(projectDirectory, connectionManagerName), password));
+            }
+
+            foreach (var packageName in ProjectManifest.PackageNames)
+            {
+                _packages.Add(packageName, new Package().Initialize(Path.Combine(projectDirectory, packageName), password));
+            }
+
+            LoadParameters();
+
+            foreach (var configurationParameter in new Configuration(configurationName).Initialize(filePath, password).Parameters)
+            {
+                UpdateParameter(configurationParameter.Key, configurationParameter.Value.Value, ParameterSource.Configuration);
+            }
+
+            var userConfigurationFilePath = $"{filePath}.user";
+            if (File.Exists(userConfigurationFilePath))
+            {
+                foreach (var userConfigurationParameter in new UserConfiguration(configurationName).Initialize(userConfigurationFilePath, password).Parameters)
+                {
+                    UpdateParameter(userConfigurationParameter.Key, null, ParameterSource.Configuration);
+                }
+            }
+
+            _isLoaded = true;
+        }
+
+        private static void ValidateDeploymentMode(XmlNode dtprojXmlDoc)
+        {
+            var deploymentModel = dtprojXmlDoc.SelectSingleNode("/Project/DeploymentModel")?.InnerText;
+
+            if (deploymentModel != "Project")
+                throw new Exception("This build method only apply to Project deployment model.");
         }
     }
 }

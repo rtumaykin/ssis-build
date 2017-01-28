@@ -20,9 +20,9 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 
-namespace SsisBuild
+namespace SsisBuild 
 {
-    public sealed class BuildArguments
+    public sealed class BuildArguments : IBuildArguments
     {
         private static readonly string[] ParameterNames = {
             nameof(OutputFolder),
@@ -44,20 +44,18 @@ namespace SsisBuild
 
         private readonly IDictionary<string, string> _parameters;
 
-        private BuildArguments()
+        public BuildArguments()
         {
             _parameters = new Dictionary<string, string>();
             Parameters = new ReadOnlyDictionary<string, string>(_parameters);
         }
 
-        private static BuildArguments Parse(string[] args)
+        private void Parse(string[] args)
         {
-            var buildArguments = new BuildArguments();
-
             var startPos = 0;
             if (args.Length > 0 && !args[0].StartsWith("-"))
             {
-                buildArguments.ProjectPath = Path.IsPathRooted(args[0])
+                ProjectPath = Path.IsPathRooted(args[0])
                     ? Path.GetFullPath(args[0])
                     : Path.Combine(Environment.CurrentDirectory, args[0]);
 
@@ -65,7 +63,7 @@ namespace SsisBuild
             }
             else
             {
-                buildArguments.ProjectPath = Directory.EnumerateFiles(Environment.CurrentDirectory, "*.dtproj").FirstOrDefault();
+                ProjectPath = Directory.EnumerateFiles(Environment.CurrentDirectory, "*.dtproj").FirstOrDefault();
             }
 
             for (var argPos = startPos; argPos < args.Length; argPos += 2)
@@ -82,33 +80,33 @@ namespace SsisBuild
                 switch (lookupArgName)
                 {
                     case nameof(Configuration):
-                        buildArguments.Configuration = argValue;
+                        Configuration = argValue;
                         break;
 
                     case nameof(OutputFolder):
-                        buildArguments.OutputFolder = argValue;
+                        OutputFolder = argValue;
                         break;
 
                     case nameof(ProtectionLevel):
-                        buildArguments.ProtectionLevel = argValue;
+                        ProtectionLevel = argValue;
                         break;
 
                     case nameof(Password):
-                        buildArguments.Password = argValue;
+                        Password = argValue;
                         break;
 
                     case nameof(NewPassword):
-                        buildArguments.NewPassword = argValue;
+                        NewPassword = argValue;
                         break;
 
                     case nameof(ReleaseNotes):
-                        buildArguments.ReleaseNotes = argValue;
+                        ReleaseNotes = argValue;
                         break;
 
                     default:
                         if (argName.StartsWith("-Parameter:", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            buildArguments._parameters.Add(argName.Substring(11), argValue);
+                            _parameters.Add(argName.Substring(11), argValue);
                         }
                         else
                         {
@@ -120,7 +118,6 @@ namespace SsisBuild
                 if (argValue == null)
                     throw new InvalidArgumentException("No value provided for an argument", lookupArgName, null);
             }
-            return buildArguments;
         }
 
         private void Validate()
@@ -145,13 +142,11 @@ namespace SsisBuild
 
         }
 
-        public static BuildArguments ProcessArgs(string[] args)
+        public void ProcessArgs(string[] args)
         {
-            var buildArguments = Parse(args);
+            Parse(args);
 
-            buildArguments.Validate();
-
-            return buildArguments;
+            Validate();
         }
     }
 }

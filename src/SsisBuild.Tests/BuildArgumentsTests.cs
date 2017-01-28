@@ -34,7 +34,7 @@ namespace SsisBuild.Tests
             Directory.CreateDirectory(_workingFolder);
             _oldWorkingFolder = Environment.CurrentDirectory;
             Environment.CurrentDirectory = _workingFolder;
-            _parseMethod = typeof(BuildArguments).GetMethod("Parse", BindingFlags.NonPublic|BindingFlags.Static);
+            _parseMethod = typeof(BuildArguments).GetMethod("Parse", BindingFlags.NonPublic|BindingFlags.Instance);
             _validateMethod = typeof(BuildArguments).GetMethod("Validate", BindingFlags.NonPublic|BindingFlags.Instance);
         }
 
@@ -51,9 +51,10 @@ namespace SsisBuild.Tests
         {
             var filePath = Path.Combine(_workingFolder, "test.dtproj");
             File.WriteAllText(filePath, "test");
-            var res = _parseMethod.Invoke(null, new object[] { new string[] {}}) as BuildArguments;
-            Assert.NotNull(res);
-            Assert.Equal(res.ProjectPath, filePath);
+            var buildArguments = new BuildArguments();
+            _parseMethod.Invoke(buildArguments, new object[] { new string[] {}});
+            Assert.NotNull(buildArguments);
+            Assert.Equal(buildArguments.ProjectPath, filePath);
         }
 
         [Fact]
@@ -61,9 +62,10 @@ namespace SsisBuild.Tests
         {
             var filePath = Path.Combine(_workingFolder, "test.dtproj");
             File.WriteAllText(filePath, "test");
-            var res = _parseMethod.Invoke(null, new object[] {new[] {"test.dtproj"}}) as BuildArguments;
-            Assert.NotNull(res);
-            Assert.Equal(res.ProjectPath, filePath);
+            var buildArguments = new BuildArguments();
+            _parseMethod.Invoke(buildArguments, new object[] {new[] {"test.dtproj"}});
+            Assert.NotNull(buildArguments);
+            Assert.Equal(buildArguments.ProjectPath, filePath);
         }
 
         [Fact]
@@ -91,18 +93,20 @@ namespace SsisBuild.Tests
                 "-Parameter:Package1::Parameter1",
                 "qwerty"
             };
-            var res = _parseMethod.Invoke(null, new object[] { args }) as BuildArguments;
-            Assert.NotNull(res);
-            Assert.Equal(res.Configuration, "abc");
-            Assert.Equal(res.ProtectionLevel, "EncryptAllWithPassword");
-            Assert.Equal(res.NewPassword, "123");
-            Assert.Equal(res.Password, "234");
-            Assert.Equal(res.OutputFolder, ".\\sss");
-            Assert.Equal(res.ReleaseNotes, ".\\aaa");
-            Assert.NotNull(res.Parameters);
-            Assert.True(res.Parameters.Count == 2);
-            Assert.Equal(res.Parameters["Project::Parameter1"], "asdfg");
-            Assert.Equal(res.Parameters["Package1::Parameter1"], "qwerty");
+            var buildArguments = new BuildArguments();
+            _parseMethod.Invoke(buildArguments, new object[] { args });
+
+            Assert.NotNull(buildArguments);
+            Assert.Equal(buildArguments.Configuration, "abc");
+            Assert.Equal(buildArguments.ProtectionLevel, "EncryptAllWithPassword");
+            Assert.Equal(buildArguments.NewPassword, "123");
+            Assert.Equal(buildArguments.Password, "234");
+            Assert.Equal(buildArguments.OutputFolder, ".\\sss");
+            Assert.Equal(buildArguments.ReleaseNotes, ".\\aaa");
+            Assert.NotNull(buildArguments.Parameters);
+            Assert.True(buildArguments.Parameters.Count == 2);
+            Assert.Equal(buildArguments.Parameters["Project::Parameter1"], "asdfg");
+            Assert.Equal(buildArguments.Parameters["Package1::Parameter1"], "qwerty");
         }
 
 
@@ -110,9 +114,10 @@ namespace SsisBuild.Tests
         public void Pass_Parse_Configuration()
         {
             var args = new[] { $"-{nameof(BuildArguments.Configuration)}", "Development" };
-            var res = _parseMethod.Invoke(null, new object[] { args }) as BuildArguments;
-            Assert.NotNull(res);
-            Assert.Equal(res.Configuration, "Development");
+            var buildArguments = new BuildArguments();
+            _parseMethod.Invoke(buildArguments, new object[] { args });
+            Assert.NotNull(buildArguments);
+            Assert.Equal(buildArguments.Configuration, "Development");
         }
 
         [Fact]
@@ -123,7 +128,7 @@ namespace SsisBuild.Tests
             // need to set configuration value, otherwise the call will fail;
             var args = new[] { $"-{nameof(BuildArguments.Configuration)}", "Development", $"-{nameof(BuildArguments.Password)}" };
 
-            var exception = Record.Exception(() => _parseMethod.Invoke(null, new object[] { args }));
+            var exception = Record.Exception(() => _parseMethod.Invoke(new BuildArguments(), new object[] { args }));
 
             Assert.NotNull(exception);
 
@@ -145,7 +150,7 @@ namespace SsisBuild.Tests
             // need to set configuration value, otherwise the call will fail;
             var args = new[] { $"-{nameof(BuildArguments.Configuration)}", "Development", token };
 
-            var exception = Record.Exception(() => _parseMethod.Invoke(null, new object[] { args }));
+            var exception = Record.Exception(() => _parseMethod.Invoke(new BuildArguments(), new object[] { args }));
 
             Assert.NotNull(exception);
 
@@ -163,7 +168,8 @@ namespace SsisBuild.Tests
         {
             var filePath = Path.Combine(_workingFolder, "test.dtproj");
             File.WriteAllText(filePath, "test");
-            var buildArguments = _parseMethod.Invoke(null, new object[] { new string[] { } }) as BuildArguments;
+            var buildArguments = new BuildArguments();
+            _parseMethod.Invoke(buildArguments, new object[] { new string[] { } });
 
             // must have to pass validation
             Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Configuration), "abc");
@@ -176,7 +182,7 @@ namespace SsisBuild.Tests
         [Fact]
         public void Fail_Validate_NullProjectPath()
         {
-            var buildArguments = Helpers.CreateBuildArguments();
+            var buildArguments = new BuildArguments();
 
             var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] {}));
 
@@ -193,7 +199,7 @@ namespace SsisBuild.Tests
         [Fact]
         public void Fail_Validate_InvalidProjectPath()
         {
-            var buildArguments = Helpers.CreateBuildArguments();
+            var buildArguments = new BuildArguments();
             Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "abc.dtproj");
 
             // must have to pass validation
@@ -215,7 +221,7 @@ namespace SsisBuild.Tests
             var filePath = Path.Combine(_workingFolder, "test.dtproj");
             File.WriteAllText(filePath, "test");
 
-            var buildArguments = Helpers.CreateBuildArguments();
+            var buildArguments = new BuildArguments();
             Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
 
             var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] { }));
@@ -238,7 +244,7 @@ namespace SsisBuild.Tests
             var filePath = Path.Combine(_workingFolder, "test.dtproj");
             File.WriteAllText(filePath, "test");
 
-            var buildArguments = Helpers.CreateBuildArguments();
+            var buildArguments = new BuildArguments();
             Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
 
             // must have to pass validation
@@ -270,7 +276,7 @@ namespace SsisBuild.Tests
             var filePath = Path.Combine(_workingFolder, "test.dtproj");
             File.WriteAllText(filePath, "test");
 
-            var buildArguments = Helpers.CreateBuildArguments();
+            var buildArguments = new BuildArguments();
             Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
 
             // must have to pass validation
@@ -301,7 +307,7 @@ namespace SsisBuild.Tests
             var filePath = Path.Combine(_workingFolder, "test.dtproj");
             File.WriteAllText(filePath, "test");
 
-            var buildArguments = Helpers.CreateBuildArguments();
+            var buildArguments = new BuildArguments();
             Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
 
             // must have to pass validation
@@ -329,7 +335,7 @@ namespace SsisBuild.Tests
             var filePath = Path.Combine(_workingFolder, "test.dtproj");
             File.WriteAllText(filePath, "test");
 
-            var buildArguments = Helpers.CreateBuildArguments();
+            var buildArguments = new BuildArguments();
             Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
 
             // must have to pass validation
@@ -363,7 +369,7 @@ namespace SsisBuild.Tests
             var filePath = Path.Combine(_workingFolder, "test.dtproj");
             File.WriteAllText(filePath, "test");
 
-            var buildArguments = Helpers.CreateBuildArguments();
+            var buildArguments = new BuildArguments();
             Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
 
             // must have to pass validation
@@ -395,7 +401,8 @@ namespace SsisBuild.Tests
         [Fact]
         public void Fail_ProcessArgs_InvalidProjectPath()
         {
-            var exception = Record.Exception(() => BuildArguments.ProcessArgs(new [] { "abc.dtproj", "-configuration", "abc"}));
+            var buildArguments = new BuildArguments();
+            var exception = Record.Exception(() => buildArguments.ProcessArgs(new [] { "abc.dtproj", "-configuration", "abc"}));
 
             Assert.NotNull(exception);
             Assert.IsType<FileNotFoundException>(exception);
@@ -404,7 +411,8 @@ namespace SsisBuild.Tests
         [Fact]
         public void Fail_ProcessArgs_NullArgs()
         {
-            var exception = Record.Exception(() => BuildArguments.ProcessArgs(null));
+            var buildArguments = new BuildArguments();
+            var exception = Record.Exception(() => buildArguments.ProcessArgs(null));
 
             Assert.NotNull(exception);
             Assert.IsType<NullReferenceException>(exception);

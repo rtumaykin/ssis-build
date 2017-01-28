@@ -24,18 +24,20 @@ using SsisBuild.Logger;
 
 namespace SsisBuild
 {
-    public class Builder
+    public class Builder : IBuilder
     {
         private readonly ILogger _logger;
-        private readonly IProjectFactory _projectFactory;
+        private readonly IProject _project;
 
-        public Builder(ILogger logger, IProjectFactory projectFactory)
+        public Builder() : this (null, null) { }
+
+        internal Builder(ILogger logger, IProject project)
         {
             _logger = logger ?? new ConsoleLogger();
-            _projectFactory = projectFactory ?? new ProjectFactory();
+            _project = project ?? new Project();
         }
 
-        public void Execute(BuildArguments buildArguments)
+        public void Execute(IBuildArguments buildArguments)
         {
             EchoBuildArguments(buildArguments);
 
@@ -43,22 +45,22 @@ namespace SsisBuild
             _logger.LogMessage($"Starting build. Loading project files from {buildArguments.ProjectPath}.");
 
             // Load and process project
-            var project = _projectFactory.LoadFromDtproj(buildArguments.ProjectPath, buildArguments.Configuration, buildArguments.Password);
+            _project.LoadFromDtproj(buildArguments.ProjectPath, buildArguments.Configuration, buildArguments.Password);
 
             // replace parameter values
             foreach (var buildArgumentsParameter in buildArguments.Parameters)
             {
-                project.UpdateParameter(buildArgumentsParameter.Key, buildArgumentsParameter.Value, ParameterSource.Manual);
+                _project.UpdateParameter(buildArgumentsParameter.Key, buildArgumentsParameter.Value, ParameterSource.Manual);
             }
 
             // parse release notes if provided
             if (!string.IsNullOrWhiteSpace(buildArguments.ReleaseNotes))
             {
-                ApplyReleaseNotes(buildArguments.ReleaseNotes, project);
+                ApplyReleaseNotes(buildArguments.ReleaseNotes, _project);
             }
 
 
-            EchoFinalParameterValues(project.Parameters.Values.ToArray());
+            EchoFinalParameterValues(_project.Parameters.Values.ToArray());
 
             var outputFolder = string.IsNullOrWhiteSpace(buildArguments.OutputFolder)
                     ? Path.Combine(Path.GetDirectoryName(buildArguments.ProjectPath), "bin", buildArguments.Configuration)
@@ -66,11 +68,11 @@ namespace SsisBuild
 
             var destinationPath = Path.Combine(outputFolder, Path.ChangeExtension(Path.GetFileName(buildArguments.ProjectPath), "ispac"));
 
-            var finalProtectionLevel = ResolveFinalProtectionLevel(buildArguments.ProtectionLevel, project.ProtectionLevel);
+            var finalProtectionLevel = ResolveFinalProtectionLevel(buildArguments.ProtectionLevel, _project.ProtectionLevel);
 
             if (finalProtectionLevel == ProtectionLevel.DontSaveSensitive)
             {
-                project.Save(destinationPath);
+                _project.Save(destinationPath);
             }
             else
             {
@@ -78,7 +80,7 @@ namespace SsisBuild
                 if (string.IsNullOrWhiteSpace(encryptionPassword))
                     throw new Exception($"Password must be specified for {finalProtectionLevel} Protection Level.");
 
-                project.Save(destinationPath, finalProtectionLevel, encryptionPassword);
+                _project.Save(destinationPath, finalProtectionLevel, encryptionPassword);
             }
 
         }
@@ -127,7 +129,7 @@ namespace SsisBuild
                 _logger.LogMessage($"   [{parameter.Name}]; Value: {parameter.Value}");
         }
 
-        private void ApplyReleaseNotes(string releaseNotesFilePath, Project project)
+        private void ApplyReleaseNotes(string releaseNotesFilePath, IProject project)
         {
             if (File.Exists(releaseNotesFilePath))
             {
@@ -151,7 +153,7 @@ namespace SsisBuild
         }
 
 
-        private void EchoBuildArguments(BuildArguments buildArguments)
+        private void EchoBuildArguments(IBuildArguments buildArguments)
         {
             _logger.LogMessage("SSIS Build Engine");
             _logger.LogMessage("Copyright (c) 2017 Roman Tumaykin");
