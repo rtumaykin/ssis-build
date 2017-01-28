@@ -24,39 +24,37 @@ namespace SsisDeploy
 
         public static DeployArguments ProcessArgs(string[] args)
         {
-            var argsList = args.ToList();
             var deploymentArgs = new DeployArguments()
             {
                 EraseSensitiveInfo = false
-                
             };
 
             var startPos = 0;
 
-            if (!argsList[0].StartsWith("-"))
+            if (!args[0].StartsWith("-"))
             {
-                deploymentArgs.DeploymentFilePath = argsList[0];
+                deploymentArgs.DeploymentFilePath = args[0];
                 startPos++;
             }
 
-            for (var argPos = startPos; argPos < argsList.Count; argPos++)
+            for (var argPos = startPos; argPos < args.Length; argPos++)
             {
-                switch (argsList[argPos].ToLowerInvariant())
+                switch (args[argPos].ToLowerInvariant())
                 {
                     case "-serverinstance":
-                        deploymentArgs.ServerInstance = argsList[argPos++ + 1];
+                        deploymentArgs.ServerInstance = args[argPos++ + 1];
                         break;
 
                     case "-catalog":
-                        deploymentArgs.Catalog = argsList[argPos++ + 1];
+                        deploymentArgs.Catalog = args[argPos++ + 1];
                         break;
 
                     case "-folder":
-                        deploymentArgs.Folder = argsList[argPos++ + 1];
+                        deploymentArgs.Folder = args[argPos++ + 1];
                         break;
 
                     case "-projectname":
-                        deploymentArgs.ProjectName = argsList[argPos++ + 1];
+                        deploymentArgs.ProjectName = args[argPos++ + 1];
                         break;
 
                     case "-erasesensitiveinfo":
@@ -64,11 +62,11 @@ namespace SsisDeploy
                         break;
 
                     case "-projectpassword":
-                        deploymentArgs.ProjectPassword = argsList[argPos++ + 1];
+                        deploymentArgs.ProjectPassword = args[argPos++ + 1];
                         break;
 
                     default:
-                        throw new InvalidArgumentException(argsList[argPos]);
+                        throw new InvalidArgumentException(args[argPos]);
                 }
             }
 

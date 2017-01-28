@@ -30,7 +30,7 @@ namespace SsisBuild
                 var builder = new Builder(new ConsoleLogger());
                 builder.Execute(buildArguments);
             }
-            catch (ArgumentProcessingException x)
+            catch (InvalidArgumentException x)
             {
                 Console.WriteLine(x.Message);
                 Usage();

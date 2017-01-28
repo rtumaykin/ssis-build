@@ -44,7 +44,7 @@ namespace SsisBuild
             _logger.LogMessage($"Starting build. Loading project files from {buildArguments.ProjectPath}.");
 
             // Load and process project
-            var project = Project.LoadFromDtproj(buildArguments.ProjectPath, buildArguments.ConfigurationName, buildArguments.Password);
+            var project = Project.LoadFromDtproj(buildArguments.ProjectPath, buildArguments.Configuration, buildArguments.Password);
 
             // replace parameter values
             foreach (var buildArgumentsParameter in buildArguments.Parameters)
@@ -53,16 +53,16 @@ namespace SsisBuild
             }
 
             // parse release notes if provided
-            if (!string.IsNullOrWhiteSpace(buildArguments.ReleaseNotesFilePath))
+            if (!string.IsNullOrWhiteSpace(buildArguments.ReleaseNotes))
             {
-                ApplyReleaseNotes(buildArguments.ReleaseNotesFilePath, project);
+                ApplyReleaseNotes(buildArguments.ReleaseNotes, project);
             }
 
 
             EchoFinalParameterValues(project.Parameters.Values.ToArray());
 
             var outputFolder = string.IsNullOrWhiteSpace(buildArguments.OutputFolder)
-                    ? Path.Combine(Path.GetDirectoryName(buildArguments.ProjectPath), "bin", buildArguments.ConfigurationName)
+                    ? Path.Combine(Path.GetDirectoryName(buildArguments.ProjectPath), "bin", buildArguments.Configuration)
                     : buildArguments.OutputFolder;
 
             var destinationPath = Path.Combine(outputFolder, Path.ChangeExtension(Path.GetFileName(buildArguments.ProjectPath), "ispac"));
@@ -166,12 +166,12 @@ namespace SsisBuild
 
             if (!string.IsNullOrWhiteSpace(buildArguments.Password))
             {
-                _logger.LogMessage($"-Password: (hidden)");
+                _logger.LogMessage("-Password: (hidden)");
             }
 
             if (!string.IsNullOrWhiteSpace(buildArguments.NewPassword))
             {
-                _logger.LogMessage($"-NewPassword: (hidden)");
+                _logger.LogMessage("-NewPassword: (hidden)");
             }
 
             if (!string.IsNullOrWhiteSpace(buildArguments.OutputFolder))
@@ -179,20 +179,20 @@ namespace SsisBuild
                 _logger.LogMessage($"-OutputFolder: {buildArguments.OutputFolder}");
             }
 
-            if (!string.IsNullOrWhiteSpace(buildArguments.ConfigurationName))
+            if (!string.IsNullOrWhiteSpace(buildArguments.Configuration))
             {
-                _logger.LogMessage($"-Configuration: {buildArguments.ConfigurationName}");
+                _logger.LogMessage($"-Configuration: {buildArguments.Configuration}");
             }
-            if (!string.IsNullOrWhiteSpace(buildArguments.ReleaseNotesFilePath))
+            if (!string.IsNullOrWhiteSpace(buildArguments.ReleaseNotes))
             {
-                _logger.LogMessage($"-ReleaseNotes: {buildArguments.ReleaseNotesFilePath}");
+                _logger.LogMessage($"-ReleaseNotes: {buildArguments.ReleaseNotes}");
             }
             _logger.LogMessage("");
             _logger.LogMessage("Project parameters:");
             foreach (var parameter in buildArguments.Parameters)
             {
                 _logger.LogMessage(
-                    $"  {parameter.Key} (Sensitive = false): {parameter.Value}");
+                    $"  {parameter.Key}: {parameter.Value}");
             }
         }
     }

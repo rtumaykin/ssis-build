@@ -71,7 +71,7 @@ Target "Build" <| fun _ ->
 
 open Fake.Testing
 Target "RunTests" <| fun _ ->  
-    let xunitTestAssemblies = !! "src/tests/**/bin/Release/*.Tests.dll"
+    let xunitTestAssemblies = !! "src/**/bin/Release/*.Tests.dll"
 
     mkdir testDir
    
@@ -106,7 +106,7 @@ Target "CreatePackage" (fun _ ->
 
     mkdir buildDir
 
-    let nuspecFile = @"src\SsisBuild.Runner\SsisBuild.Runner.nuspec"
+    let nuspecFile = @"src\SsisBuild\SsisBuild.nuspec"
 
     XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/id" project
     XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/version" release.NugetVersion
@@ -132,11 +132,10 @@ Target "CreatePackage" (fun _ ->
             Version = release.NugetVersion
             Tags = tags |> String.concat " "
             Title = title
-            ProjectFile = @"src\SsisBuild.Runner\SsisBuild.Runner.csproj"
             SymbolPackage = NugetSymbolPackage.ProjectFile
-            WorkingDir = @"src\SsisBuild.Runner\bin\Release"
+            WorkingDir = @"src\SsisBuild"
             Publish = false }) 
-            @"src\SsisBuild.Runner\SsisBuild.Runner.csproj"
+            @"src\SsisBuild\SsisBuild.nuspec"
 )
 
 Target "BuildRelease" DoNothing

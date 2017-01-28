@@ -18,8 +18,18 @@ using System;
 
 namespace SsisBuild
 {
-    public class ArgumentProcessingException : Exception
+    public class InvalidArgumentException : Exception
     {
-        public ArgumentProcessingException(string message) : base(message) {}
+        public override string Message { get; }
+
+        public InvalidArgumentException(string message, string argument, string value)
+        {
+            Message = $"{message} [{argument}]: {value ?? "(no value)"}";
+        }
+
+        public InvalidArgumentException(string message)
+        {
+            Message = message;
+        }
     }
 }

@@ -4,16 +4,18 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{01657A26-BE3B-4A6E-A193-E175096F54BA}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{8B1B1E18-1BA7-4593-AFE2-76064BD213C4}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SsisBuild.Core</RootNamespace>
-    <AssemblyName>SsisBuild.Core</AssemblyName>
+    <RootNamespace>SsisBuild</RootNamespace>
+    <AssemblyName>ssisbuild</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -21,9 +23,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -32,52 +34,37 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.IO.Compression.FileSystem" />
-    <Reference Include="System.Security" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Helpers\XmlHelper.cs" />
-    <Compile Include="InvalidPaswordException.cs" />
-    <Compile Include="Configuration.cs" />
-    <Compile Include="DataType.cs" />
-    <Compile Include="Package.cs" />
-    <Compile Include="Parameter.cs" />
-    <Compile Include="ParameterSource.cs" />
-    <Compile Include="Project.cs" />
-    <Compile Include="ProjectConnection.cs" />
-    <Compile Include="ProjectFile.cs" />
-    <Compile Include="ProjectManifest.cs" />
-    <Compile Include="ProjectParams.cs" />
-    <Compile Include="ProtectionLevel.cs" />
-    <Compile Include="UserConfiguration.cs" />
+    <Compile Include="InvalidArgumentException.cs" />
+    <Compile Include="BuildArguments.cs" />
+    <Compile Include="Builder.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReleaseNotesHelper.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SsisBuild.Core\SsisBuild.Core.csproj">
+      <Project>{01657a26-be3b-4a6e-a193-e175096f54ba}</Project>
+      <Name>SsisBuild.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SsisBuild.Logger\SsisBuild.Logger.csproj">
       <Project>{6fadb9e9-cf51-4caf-8b82-b4b93fd367eb}</Project>
       <Name>SsisBuild.Logger</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
