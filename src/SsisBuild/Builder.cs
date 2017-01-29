@@ -30,16 +30,25 @@ namespace SsisBuild
         private readonly ILogger _logger;
         private readonly IProject _project;
 
-        public Builder() : this (null, null) { }
+        public Builder() : this (new ConsoleLogger(), new Project()) { }
 
         internal Builder(ILogger logger, IProject project)
         {
-            _logger = logger ?? new ConsoleLogger();
-            _project = project ?? new Project();
+            if (logger == null)
+                throw new ArgumentNullException(nameof(logger));
+
+            if (project == null)
+                throw new ArgumentNullException(nameof(project));
+
+            _logger = logger;
+            _project = project;
         }
 
         public void Execute(IBuildArguments buildArguments)
         {
+            if (buildArguments == null)
+                throw new ArgumentNullException(nameof(buildArguments));
+
             EchoBuildArguments(buildArguments);
 
             _logger.LogMessage("-------------------------------------------------------------------------------");
@@ -69,7 +78,16 @@ namespace SsisBuild
 
             var destinationPath = Path.Combine(outputFolder, Path.ChangeExtension(Path.GetFileName(buildArguments.ProjectPath), "ispac"));
 
-            var finalProtectionLevel = ResolveFinalProtectionLevel(buildArguments.ProtectionLevel, _project.ProtectionLevel);
+            var finalProtectionLevel = string.IsNullOrWhiteSpace(buildArguments.ProtectionLevel)
+                ? _project.ProtectionLevel
+                : (ProtectionLevel)Enum.Parse(typeof(ProtectionLevel), buildArguments.ProtectionLevel, true);
+
+            if (finalProtectionLevel != _project.ProtectionLevel)
+                _logger.LogMessage($"Changing protection level from {_project.ProtectionLevel} to {finalProtectionLevel}.");
+            else
+                _logger.LogMessage($"Protection Level is unchanged: {finalProtectionLevel}.");
+
+
 
             if (finalProtectionLevel == ProtectionLevel.DontSaveSensitive)
             {
@@ -79,25 +97,11 @@ namespace SsisBuild
             {
                 var encryptionPassword = string.IsNullOrWhiteSpace(buildArguments.NewPassword) ? buildArguments.Password : buildArguments.NewPassword;
                 if (string.IsNullOrWhiteSpace(encryptionPassword))
-                    throw new Exception($"Password must be specified for {finalProtectionLevel} Protection Level.");
+                    throw new PasswordRequiredException(finalProtectionLevel.ToString());
 
                 _project.Save(destinationPath, finalProtectionLevel, encryptionPassword);
             }
 
-        }
-
-        private ProtectionLevel ResolveFinalProtectionLevel(string buildArgumentsProtectionLevel, ProtectionLevel projectProtectionLevel)
-        {
-            var finalProtectionLevel = string.IsNullOrWhiteSpace(buildArgumentsProtectionLevel)
-                ? projectProtectionLevel
-                : (ProtectionLevel)Enum.Parse(typeof(ProtectionLevel), buildArgumentsProtectionLevel, true);
-
-            if (finalProtectionLevel != projectProtectionLevel)
-                _logger.LogMessage($"Changing protection level from {projectProtectionLevel} to {finalProtectionLevel}.");
-            else
-                _logger.LogMessage($"Protection Level is unchanged: {finalProtectionLevel}.");
-
-            return finalProtectionLevel;
         }
 
         private void EchoFinalParameterValues(Parameter[] parameterValues)
@@ -149,7 +153,7 @@ namespace SsisBuild
             }
             else
             {
-                throw new Exception($"Release notes file [{releaseNotesFilePath}] does not exist.");
+                throw new FileNotFoundException($"Release notes file does not exist.", releaseNotesFilePath);
             }
         }
 

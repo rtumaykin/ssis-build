@@ -14,6 +14,8 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
+using System.Linq;
 using System.Reflection;
 
 namespace SsisBuild.Tests
@@ -23,6 +25,14 @@ namespace SsisBuild.Tests
         public static void SetBuildArgumentsValue(BuildArguments buldArguments, string propertyName, object value)
         {
             (typeof(BuildArguments).GetProperty(propertyName, BindingFlags.NonPublic) ?? typeof(BuildArguments).GetProperty(propertyName)).SetValue(buldArguments, value);
+        }
+
+        private static Random random = new Random();
+        public static string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
 }

@@ -23,17 +23,9 @@ namespace SsisBuild
 
         static void Main(string[] args)
         {
-            MainInternal(args, null, null);
-        }
-
-        internal static void MainInternal(string[] args, IBuilder builder, IBuildArguments buildArguments)
-        {
             try
             {
-                buildArguments = buildArguments ?? new BuildArguments();
-                buildArguments.ProcessArgs(args);
-                builder = builder ?? new Builder();
-                builder.Execute(buildArguments);
+                MainInternal(args, new Builder(), new BuildArguments());
             }
             catch (ArgumentsProcessingException x)
             {
@@ -46,6 +38,12 @@ namespace SsisBuild
                 Console.WriteLine(e.Message);
                 Environment.Exit(1);
             }
+        }
+
+        internal static void MainInternal(string[] args, IBuilder builder, IBuildArguments buildArguments)
+        {
+            buildArguments.ProcessArgs(args);
+            builder.Execute(buildArguments);
         }
 
         private static void Usage()

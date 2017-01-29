@@ -17,6 +17,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using Moq;
 using Xunit;
 
 namespace SsisBuild.Tests
@@ -334,9 +335,9 @@ namespace SsisBuild.Tests
         }
 
         [Theory]
-        [InlineData("EncryptAllWithPassword", null, null)]
-        [InlineData("EncryptSensitiveWithPassword", null, null)]
-        public void Fail_Validate_ProtectionLevelPasswordCombination(string protectionLevel, string password, string newPassword)
+        [InlineData("EncryptAllWithPassword")]
+        [InlineData("EncryptSensitiveWithPassword")]
+        public void Fail_Validate_ProtectionLevelPasswordCombination(string protectionLevel)
         {
             var filePath = Path.Combine(_workingFolder, "test.dtproj");
             File.WriteAllText(filePath, "test");
@@ -349,12 +350,6 @@ namespace SsisBuild.Tests
 
             // must have to pass validation
             Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProtectionLevel), protectionLevel);
-
-            if (password != null)
-                Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Password), password);
-
-            if (newPassword != null)
-                Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.NewPassword), newPassword);
 
             var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] { }));
 
@@ -405,6 +400,19 @@ namespace SsisBuild.Tests
         #endregion // Validate tests
 
         #region ProcessArgs Tests
+        [Fact]
+        public void Pass_ProcessArgs()
+        {
+            var filePath = Path.Combine(_workingFolder, "test.dtproj");
+            File.WriteAllText(filePath, "test");
+
+            var buildArguments = new BuildArguments();
+            var exception = Record.Exception(() => buildArguments.ProcessArgs(new[] {"-configuration", "abc" }));
+
+            Assert.Null(exception);
+            Assert.Equal(buildArguments.ProjectPath, filePath);
+        }
+
 
         [Fact]
         public void Fail_ProcessArgs_InvalidProjectPath()
