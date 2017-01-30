@@ -19,6 +19,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Xml;
 using Moq;
 using SsisBuild.Core;
 using SsisBuild.Logger;
@@ -215,11 +217,15 @@ namespace SsisBuild.Tests
             }
         }
 
-        [Fact]
-        public void Execute_Pass_ValidReleaseNotes()
+        [Theory]
+        [InlineData("*1.0.0 - Initial release")]
+        [InlineData("### New in 1.1.10 (Released 2017/01/01)\r\n* Note 1.\r\n* Note 2.\r\n* Note3.\r\n")]
+        [InlineData("*1.0.0 - Initial release\r\n\r\n*0.9.0 - Pre-release")]
+        [InlineData("### New in 1.1.10 (Released 2017/01/01)\r\n* Note 1.\r\n* Note 2.\r\n* Note3.\r\n\r\n### New in 1.1.09 (Released 2016/12/01)\r\n* Note 4.\r\n* Note 5.\r\n* Note6.\r\n")]
+        public void Execute_Pass_ValidReleaseNotes(string releaseNotesWithLineBreaks)
         {
             var releaseNotesPath = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
-            File.WriteAllText(releaseNotesPath, "*1.0.0 - Initial release");
+            File.WriteAllText(releaseNotesPath, releaseNotesWithLineBreaks);
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
             _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, Parameter>());
@@ -259,6 +265,93 @@ namespace SsisBuild.Tests
             Assert.IsType<FileNotFoundException>(exception);
             Assert.Equal(((FileNotFoundException) exception).FileName, releaseNotesPath);
         }
+
+        [Theory]
+        [InlineData("#*1xd.0.0&&Initial release")]
+        [InlineData("lalala*1xd.0.0&&Initial release")]
+        [InlineData("*1q.0ew.0 - Initial release")]
+        [InlineData(null)]
+        public void Execute_Fail_InvalidContentReleaseNotes(string releaseNotes)
+        {
+            var releaseNotesPath = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            File.Create(releaseNotesPath).Close();
+            if (releaseNotes != null)
+                File.WriteAllText(releaseNotesPath, releaseNotes);
+
+            _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, Parameter>());
+
+            _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
+            _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
+            _buildArgumentsMock.Setup(ba => ba.ReleaseNotes).Returns(releaseNotesPath);
+
+            var project = _projectMock.Object;
+            var buildArguments = _buildArgumentsMock.Object;
+            var logger = new TestLogger();
+            var builder = new Builder(logger, project);
+            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidReleaseNotesException>(exception);
+        }
+
+        [Fact]
+        public void Execute_Pass_CustomOutputFolder()
+        {
+            _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, Parameter>());
+
+            _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
+            _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
+            _buildArgumentsMock.Setup(ba => ba.OutputFolder).Returns("something");
+
+            var project = _projectMock.Object;
+            var buildArguments = _buildArgumentsMock.Object;
+            var logger = new TestLogger();
+            var builder = new Builder(logger, project);
+            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            Assert.Null(exception);
+        }
+
+
+        [Fact]
+        public void Execute_Pass_EchoParametersCoverage()
+        {
+            var xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml("<root><parent><child>123</child></parent></root>");
+            var childNode = xmlDocument.SelectSingleNode("/root/parent/child") as XmlElement;
+
+            var projectParameters = new Dictionary<string, Parameter>
+            {
+                {"Parameter1", new Parameter("Parameter1", "1", ParameterSource.Original, childNode)},
+                {"SensitiveOriginalParameterNoValue", new Parameter("SensitiveOriginalParameterNoValue", null, ParameterSource.Original, childNode)},
+                {"Parameter2", new Parameter("Parameter2", "1", ParameterSource.Configuration, childNode)},
+                {"SensitiveConfigParameterNoValue", new Parameter("SensitiveConfigParameterNoValue", null, ParameterSource.Configuration, childNode)},
+                {"Parameter3", new Parameter("Parameter3", "1", ParameterSource.Manual, childNode)}
+            };
+
+            var sensitiveProperty = typeof(Parameter).GetProperty("Sensitive");
+
+            sensitiveProperty.SetValue(projectParameters["SensitiveOriginalParameterNoValue"], true);
+            sensitiveProperty.SetValue(projectParameters["SensitiveConfigParameterNoValue"], true);
+
+
+            _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
+            _projectMock.Setup(p => p.Parameters).Returns(projectParameters);
+
+            _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
+            _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
+
+            var project = _projectMock.Object;
+            var buildArguments = _buildArgumentsMock.Object;
+            var logger = new TestLogger();
+            var builder = new Builder(logger, project);
+            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            Assert.Null(exception);
+        }
+
 
         [Fact]
         public void Fail_Execute_NoArgs()

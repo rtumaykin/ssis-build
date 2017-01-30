@@ -25,7 +25,7 @@ namespace SsisBuild.Core
         public string Name { get; }
         public string Value { get; private set; }
         public ParameterSource Source { get; private set; }
-        public bool Sensitive { get; }
+        public bool Sensitive { get; private set; }
 
         public Type ParameterDataType { get; }
 

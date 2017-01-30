@@ -20,9 +20,9 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace SsisBuild.Core.Helpers
+namespace SsisBuild
 {
-    public enum ReleaseNotesType
+    internal enum ReleaseNotesType
     {
         Simple,
         Complex,
@@ -35,10 +35,13 @@ namespace SsisBuild.Core.Helpers
         {
             var releaseNoteLines = ReadLatestReleaseNotes(releaseNotesFilePath);
             var noteLines = releaseNoteLines as string[] ?? releaseNoteLines.ToArray();
+            if (noteLines.Length == 0)
+                throw new InvalidReleaseNotesException("Empty release notes file.");
+
             var notesType = GetReleaseNotesType(noteLines[0]);
 
-            if (noteLines.Length == 0 || notesType == ReleaseNotesType.Invalid)
-                return null;
+            if (notesType == ReleaseNotesType.Invalid)
+                throw new InvalidReleaseNotesException("Ivalid release notes content");
 
             if (notesType == ReleaseNotesType.Simple)
                 return ProcessSimpleNotes(noteLines[0]);
@@ -51,7 +54,7 @@ namespace SsisBuild.Core.Helpers
             return new ReleaseNotes()
             {
                 Version = ParseVersion(noteLines[0]),
-                Notes = noteLines.Where(nl=>!nl.StartsWith("##")).Select(nl=>nl.Trim(' ', '*')).ToList()
+                Notes = noteLines.Where(nl => !nl.StartsWith("##")).Select(nl => nl.Trim(' ', '*')).ToList()
             };
         }
 
@@ -68,7 +71,7 @@ namespace SsisBuild.Core.Helpers
         }
 
 
-        public static ReleaseNotesType GetReleaseNotesType(string firstLine)
+        private static ReleaseNotesType GetReleaseNotesType(string firstLine)
         {
             if (firstLine.StartsWith("*"))
                 return ReleaseNotesType.Simple;
@@ -92,7 +95,6 @@ namespace SsisBuild.Core.Helpers
             switch (notesType)
             {
                 case ReleaseNotesType.Invalid:
-                    yield break;
                 case ReleaseNotesType.Simple:
                     yield return notes[0];
                     break;
@@ -112,17 +114,11 @@ namespace SsisBuild.Core.Helpers
             var regex = new Regex(@"[0-9]+\.[0-9]+\.[0-9]+");
 
             var match = regex.Match(input);
+
             if (match.Success)
                 return Version.Parse(match.Value);
 
-            throw new Exception($"Unable to parse version from the string: {input}.");
+            throw new InvalidReleaseNotesException($"No version found in string: {input}.");
         }
-    }
-
-
-    public class ReleaseNotes
-    {
-        public Version Version { get; set; }
-        public List<string> Notes { get; set; }
     }
 }

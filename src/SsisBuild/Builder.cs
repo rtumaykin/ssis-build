@@ -141,6 +141,7 @@ namespace SsisBuild
                 _logger.LogMessage("");
                 _logger.LogMessage("Processing Release Notes.");
                 var releaseNotes = ReleaseNotesHelper.ParseReleaseNotes(releaseNotesFilePath);
+
                 _logger.LogMessage($"   Overriding Version to {releaseNotes.Version}");
 
 
