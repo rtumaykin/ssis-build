@@ -15,28 +15,19 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
-using System.Xml;
+using System.Linq;
+using System.Reflection;
 
-namespace SsisBuild.Core
+namespace SsisBuild.Core.Tests
 {
-    public class ProjectParams : ProjectFile
+    public class Helpers
     {
-        protected override IList<IParameter> ExtractParameters()
+        private static readonly Random Random = new Random();
+        public static string RandomString(int length)
         {
-            var parameterNodes = FileXmlDocument.SelectNodes("/SSIS:Parameters/SSIS:Parameter", NamespaceManager);
-
-            if (parameterNodes == null)
-                return null;
-
-            var parameters = new List<IParameter>();
-
-            foreach (XmlNode parameterNode in parameterNodes)
-            {
-                parameters.Add(new ProjectParameter("Project", parameterNode));
-            }
-
-            return parameters;
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[Random.Next(s.Length)]).ToArray());
         }
     }
 }

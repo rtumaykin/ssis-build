@@ -104,7 +104,7 @@ namespace SsisBuild
 
         }
 
-        private void EchoFinalParameterValues(Parameter[] parameterValues)
+        private void EchoFinalParameterValues(IParameter[] parameterValues)
         {
             _logger.LogMessage("");
             _logger.LogMessage("Parameters with values unchanged:");

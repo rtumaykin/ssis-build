@@ -22,7 +22,7 @@ using SsisBuild.Core.Helpers;
 
 namespace SsisBuild.Core
 {
-    public class ProjectManifest : ProjectFile
+    public class ProjectManifest : ProjectFile, IProjectManifest
     {
         public ProtectionLevel ProtectonLevel { get; private set; }
 
@@ -151,9 +151,9 @@ namespace SsisBuild.Core
             manifestXml.Attributes["SSIS:ProtectionLevel"].Value = protectionLevel.ToString();
         }
 
-        protected override IList<Parameter> ExtractParameters()
+        protected override IList<IParameter> ExtractParameters()
         {
-            var parameters = new List<Parameter>();
+            var parameters = new List<IParameter>();
 
             var projectConnectionParameterXmlNodes = FileXmlDocument.SelectNodes("/SSIS:Project/SSIS:DeploymentInfo/SSIS:ProjectConnectionParameters/SSIS:Parameter",
                 NamespaceManager);
@@ -162,15 +162,7 @@ namespace SsisBuild.Core
             {
                 foreach (XmlNode projectConnectionParameterXmlNode in projectConnectionParameterXmlNodes)
                 {
-                    var name = $"Project::{projectConnectionParameterXmlNode.GetAttribute("SSIS:Name").Value}";
-
-                    var parentElement = projectConnectionParameterXmlNode.SelectSingleNode("./SSIS:Properties", NamespaceManager) as XmlElement;
-
-                    var valueNode = parentElement?.SelectSingleNode("./SSIS:Property[@SSIS:Name = \"Value\"]", NamespaceManager) as XmlElement;
-
-                    var value = valueNode?.InnerText;
-
-                    parameters.Add(new Parameter(name, value, ParameterSource.Original, valueNode, parentElement));
+                   parameters.Add(new ProjectParameter("Project", projectConnectionParameterXmlNode));
                 }
             }
 
@@ -181,16 +173,9 @@ namespace SsisBuild.Core
             {
                 foreach (XmlNode packageParameterXmlNode in packageParameterXmlNodes)
                 {
-                    var name =
-                        $"{packageParameterXmlNode.SelectSingleNode("../../SSIS:Properties/SSIS:Property[@SSIS:Name = \"Name\"]", NamespaceManager)?.InnerText}::{packageParameterXmlNode.GetAttribute("SSIS:Name").Value}";
-
-                    var parentElement = packageParameterXmlNode.SelectSingleNode("./SSIS:Properties", NamespaceManager) as XmlElement;
-
-                    var valueNode = parentElement?.SelectSingleNode("./SSIS:Property[@SSIS:Name = \"Value\"]", NamespaceManager) as XmlElement;
-
-                    var value = valueNode?.InnerText;
-
-                    parameters.Add(new Parameter(name, value, ParameterSource.Original, valueNode, parentElement));
+                    var packageName = packageParameterXmlNode.SelectSingleNode("../../SSIS:Properties/SSIS:Property[@SSIS:Name = \"Name\"]", NamespaceManager)?.InnerText;
+                    
+                    parameters.Add(new ProjectParameter(packageName, packageParameterXmlNode));
                 }
             }
 

@@ -26,33 +26,33 @@ using SsisBuild.Core.Helpers;
 
 namespace SsisBuild.Core
 {
-    public abstract class ProjectFile
+    public abstract class ProjectFile : IProjectFile
     {
         protected XmlDocument FileXmlDocument;
         protected XmlNamespaceManager NamespaceManager;
 
-        private readonly IDictionary<string, Parameter> _parameters;
-        public IReadOnlyDictionary<string, Parameter> Parameters { get; }
+        private readonly IDictionary<string, IParameter> _parameters;
+        public IReadOnlyDictionary<string, IParameter> Parameters { get; }
 
         private bool _isInitialized;
 
         protected ProjectFile()
         {
-            _parameters = new Dictionary<string, Parameter>();
+            _parameters = new Dictionary<string, IParameter>();
 
-            Parameters = new ReadOnlyDictionary<string, Parameter>(_parameters);
+            Parameters = new ReadOnlyDictionary<string, IParameter>(_parameters);
 
             FileXmlDocument = new XmlDocument();
 
             _isInitialized = false;
         }
 
-        public ProjectFile Initialize(string filePath, string password)
+        public void Initialize(string filePath, string password)
         {
-            return Initialize(File.OpenRead(filePath), password);
+            Initialize(File.OpenRead(filePath), password);
         }
 
-        public ProjectFile Initialize(Stream fileStream, string password)
+        public void Initialize(Stream fileStream, string password)
         {
             _isInitialized = true;
             Load(fileStream);
@@ -67,15 +67,13 @@ namespace SsisBuild.Core
             }
 
             PostInitialize();
-
-            return this;
         }
 
         protected virtual void PostInitialize()
         {
         }
 
-        protected virtual IList<Parameter> ExtractParameters()
+        protected virtual IList<IParameter> ExtractParameters()
         {
             return null;
         }

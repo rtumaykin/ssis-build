@@ -27,77 +27,75 @@ namespace SsisBuild.Core
 {
     public sealed class Project : IProject
     {
-        public ProtectionLevel ProtectionLevel => ProjectManifest?.ProtectonLevel ?? ProtectionLevel.DontSaveSensitive;
+        public ProtectionLevel ProtectionLevel => _projectManifest?.ProtectonLevel ?? ProtectionLevel.DontSaveSensitive;
 
         public string VersionMajor
         {
-            get { return ProjectManifest?.VersionMajor; }
+            get { return _projectManifest?.VersionMajor; }
             set
             {
-                if (ProjectManifest != null)
-                    ProjectManifest.VersionMajor = value;
+                if (_projectManifest != null)
+                    _projectManifest.VersionMajor = value;
             }
         }
 
         public string VersionMinor
         {
-            get { return ProjectManifest?.VersionMinor; }
+            get { return _projectManifest?.VersionMinor; }
             set
             {
-                if (ProjectManifest != null)
-                    ProjectManifest.VersionMinor = value;
+                if (_projectManifest != null)
+                    _projectManifest.VersionMinor = value;
             }
         }
 
         public string VersionBuild
         {
-            get { return ProjectManifest?.VersionBuild; }
+            get { return _projectManifest?.VersionBuild; }
             set
             {
-                if (ProjectManifest != null)
-                    ProjectManifest.VersionBuild = value;
+                if (_projectManifest != null)
+                    _projectManifest.VersionBuild = value;
             }
         }
 
         public string VersionComments
         {
-            get { return ProjectManifest?.VersionComments; }
+            get { return _projectManifest?.VersionComments; }
             set
             {
-                if (ProjectManifest != null)
-                    ProjectManifest.VersionComments = value;
+                if (_projectManifest != null)
+                    _projectManifest.VersionComments = value;
             }
         }
 
         public string Description
         {
-            get { return ProjectManifest?.Description; }
+            get { return _projectManifest?.Description; }
             set
             {
-                if (ProjectManifest != null)
-                    ProjectManifest.Description = value;
+                if (_projectManifest != null)
+                    _projectManifest.Description = value;
             }
         }
-        private ProjectManifest ProjectManifest => (_projectManifest as ProjectManifest);
+        private readonly IDictionary<string, IParameter> _parameters;
+        public IReadOnlyDictionary<string, IParameter> Parameters { get; }
 
-        private readonly IDictionary<string, Parameter> _parameters;
-        public IReadOnlyDictionary<string, Parameter> Parameters { get; }
-
-        private ProjectFile _projectManifest;
-        private ProjectFile _projectParams;
-        private readonly IDictionary<string, ProjectFile> _projectConnections;
-        private readonly IDictionary<string, ProjectFile> _packages;
+        private IProjectManifest _projectManifest;
+        private IProjectFile _projectParams;
+        private readonly IDictionary<string, IProjectFile> _projectConnections;
+        private readonly IDictionary<string, IProjectFile> _packages;
 
         private bool _isLoaded;
 
         public Project()
         {
-            _parameters = new Dictionary<string, Parameter>();
+            _parameters = new Dictionary<string, IParameter>();
 
-            Parameters = new ReadOnlyDictionary<string, Parameter>(_parameters);
+            Parameters = new ReadOnlyDictionary<string, IParameter>(_parameters);
 
-            _packages = new Dictionary<string, ProjectFile>();
-            _projectConnections = new Dictionary<string, ProjectFile>();
+            _packages = new Dictionary<string, IProjectFile>();
+            _projectConnections = new Dictionary<string, IProjectFile>();
 
             _isLoaded = false;
         }
@@ -217,19 +215,25 @@ namespace SsisBuild.Core
                             switch (Path.GetExtension(fileName))
                             {
                                 case ".manifest":
-                                    _projectManifest = new ProjectManifest().Initialize(fileStream, password);
+                                    _projectManifest = new ProjectManifest();
+                                    _projectManifest.Initialize(fileStream, password);
                                     break;
 
                                 case ".params":
-                                    _projectParams = new ProjectParams().Initialize(fileStream, password);
+                                    _projectParams = new ProjectParams();
+                                    _projectParams.Initialize(fileStream, password);
                                     break;
 
                                 case ".dtsx":
-                                    _packages.Add(fileName, new Package().Initialize(fileStream, password));
+                                    var package = new Package();
+                                    package.Initialize(fileStream, password);
+                                    _packages.Add(fileName, package);
                                     break;
 
                                 case ".conmgr":
-                                    _projectConnections.Add(fileName, new ProjectConnection().Initialize(fileStream, password));
+                                    var projectConnection = new ProjectConnection();
+                                    projectConnection.Initialize(fileStream, password);
+                                    _projectConnections.Add(fileName, projectConnection);
                                     break;
 
                                 case ".xml":
@@ -280,39 +284,48 @@ namespace SsisBuild.Core
                     writer.Flush();
                     stream.Position = 0;
 
-                    _projectManifest = new ProjectManifest().Initialize(stream, password);
+                    _projectManifest = new ProjectManifest();
+                    _projectManifest.Initialize(stream, password);
                 }
             }
 
-            _projectParams = new ProjectParams().Initialize(Path.Combine(projectDirectory, "Project.params"), password);
+            _projectParams = new ProjectParams();
+            _projectParams.Initialize(Path.Combine(projectDirectory, "Project.params"), password);
 
-            foreach (var connectionManagerName in ProjectManifest.ConnectionManagerNames)
+            foreach (var connectionManagerName in _projectManifest.ConnectionManagerNames)
             {
-                _projectConnections.Add(connectionManagerName, new ProjectConnection().Initialize(Path.Combine(projectDirectory, connectionManagerName), password));
+                var projectConnection = new ProjectConnection();
+                projectConnection.Initialize(Path.Combine(projectDirectory, connectionManagerName), password);
+                _projectConnections.Add(connectionManagerName, projectConnection);
             }
 
-            foreach (var packageName in ProjectManifest.PackageNames)
+            foreach (var packageName in _projectManifest.PackageNames)
             {
-                _packages.Add(packageName, new Package().Initialize(Path.Combine(projectDirectory, packageName), password));
+                var package = new Package();
+                package.Initialize(Path.Combine(projectDirectory, packageName), password);
+                _packages.Add(packageName, package);
             }
 
             LoadParameters();
+            _isLoaded = true;
 
-            foreach (var configurationParameter in new Configuration(configurationName).Initialize(filePath, password).Parameters)
+            var configuration = new Configuration(configurationName);
+            configuration.Initialize(filePath, password);
+            foreach (var configurationParameter in configuration.Parameters)
             {
                 UpdateParameter(configurationParameter.Key, configurationParameter.Value.Value, ParameterSource.Configuration);
             }
 
             var userConfigurationFilePath = $"{filePath}.user";
+            var userConfiguration = new UserConfiguration(configurationName);
+            userConfiguration.Initialize(userConfigurationFilePath, password);
             if (File.Exists(userConfigurationFilePath))
             {
-                foreach (var userConfigurationParameter in new UserConfiguration(configurationName).Initialize(userConfigurationFilePath, password).Parameters)
+                foreach (var userConfigurationParameter in userConfiguration.Parameters)
                 {
                     UpdateParameter(userConfigurationParameter.Key, null, ParameterSource.Configuration);
                 }
             }
-
-            _isLoaded = true;
         }
 
         private static void ValidateDeploymentMode(XmlNode dtprojXmlDoc)

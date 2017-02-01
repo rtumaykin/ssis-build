@@ -30,9 +30,6 @@ namespace SsisBuild.Core.Helpers
         {
             var ownerDocument = node.GetDocument();
 
-            if (ownerDocument == null)
-                throw new Exception("Failed to fetch owner document for Xml Node.");
-
             var namespaceManager = new XmlNamespaceManager(ownerDocument.NameTable);
             namespaceManager.AddNamespace("SSIS", Schemas.SSIS);
             namespaceManager.AddNamespace("DTS", Schemas.DTS);

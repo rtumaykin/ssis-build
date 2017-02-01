@@ -27,7 +27,7 @@ namespace SsisBuild.Core
         string VersionBuild { get; set; }
         string VersionComments { get; set; }
         string Description { get; set; }
-        IReadOnlyDictionary<string, Parameter> Parameters { get; }
+        IReadOnlyDictionary<string, IParameter> Parameters { get; }
 
 
         void LoadFromIspac(string filePath, string password);

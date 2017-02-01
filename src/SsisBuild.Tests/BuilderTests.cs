@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Xml;
 using Moq;
 using SsisBuild.Core;
@@ -115,7 +114,7 @@ namespace SsisBuild.Tests
             var newPassword = sendNewPassword ? Helpers.RandomString(30) : null;
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(projectProtectionLevel);
-            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, Parameter>());
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
 
             _buildArgumentsMock.Setup(ba => ba.ProtectionLevel).Returns(buildArgumentsProtectionLevel);
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
@@ -147,7 +146,7 @@ namespace SsisBuild.Tests
             var newPassword = sendNewPassword ? Helpers.RandomString(30) : null;
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(projectProtectionLevel);
-            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, Parameter>());
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
 
             _buildArgumentsMock.Setup(ba => ba.ProtectionLevel).Returns(buildArgumentsProtectionLevel);
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
@@ -183,7 +182,7 @@ namespace SsisBuild.Tests
             }
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
-            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, Parameter>());
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
             _projectMock.Setup(p => p.UpdateParameter(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ParameterSource>())).Callback(
                 (string parameterName, string value, ParameterSource parameterSource) =>
                 {
@@ -228,7 +227,7 @@ namespace SsisBuild.Tests
             File.WriteAllText(releaseNotesPath, releaseNotesWithLineBreaks);
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
-            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, Parameter>());
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
 
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
@@ -249,7 +248,7 @@ namespace SsisBuild.Tests
             var releaseNotesPath = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
-            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, Parameter>());
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
 
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
@@ -279,7 +278,7 @@ namespace SsisBuild.Tests
                 File.WriteAllText(releaseNotesPath, releaseNotes);
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
-            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, Parameter>());
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
 
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
@@ -299,7 +298,7 @@ namespace SsisBuild.Tests
         public void Execute_Pass_CustomOutputFolder()
         {
             _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
-            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, Parameter>());
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
 
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
@@ -322,20 +321,15 @@ namespace SsisBuild.Tests
             xmlDocument.LoadXml("<root><parent><child>123</child></parent></root>");
             var childNode = xmlDocument.SelectSingleNode("/root/parent/child") as XmlElement;
 
-            var projectParameters = new Dictionary<string, Parameter>
+
+            var projectParameters = new Dictionary<string, IParameter>
             {
-                {"Parameter1", new Parameter("Parameter1", "1", ParameterSource.Original, childNode)},
-                {"SensitiveOriginalParameterNoValue", new Parameter("SensitiveOriginalParameterNoValue", null, ParameterSource.Original, childNode)},
-                {"Parameter2", new Parameter("Parameter2", "1", ParameterSource.Configuration, childNode)},
-                {"SensitiveConfigParameterNoValue", new Parameter("SensitiveConfigParameterNoValue", null, ParameterSource.Configuration, childNode)},
-                {"Parameter3", new Parameter("Parameter3", "1", ParameterSource.Manual, childNode)}
+                {"Parameter1", CreateParameter("Parameter1", "1", false, ParameterSource.Original)},
+                {"SensitiveOriginalParameterNoValue", CreateParameter("SensitiveOriginalParameterNoValue", null, true, ParameterSource.Original)},
+                {"Parameter2", CreateParameter("Parameter2", "1", false, ParameterSource.Configuration)},
+                {"SensitiveConfigParameterNoValue", CreateParameter("SensitiveConfigParameterNoValue", null, true, ParameterSource.Configuration)},
+                {"Parameter3", CreateParameter("Parameter3", "1", false, ParameterSource.Manual)}
             };
-
-            var sensitiveProperty = typeof(Parameter).GetProperty("Sensitive");
-
-            sensitiveProperty.SetValue(projectParameters["SensitiveOriginalParameterNoValue"], true);
-            sensitiveProperty.SetValue(projectParameters["SensitiveConfigParameterNoValue"], true);
-
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
             _projectMock.Setup(p => p.Parameters).Returns(projectParameters);
@@ -383,6 +377,17 @@ namespace SsisBuild.Tests
         {
             var builder = new Builder();
             Assert.NotNull(builder);
+        }
+
+        private IParameter CreateParameter(string name, string value, bool sensitive, ParameterSource source)
+        {
+            var parameterMock = new Mock<IParameter>();
+            parameterMock.Setup(p => p.Name).Returns(name);
+            parameterMock.Setup(p => p.Sensitive).Returns(sensitive);
+            parameterMock.Setup(p => p.Value).Returns(value);
+            parameterMock.Setup(p => p.Source).Returns(source);
+
+            return parameterMock.Object;
         }
 
         public void Dispose()
