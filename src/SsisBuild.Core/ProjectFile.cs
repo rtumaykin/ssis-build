@@ -49,7 +49,10 @@ namespace SsisBuild.Core
 
         public void Initialize(string filePath, string password)
         {
-            Initialize(File.OpenRead(filePath), password);
+            using (var stream = File.OpenRead(filePath))
+            {
+                Initialize(stream, password);
+            }
         }
 
         public void Initialize(Stream fileStream, string password)

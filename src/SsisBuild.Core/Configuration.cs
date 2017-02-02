@@ -32,11 +32,17 @@ namespace SsisBuild.Core
         {
             var parameters = new List<IParameter>();
 
-            var parameterNodes =
-                 FileXmlDocument.SelectNodes(
-                     $"/Project/Configurations/Configuration[Name=\"{_configurationName}\"]/Options/ParameterConfigurationValues/ConfigurationSetting", NamespaceManager);
+            var configurationNode = FileXmlDocument.SelectSingleNode(
+                     $"/Project/Configurations/Configuration[Name=\"{_configurationName}\"]", NamespaceManager);
 
-            if (parameterNodes == null)
+            if (configurationNode == null)
+                throw new InvalidConfigurationNameException(_configurationName);
+
+            var parameterNodes =
+                 configurationNode.SelectNodes(
+                     $"./Options/ParameterConfigurationValues/ConfigurationSetting", NamespaceManager);
+
+            if (parameterNodes == null || parameterNodes.Count == 0)
                 return parameters;
 
             foreach (XmlNode parameterNode in parameterNodes)

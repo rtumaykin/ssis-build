@@ -57,9 +57,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigurationParameterTests.cs" />
+    <Compile Include="ConfigurationTests.cs" />
     <Compile Include="Helpers.cs" />
+    <Compile Include="PackageTests.cs" />
     <Compile Include="ProjectParameterTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UserConfigurationTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

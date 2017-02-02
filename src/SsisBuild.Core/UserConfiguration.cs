@@ -31,18 +31,26 @@ namespace SsisBuild.Core
 
         protected override void DecryptNode(XmlNode node, string password)
         {
-            // Do nothing since it is encrypted by a user key.
+            // Do nothing since it is encrypted by a user key. And since the encrypted values don't have salt or any other encryption indication, this
+            // method will not be called as of now at all
         }
 
         protected override IList<IParameter> ExtractParameters()
         {
             var parameters = new List<IParameter>();
+
+            var configurationNode = FileXmlDocument.SelectSingleNode(
+                $"/DataTransformationsUserConfiguration/Configurations/Configuration[Name=\"{_configurationName}\"]", NamespaceManager);
+
+            if (configurationNode == null)
+                throw new InvalidConfigurationNameException(_configurationName);
+
             var parameterNodes =
-                FileXmlDocument.SelectNodes(
-                    $"/DataTransformationsUserConfiguration/Configurations/Configuration[Name=\"{_configurationName}\"]/Options/ParameterConfigurationSensitiveValues/ConfigurationSetting",
+                configurationNode.SelectNodes(
+                    $"./Options/ParameterConfigurationSensitiveValues/ConfigurationSetting",
                     NamespaceManager);
 
-            if (parameterNodes == null)
+            if (parameterNodes == null || parameterNodes.Count == 0)
                 return parameters;
 
             foreach (XmlNode parameterNode in parameterNodes)

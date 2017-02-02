@@ -55,6 +55,7 @@
     </Compile>
     <Compile Include="ConfigurationParameter.cs" />
     <Compile Include="Helpers\XmlHelper.cs" />
+    <Compile Include="InvalidConfigurationNameException.cs" />
     <Compile Include="InvalidPaswordException.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="DataType.cs" />

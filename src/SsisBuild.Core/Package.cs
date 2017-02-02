@@ -39,13 +39,16 @@ namespace SsisBuild.Core
                 FileXmlDocument.SelectSingleNode("/DTS:Executable", NamespaceManager)?.Attributes?["DTS:ProtectionLevel"]?.Value;
 
             if (protectionLevelValue == null)
-                throw new Exception("Failed to determine protection level. DTS:ProtectionLevel attribute was not found.");
+                throw new InvalidXmlException("Failed to determine protection level. DTS:ProtectionLevel attribute was not found.", FileXmlDocument);
 
             ProtectionLevel protectionLevel;
             if (!Enum.TryParse(protectionLevelValue, true, out protectionLevel))
-                throw new Exception($"Invalid DTS:ProtectionLevel value {protectionLevelValue}.");
+                throw new InvalidXmlException($"Invalid DTS:ProtectionLevel value {protectionLevelValue}.", FileXmlDocument);
 
-            return ProtectionLevel;
+            if (!Enum.IsDefined(typeof(ProtectionLevel), protectionLevel))
+                throw new InvalidXmlException($"Invalid DTS:ProtectionLevel value {protectionLevelValue}.", FileXmlDocument);
+
+            return protectionLevel;
         }
 
 
