@@ -18,9 +18,9 @@ using System;
 
 namespace SsisBuild.Core
 {
-    public class ProjectNotLoadedException : Exception
+    public class ProjectNotInitializedException : Exception
     {
-        public ProjectNotLoadedException() : base("Project must be loaded from dtproj or ispac file before this operation can be performed")
+        public ProjectNotInitializedException() : base("Project must be loaded from dtproj or ispac file before this operation can be performed")
         {
         }
     }

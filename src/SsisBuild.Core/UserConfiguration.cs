@@ -29,12 +29,6 @@ namespace SsisBuild.Core
             _configurationName = configurationName;
         }
 
-        protected override void DecryptNode(XmlNode node, string password)
-        {
-            // Do nothing since it is encrypted by a user key. And since the encrypted values don't have salt or any other encryption indication, this
-            // method will not be called as of now at all
-        }
-
         protected override IList<IParameter> ExtractParameters()
         {
             var parameters = new List<IParameter>();

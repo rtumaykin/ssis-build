@@ -26,7 +26,7 @@ namespace SsisBuild.Core
         {
             var parameterNodes = FileXmlDocument.SelectNodes("/SSIS:Parameters/SSIS:Parameter", NamespaceManager);
 
-            if (parameterNodes == null)
+            if (parameterNodes == null || parameterNodes.Count == 0)
                 return null;
 
             var parameters = new List<IParameter>();

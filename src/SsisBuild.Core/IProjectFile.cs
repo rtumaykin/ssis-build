@@ -6,6 +6,7 @@ namespace SsisBuild.Core
     public interface IProjectFile
     {
         IReadOnlyDictionary<string, IParameter> Parameters { get; }
+        ProtectionLevel ProtectionLevel { get; set; }
 
         void Initialize(string filePath, string password);
         void Initialize(Stream fileStream, string password);

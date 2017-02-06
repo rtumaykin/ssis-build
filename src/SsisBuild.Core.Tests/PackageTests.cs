@@ -20,7 +20,7 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_Get_ProtectionLevel()
         {
-            var xml = CreateXml("Anything", 2);
+            var xml = CreateXml(Helpers.RandomString(20), 2, Helpers.RandomString(20));
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
             var package = new Package();
@@ -30,9 +30,9 @@ namespace SsisBuild.Core.Tests
         }
 
         [Fact]
-        public void Pass_Fail_InvalidProtectionLevel()
+        public void Fail_InvalidProtectionLevel()
         {
-            var xml = CreateXml("Anything", 1000);
+            var xml = CreateXml(Helpers.RandomString(20), 1000, Helpers.RandomString(20));
 
 
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
@@ -44,10 +44,25 @@ namespace SsisBuild.Core.Tests
         }
 
         [Fact]
-        public void Pass_Fail_NoProtectionLevel()
+        public void Fail_NoProtectionLevel()
         {
-            var xml = CreateXml("Anything", 1000);
-            xml = xml.Replace("DTS:ProtectionLevel=\"{protectionLevel}\"", "");
+            var xml = CreateXml(Helpers.RandomString(20), 1000, Helpers.RandomString(20));
+            xml = xml.Replace("DTS:ProtectionLevel=\"1000\"", "");
+
+
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            File.WriteAllText(path, xml);
+            var package = new Package();
+            var exception = Record.Exception(() => package.Initialize(path, null));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+        }
+
+        [Fact]
+        public void Fail_UnparsableProtectionLevel()
+        {
+            var xml = CreateXml(Helpers.RandomString(20), 1000, Helpers.RandomString(20));
+            xml = xml.Replace("DTS:ProtectionLevel=\"1000\"", "DTS:ProtectionLevel=\"abc\"");
 
 
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
@@ -62,7 +77,7 @@ namespace SsisBuild.Core.Tests
         public void Pass_Encrypt()
         {
             var password = Helpers.RandomString(30);
-            var xml = CreateXml("Anything", 2);
+            var xml = CreateXml(Helpers.RandomString(20), 2, Helpers.RandomString(20));
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
             var package = new Package();
@@ -74,12 +89,12 @@ namespace SsisBuild.Core.Tests
                 package.Save(stream, ProtectionLevel.EncryptSensitiveWithPassword, password);
                 stream.Position = 0;
                 var sr = new StreamReader(stream);
-               encryptedXml = sr.ReadToEnd();
+                encryptedXml = sr.ReadToEnd();
             }
             var xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(encryptedXml);
             var encryptedNode = xmlDoc.SelectSingleNode("/DTS:Executable/DTS:PackageParameter/DTS:Property[@DTS:Name=\"ParameterValue\"]", xmlDoc.GetNameSpaceManager());
-            Assert.True(encryptedNode?.ChildNodes.OfType<XmlElement>().Any(n => n.Name == "EncryptedData"));
+            Assert.True(xmlDoc.SelectNodes("//*[name(.)=\"EncryptedData\"]")?.Count == 2);
         }
 
         [Fact]
@@ -87,7 +102,8 @@ namespace SsisBuild.Core.Tests
         {
             var password = Helpers.RandomString(30);
             var value = Helpers.RandomString(40);
-            var xml = CreateXml(value, 2);
+            var value1 = Helpers.RandomString(40);
+            var xml = CreateXml(value, 2, value1);
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
             var package = new Package();
@@ -104,19 +120,277 @@ namespace SsisBuild.Core.Tests
             // if there is no exception - we are good.
         }
 
+        [Fact]
+        public void Fail_Decrypt_NoPassword()
+        {
+            var password = Helpers.RandomString(30);
+            var value = Helpers.RandomString(40);
+            var value1 = Helpers.RandomString(40);
+            var xml = CreateXml(value, 2, value1);
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            File.WriteAllText(path, xml);
+            var package = new Package();
+            package.Initialize(path, null);
+
+            var newPackage = new Package();
+
+
+            Exception exception;
+            using (var stream = new MemoryStream())
+            {
+                package.Save(stream, ProtectionLevel.EncryptSensitiveWithPassword, password);
+                stream.Position = 0;
+                exception = Record.Exception(() => newPackage.Initialize(stream, null));
+            }
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidPaswordException>(exception);
+        }
+
+        [Fact]
+        public void Fail_Decrypt_BadPassword()
+        {
+            var password = Helpers.RandomString(30);
+            var value = Helpers.RandomString(40);
+            var value1 = Helpers.RandomString(40);
+            var xml = CreateXml(value, 2, value1);
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            File.WriteAllText(path, xml);
+            var package = new Package();
+            package.Initialize(path, null);
+
+            var newPackage = new Package();
+
+
+            Exception exception;
+            using (var stream = new MemoryStream())
+            {
+                package.Save(stream, ProtectionLevel.EncryptSensitiveWithPassword, password);
+                stream.Position = 0;
+                exception = Record.Exception(() => newPackage.Initialize(stream, Helpers.RandomString(30)));
+            }
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidPaswordException>(exception);
+        }
+
+        [Fact]
+        public void Fail_Decrypt_NoIv()
+        {
+            var password = Helpers.RandomString(30);
+            var value = Helpers.RandomString(40);
+            var value1 = Helpers.RandomString(40);
+            var xml = CreateXml(value, 2, value1);
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            File.WriteAllText(path, xml);
+            var package = new Package();
+            package.Initialize(path, null);
+
+            var newPackage = new Package();
+
+            string encryptedXml;
+
+            using (var stream = new MemoryStream())
+            {
+                package.Save(stream, ProtectionLevel.EncryptSensitiveWithPassword, password);
+                stream.Position = 0;
+
+                var sr = new StreamReader(stream);
+                encryptedXml = sr.ReadToEnd();
+            }
+
+            var encryptedXmlDoc = new XmlDocument();
+            encryptedXmlDoc.LoadXml(encryptedXml);
+            var xmlNodeList = encryptedXmlDoc.SelectNodes("//*[@IV or @SSIS:IV]", encryptedXmlDoc.GetNameSpaceManager());
+            if (xmlNodeList != null)
+                foreach (XmlNode node in xmlNodeList)
+                {
+                    var ivAttribute = node.GetAttributeNode("IV");
+                    if (ivAttribute != null)
+                        ivAttribute.Value = string.Empty;
+                }
+
+            Exception exception;
+            using (var stream = new MemoryStream())
+            {
+                encryptedXmlDoc.Save(stream);
+                stream.Flush();
+                stream.Position = 0;
+
+                exception = Record.Exception(() => newPackage.Initialize(stream, password));
+            }
+
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("\"IV\""));
+        }
+
+        [Fact]
+        public void Fail_Decrypt_BadIv()
+        {
+            var password = Helpers.RandomString(30);
+            var value = Helpers.RandomString(40);
+            var value1 = Helpers.RandomString(40);
+            var xml = CreateXml(value, 2, value1);
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            File.WriteAllText(path, xml);
+            var package = new Package();
+            package.Initialize(path, null);
+
+            var newPackage = new Package();
+
+            string encryptedXml;
+
+            using (var stream = new MemoryStream())
+            {
+                package.Save(stream, ProtectionLevel.EncryptSensitiveWithPassword, password);
+                stream.Position = 0;
+
+                var sr = new StreamReader(stream);
+                encryptedXml = sr.ReadToEnd();
+            }
+
+            var encryptedXmlDoc = new XmlDocument();
+            encryptedXmlDoc.LoadXml(encryptedXml);
+            var xmlNodeList = encryptedXmlDoc.SelectNodes("//*[@IV or @SSIS:IV]", encryptedXmlDoc.GetNameSpaceManager());
+            if (xmlNodeList != null)
+                foreach (XmlNode node in xmlNodeList)
+                {
+                    var ivAttribute = node.GetAttributeNode("IV");
+                    if (ivAttribute != null)
+                        ivAttribute.Value = Helpers.RandomString(30);
+                }
+
+            Exception exception;
+            using (var stream = new MemoryStream())
+            {
+                encryptedXmlDoc.Save(stream);
+                stream.Flush();
+                stream.Position = 0;
+
+                exception = Record.Exception(() => newPackage.Initialize(stream, password));
+            }
+
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("\"IV\""));
+        }
+
+        [Fact]
+        public void Fail_Decrypt_NoSalt()
+        {
+            var password = Helpers.RandomString(30);
+            var value = Helpers.RandomString(40);
+            var value1 = Helpers.RandomString(40);
+            var xml = CreateXml(value, 2, value1);
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            File.WriteAllText(path, xml);
+            var package = new Package();
+            package.Initialize(path, null);
+
+            var newPackage = new Package();
+
+            string encryptedXml;
+
+            using (var stream = new MemoryStream())
+            {
+                package.Save(stream, ProtectionLevel.EncryptSensitiveWithPassword, password);
+                stream.Position = 0;
+
+                var sr = new StreamReader(stream);
+                encryptedXml = sr.ReadToEnd();
+            }
+
+            var encryptedXmlDoc = new XmlDocument();
+            encryptedXmlDoc.LoadXml(encryptedXml);
+            var xmlNodeList = encryptedXmlDoc.SelectNodes("//*[@Salt or @SSIS:Salt]", encryptedXmlDoc.GetNameSpaceManager());
+            if (xmlNodeList != null)
+                foreach (XmlNode node in xmlNodeList)
+                {
+                    var saltAttribute = node.GetAttributeNode("Salt");
+                    if (saltAttribute != null)
+                        saltAttribute.Value = string.Empty;
+                }
+
+            Exception exception;
+            using (var stream = new MemoryStream())
+            {
+                encryptedXmlDoc.Save(stream);
+                stream.Flush();
+                stream.Position = 0;
+
+                exception = Record.Exception(() => newPackage.Initialize(stream, password));
+            }
+
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("\"Salt\""));
+        }
+
+        [Fact]
+        public void Fail_Decrypt_BadSalt()
+        {
+            var password = Helpers.RandomString(30);
+            var value = Helpers.RandomString(40);
+            var value1 = Helpers.RandomString(40);
+            var xml = CreateXml(value, 2, value1);
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            File.WriteAllText(path, xml);
+            var package = new Package();
+            package.Initialize(path, null);
+
+            var newPackage = new Package();
+
+            string encryptedXml;
+
+            using (var stream = new MemoryStream())
+            {
+                package.Save(stream, ProtectionLevel.EncryptSensitiveWithPassword, password);
+                stream.Position = 0;
+
+                var sr = new StreamReader(stream);
+                encryptedXml = sr.ReadToEnd();
+            }
+
+            var encryptedXmlDoc = new XmlDocument();
+            encryptedXmlDoc.LoadXml(encryptedXml);
+            var xmlNodeList = encryptedXmlDoc.SelectNodes("//*[@Salt or @SSIS:Salt]", encryptedXmlDoc.GetNameSpaceManager());
+            if (xmlNodeList != null)
+                foreach (XmlNode node in xmlNodeList)
+                {
+                    var saltAttribute = node.GetAttributeNode("Salt");
+                    if (saltAttribute != null)
+                        saltAttribute.Value = Helpers.RandomString(30);
+                }
+
+            Exception exception;
+            using (var stream = new MemoryStream())
+            {
+                encryptedXmlDoc.Save(stream);
+                stream.Flush();
+                stream.Position = 0;
+
+                exception = Record.Exception(() => newPackage.Initialize(stream, password));
+            }
+
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("\"Salt\""));
+        }
 
         public void Dispose()
         {
             Directory.Delete(_workingFolder, true);
         }
 
-        private static string CreateXml(string sensitiveValue, int protectionLevel)
+        private static string CreateXml(string sensitiveParameterValue, int protectionLevel, string sensitivePasswordValue)
         {
             return $@"<?xml version=""1.0""?>
                 <DTS:Executable xmlns:DTS=""www.microsoft.com/SqlServer/Dts""
                 DTS:ProtectionLevel=""{protectionLevel}"">
+                 <DTS:ConnectionManager DTS:ConnectionString=""{Helpers.RandomString(20)}"">
+                   <DTS:Password DTS:Name=""{Helpers.RandomString(20)}"" Sensitive=""1"">{sensitivePasswordValue}</DTS:Password>
+                </DTS:ConnectionManager>
                 <DTS:PackageParameter DTS:Sensitive=""True"">
-                    <DTS:Property DTS:Name=""ParameterValue"">{sensitiveValue}</DTS:Property>
+                    <DTS:Property DTS:Name=""ParameterValue"">{sensitiveParameterValue}</DTS:Property>
                 </DTS:PackageParameter>
                 </DTS:Executable>";
         }

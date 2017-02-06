@@ -40,7 +40,7 @@ namespace SsisBuild.Core.Helpers
             => node.NodeType == XmlNodeType.Document ? node as XmlDocument : node.OwnerDocument;
 
 
-        internal static XmlAttribute GetAttribute(this XmlNode rootNode, string name) => (rootNode.Attributes?.GetNamedItem(name, Schemas.SSIS) as XmlAttribute ??
+        public static XmlAttribute GetAttributeNode(this XmlNode rootNode, string name) => (rootNode.Attributes?.GetNamedItem(name, Schemas.SSIS) as XmlAttribute ??
                                                                                           rootNode.Attributes?.GetNamedItem(name) as XmlAttribute) ??
                                                                                          rootNode.Attributes?.GetNamedItem(name, Schemas.DTS) as XmlAttribute;
 

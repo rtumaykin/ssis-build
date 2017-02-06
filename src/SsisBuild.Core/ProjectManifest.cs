@@ -24,76 +24,208 @@ namespace SsisBuild.Core
 {
     public class ProjectManifest : ProjectFile, IProjectManifest
     {
-        public ProtectionLevel ProtectonLevel { get; private set; }
-
-        private XmlElement _versionMajor;
-        private XmlElement _versionMinor;
-        private XmlElement _versionBuild;
-        private XmlElement _versionComments;
-        private XmlElement _description;
-
-
-
-        public string VersionMajor
+        public override ProtectionLevel ProtectionLevel
         {
-            get { return _versionMajor?.InnerText; }
+            get
+            {
+                var protectionLevelString = _protectionLevelNodes.FirstOrDefault(a => a.NodeType == XmlNodeType.Attribute)?.Value;
+                return string.IsNullOrWhiteSpace(protectionLevelString) ? ProtectionLevel.DontSaveSensitive : (ProtectionLevel) Enum.Parse(typeof(ProtectionLevel), protectionLevelString); 
+            }
             set
             {
-                if (_versionMajor != null)
-                _versionMajor.InnerText = value;
+                foreach (var protectionLevelNode in _protectionLevelNodes)
+                {
+                    if (protectionLevelNode.NodeType == XmlNodeType.Attribute)
+                        protectionLevelNode.Value = value.ToString("G");
+                    else
+                        protectionLevelNode.InnerText = value.ToString("D");
+                }
             }
         }
 
-        public string VersionMinor
+        private readonly IList<XmlElement> _versionMajorNodes;
+        private readonly IList<XmlElement> _versionMinorNodes;
+        private readonly IList<XmlElement> _versionBuildNodes;
+        private readonly IList<XmlElement> _versionCommentsNodes;
+        private XmlElement _descriptionNode;
+        private readonly IList<XmlNode> _protectionLevelNodes;
+
+
+
+        public int VersionMajor
         {
-            get { return _versionMinor?.InnerText; }
+            get { return int.Parse(_versionMajorNodes.FirstOrDefault()?.InnerText); }
             set
             {
-                if (_versionMinor != null)
-                    _versionMinor.InnerText = value;
+                foreach (var versionMajorNode in _versionMajorNodes)
+                {
+                    versionMajorNode.InnerText = value.ToString();
+                }
             }
         }
 
-        public string VersionBuild
+        public int VersionMinor
         {
-            get { return _versionBuild?.InnerText; }
+            get { return int.Parse(_versionMinorNodes.FirstOrDefault()?.InnerText); ; }
             set
             {
-                if (_versionBuild != null)
-                    _versionBuild.InnerText = value;
+                foreach (var versionMinorNode in _versionMinorNodes)
+                {
+                    versionMinorNode.InnerText = value.ToString();
+                }
+            }
+        }
+
+        public int VersionBuild
+        {
+            get { return int.Parse(_versionBuildNodes.FirstOrDefault()?.InnerText); ; }
+            set
+            {
+                foreach (var versionBuildNode in _versionBuildNodes)
+                {
+                    versionBuildNode.InnerText = value.ToString();
+                }
             }
         }
 
         public string VersionComments
         {
-            get { return _versionComments?.InnerText; }
+            get { return _versionCommentsNodes.FirstOrDefault()?.InnerText; ; }
             set
             {
-                if (_versionComments != null)
-                    _versionComments.InnerText = value;
+                foreach (var versionCommentsNode in _versionCommentsNodes)
+                {
+                    versionCommentsNode.InnerText = value;
+                }
             }
         }
 
         public string Description
         {
-            get { return _description?.InnerText; }
+            get { return _descriptionNode?.InnerText; }
             set
             {
-                if (_description != null)
-                    _description.InnerText = value;
+                if (_descriptionNode != null)
+                    _descriptionNode.InnerText = value;
             }
+        }
+
+        public ProjectManifest()
+        {
+            _versionCommentsNodes = new List<XmlElement>();
+            _versionBuildNodes = new List<XmlElement>();
+            _versionMajorNodes = new List<XmlElement>();
+            _protectionLevelNodes = new List<XmlNode>();
+            _versionMinorNodes = new List<XmlElement>();
         }
 
         protected override void PostInitialize()
         {
-            ProtectonLevel = ExtractProtectionLevel();
+            var manifestXml = FileXmlDocument.DocumentElement;
+
+            var projectProtectionLevelAttribute = manifestXml?.Attributes["SSIS:ProtectionLevel"];
+            var protectionLevelString = projectProtectionLevelAttribute?.Value;
+
+            if (string.IsNullOrWhiteSpace(protectionLevelString))
+                throw new InvalidXmlException("Invalid project file. SSIS:Project node must contain a SSIS:ProtectionLevel attribute.", manifestXml);
+
+            ProtectionLevel protectionLevel;
+            if (!Enum.TryParse(protectionLevelString, out protectionLevel))
+                throw new InvalidXmlException($"Invalid Protection Level {protectionLevelString}.", manifestXml);
+
+            if (protectionLevel == ProtectionLevel.EncryptAllWithUserKey || protectionLevel == ProtectionLevel.EncryptSensitiveWithUserKey)
+                throw new InvalidProtectionLevelException(protectionLevel);
+
+            _protectionLevelNodes.Add(projectProtectionLevelAttribute);
+
             PackageNames = ExtractPackageNames();
             ConnectionManagerNames = ExtractConnectionManagerNames();
-            _versionMajor = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMajor\"]", NamespaceManager) as XmlElement;
-            _versionMinor = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMinor\"]", NamespaceManager) as XmlElement;
-            _versionBuild = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionBuild\"]", NamespaceManager) as XmlElement;
-            _versionComments = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionComments\"]", NamespaceManager) as XmlElement;
-            _description = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"Description\"]", NamespaceManager) as XmlElement;
+
+            foreach (XmlElement packageProtectionLevelNode in FileXmlDocument.SelectNodes("//SSIS:Property[@SSIS:Name = \"ProtectionLevel\"]", NamespaceManager))
+            {
+                packageProtectionLevelNode.InnerText = protectionLevel.ToString("D");
+                _protectionLevelNodes.Add(packageProtectionLevelNode);
+            }
+
+            var versionMajorString = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMajor\"]", NamespaceManager)?.InnerText;
+            if (string.IsNullOrWhiteSpace(versionMajorString))
+                throw new InvalidXmlException("Version Major Xml Node was not found", FileXmlDocument);
+
+            int test;
+            if (!int.TryParse(versionMajorString, out test))
+                throw new InvalidXmlException($"Invalid value of Version Major Xml Node: {versionMajorString}.", FileXmlDocument);
+
+            var versionMajorNodes = FileXmlDocument.SelectNodes("//*[@SSIS:Name = \"VersionMajor\"]", NamespaceManager);
+            if (versionMajorNodes != null)
+            {
+                foreach (XmlElement element in versionMajorNodes)
+                {
+                    if (element != null)
+                    {
+                        element.InnerText = versionMajorString;
+                        _versionMajorNodes.Add(element);
+                    }
+                }
+            }
+
+            var versionMinorString = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMinor\"]", NamespaceManager)?.InnerText;
+            if (string.IsNullOrWhiteSpace(versionMinorString))
+                throw new InvalidXmlException("Version Minor Xml Node was not found", FileXmlDocument);
+
+            if (!int.TryParse(versionMinorString, out test))
+                throw new InvalidXmlException($"Invalid value of Version Minor Xml Node: {versionMinorString}.", FileXmlDocument);
+
+            var versionMinorNodes = FileXmlDocument.SelectNodes("//*[@SSIS:Name = \"VersionMinor\"]", NamespaceManager);
+            if (versionMinorNodes != null)
+            {
+                foreach (XmlElement element in versionMinorNodes)
+                {
+                    if (element != null)
+                    {
+                        element.InnerText = versionMinorString;
+                        _versionMinorNodes.Add(element);
+                    }
+                }
+            }
+
+            var versionBuildString = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionBuild\"]", NamespaceManager)?.InnerText;
+            if (string.IsNullOrWhiteSpace(versionBuildString))
+                throw new InvalidXmlException("Version Build Xml Node was not found", FileXmlDocument);
+
+            if (!int.TryParse(versionBuildString, out test))
+                throw new InvalidXmlException($"Invalid value of Version Build Xml Node: {versionBuildString}.", FileXmlDocument);
+
+            var versionBuildNodes = FileXmlDocument.SelectNodes("//*[@SSIS:Name = \"VersionBuild\"]", NamespaceManager);
+            if (versionBuildNodes != null)
+            {
+                foreach (XmlElement element in versionBuildNodes)
+                {
+                    if (element != null)
+                    {
+                        element.InnerText = versionBuildString;
+                        _versionBuildNodes.Add(element);
+                    }
+                }
+            }
+
+            var versionCommentsString = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionComments\"]", NamespaceManager)?.InnerText;
+            if (string.IsNullOrWhiteSpace(versionCommentsString))
+                throw new InvalidXmlException("Version Comments Xml Node was not found", FileXmlDocument);
+
+            var versionCommentsNodes = FileXmlDocument.SelectNodes("//*[@SSIS:Name = \"VersionComments\"]", NamespaceManager);
+            if (versionCommentsNodes != null)
+            {
+                foreach (XmlElement element in versionCommentsNodes)
+                {
+                    if (element != null)
+                    {
+                        element.InnerText = versionCommentsString;
+                        _versionCommentsNodes.Add(element);
+                    }
+                }
+            }
+
+            _descriptionNode = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"Description\"]", NamespaceManager) as XmlElement;
         }
 
         private string[] ExtractPackageNames()
@@ -115,41 +247,6 @@ namespace SsisBuild.Core
         public string[] PackageNames { get; private set; }
 
         public string[] ConnectionManagerNames { get; private set; }
-
-        private ProtectionLevel ExtractProtectionLevel()
-        {
-            var manifestXml = FileXmlDocument.DocumentElement;
-
-            if (manifestXml?.Attributes == null || manifestXml.Attributes.Count == 0 || manifestXml.Attributes["SSIS:ProtectionLevel"] == null)
-                throw new Exception("Invalid project file. SSIS:Project node must contain a SSIS:ProtectionLevel attribute.");
-
-            var protectionLevelString = manifestXml.Attributes["SSIS:ProtectionLevel"]?.Value;
-
-            if (string.IsNullOrWhiteSpace(protectionLevelString))
-                throw new Exception("Empty SSIS:ProtectionLevel attribute");
-
-
-            ProtectionLevel protectionLevel;
-            if (Enum.TryParse(protectionLevelString, out protectionLevel))
-            {
-                if (protectionLevel == ProtectionLevel.EncryptAllWithUserKey || protectionLevel == ProtectionLevel.EncryptSensitiveWithUserKey)
-                    throw new Exception("Original project can\'t be encrypted with user key since it is not decryptable by a build agent.");
-
-                return protectionLevel;
-            }
-
-            throw new Exception($"Invalid Protection Level {protectionLevelString}.");
-        }
-
-        protected override void SetProtectionLevel(XmlDocument protectedXmlDocument, ProtectionLevel protectionLevel)
-        {
-            var manifestXml = protectedXmlDocument.DocumentElement;
-
-            if (manifestXml?.Attributes == null || manifestXml.Attributes.Count == 0 || manifestXml.Attributes["SSIS:ProtectionLevel"] == null)
-                throw new Exception("Invalid project file. SSIS:Project node must contain a SSIS:ProtectionLevel attribute.");
-
-            manifestXml.Attributes["SSIS:ProtectionLevel"].Value = protectionLevel.ToString();
-        }
 
         protected override IList<IParameter> ExtractParameters()
         {

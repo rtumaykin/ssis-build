@@ -59,6 +59,7 @@
     <Compile Include="InvalidPaswordException.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="DataType.cs" />
+    <Compile Include="InvalidProtectionLevelException.cs" />
     <Compile Include="InvalidXmlException.cs" />
     <Compile Include="IParameter.cs" />
     <Compile Include="IProject.cs" />
@@ -71,7 +72,7 @@
     <Compile Include="ProjectConnection.cs" />
     <Compile Include="ProjectFile.cs" />
     <Compile Include="ProjectManifest.cs" />
-    <Compile Include="ProjectNotLoadedException.cs" />
+    <Compile Include="ProjectNotInitializedException.cs" />
     <Compile Include="ProjectParameter.cs" />
     <Compile Include="ProjectParams.cs" />
     <Compile Include="ProtectionLevel.cs" />

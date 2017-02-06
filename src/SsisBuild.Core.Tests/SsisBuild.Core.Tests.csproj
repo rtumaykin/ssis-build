@@ -60,7 +60,9 @@
     <Compile Include="ConfigurationTests.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="PackageTests.cs" />
+    <Compile Include="ProjectManifestTests.cs" />
     <Compile Include="ProjectParameterTests.cs" />
+    <Compile Include="ProjectParamsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserConfigurationTests.cs" />
   </ItemGroup>

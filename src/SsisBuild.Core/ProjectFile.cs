@@ -28,6 +28,8 @@ namespace SsisBuild.Core
 {
     public abstract class ProjectFile : IProjectFile
     {
+        public virtual ProtectionLevel ProtectionLevel { get; set; }
+
         protected XmlDocument FileXmlDocument;
         protected XmlNamespaceManager NamespaceManager;
 
@@ -94,8 +96,7 @@ namespace SsisBuild.Core
 
         public void Save(Stream fileStream, ProtectionLevel protectionLevel, string password)
         {
-            if (!_isInitialized)
-                throw new Exception("You must initialize project file before you can save it.");
+            ThrowIfNotInitialized();
 
             var xmlToSave = PrepareXmlToSave(protectionLevel, password);
 
@@ -109,17 +110,10 @@ namespace SsisBuild.Core
 
         public void Save(string filePath, ProtectionLevel protectionLevel, string password)
         {
-            if (!_isInitialized)
-                throw new Exception("You must initialize project file before you can save it.");
-
-            if (protectionLevel == ProtectionLevel.EncryptAllWithUserKey || protectionLevel == ProtectionLevel.EncryptSensitiveWithUserKey)
-                throw new Exception("Destination project must not be protected using user key, since it is not decryptable by deploy agent.");
+            ThrowIfNotInitialized();
 
             var fullPath = Path.GetFullPath(filePath);
             var destinationDirectory = Path.GetDirectoryName(fullPath);
-            if (destinationDirectory == null)
-                throw new Exception($"Failed to determine directory of the path {filePath}.");
-
             Directory.CreateDirectory(destinationDirectory);
 
             var xmlToSave = PrepareXmlToSave(protectionLevel, password);
@@ -127,8 +121,16 @@ namespace SsisBuild.Core
             xmlToSave.Save(fullPath);
         }
 
+        private void ThrowIfNotInitialized()
+        {
+            if (!_isInitialized)
+                throw new ProjectNotInitializedException();
+        }
+
         private XmlDocument PrepareXmlToSave(ProtectionLevel protectionLevel, string password)
         {
+            ProtectionLevel = protectionLevel;
+
             var xmlToSave = new XmlDocument();
             xmlToSave.LoadXml(FileXmlDocument.OuterXml);
 
@@ -139,60 +141,60 @@ namespace SsisBuild.Core
                 ProtectionLevel.EncryptSensitiveWithPassword,
                 ProtectionLevel.ServerStorage
             }.Contains(protectionLevel))
-                throw new Exception($"Invalid Protection Level for Deployment Package: {protectionLevel}.");
+                throw new InvalidProtectionLevelException(protectionLevel);
 
-            if (protectionLevel == ProtectionLevel.EncryptSensitiveWithPassword && string.IsNullOrWhiteSpace(password))
-                throw new Exception($"Password must be specified for ProtectionLevel {protectionLevel}.");
-
-
-            SetProtectionLevel(xmlToSave, protectionLevel);
 
             if (protectionLevel == ProtectionLevel.EncryptAllWithPassword)
             {
-                EncryptNode(xmlToSave.DocumentElement, password);
+                EncryptElement(xmlToSave.DocumentElement, password);
             }
             else
             {
-                var sensitiveNodes = GetSensitiveNodes(xmlToSave);
-                foreach (var sensitiveNode in sensitiveNodes)
+                var sensitiveElements = GetSensitiveElements(xmlToSave);
+                foreach (var sensitiveElement in sensitiveElements)
                 {
                     if (protectionLevel == ProtectionLevel.EncryptSensitiveWithPassword)
-                        EncryptNode(sensitiveNode, password);
+                        EncryptElement(sensitiveElement, password);
 
                     if (protectionLevel == ProtectionLevel.DontSaveSensitive)
-                        sensitiveNode.ParentNode?.RemoveChild(sensitiveNode);
+                        sensitiveElement.ParentNode?.RemoveChild(sensitiveElement);
                 }
             }
             return xmlToSave;
         }
 
-        protected virtual void SetProtectionLevel(XmlDocument protectedXmlDocument, ProtectionLevel protectionLevel) {}
-
         private void Decrypt(string password)
         {
-            var encryptedNodes = GetEncryptedNodes(FileXmlDocument);
-            foreach (XmlNode encryptedNode in encryptedNodes)
+            var encryptedElements = GetEncryptedElements(FileXmlDocument);
+            foreach (var encryptedElement in encryptedElements)
             {
-                if (string.IsNullOrWhiteSpace(password))
-                    throw new Exception("Password must be specified in order to decrypt xml.");
+                if (string.IsNullOrEmpty(password))
+                    throw new InvalidPaswordException();
 
-                DecryptNode(encryptedNode, password);
+                DecryptElement(encryptedElement, password);
             }
         }
-        protected XmlNodeList GetEncryptedNodes(XmlNode rootNode)
+        protected IList<XmlElement> GetEncryptedElements(XmlNode rootNode)
         {
-            return rootNode.SelectNodes("//*[@Salt or @SSIS:Salt]",
+            var encryptedElements = new List<XmlElement>();
+
+            var nodes = rootNode.SelectNodes("//*[@Salt or @SSIS:Salt]",
                 rootNode.GetNameSpaceManager());
+
+
+
+            if (nodes != null)
+            {
+                encryptedElements.AddRange(nodes.OfType<XmlElement>());
+            }
+
+            return encryptedElements;
         }
 
-        protected virtual void EncryptNode(XmlNode node, string password)
+        protected virtual void EncryptElement(XmlElement element, string password)
         {
-            if (node == null)
-                throw new ArgumentNullException(nameof(node));
-
-            var element = node as XmlElement;
-            if (element == null)
-                throw new Exception("Trying to encrypt node that is not an element.");
+            if (password == null)
+                throw new InvalidPaswordException();
 
             var rgbSalt = new byte[7];
             new RNGCryptoServiceProvider().GetBytes(rgbSalt);
@@ -220,14 +222,14 @@ namespace SsisBuild.Core
             element.SetAttribute("IV", XmlHelpers.Schemas.SSIS, Convert.ToBase64String(cryptoServiceProvider.IV));
         }
 
-        protected IList<XmlNode> GetSensitiveNodes(XmlNode rootNode)
+        protected IList<XmlElement> GetSensitiveElements(XmlNode rootNode)
         {
-            var sensitiveNodes = new List<XmlNode>();
+            var sensitiveElements = new List<XmlElement>();
 
             var sensitiveNodesNumberAttributeValue = rootNode.SelectNodes("//*[@Sensitive=\"1\" or @SSIS:Sensitive=\"1\"]", NamespaceManager);
 
             if (sensitiveNodesNumberAttributeValue != null)
-                sensitiveNodes.AddRange(sensitiveNodesNumberAttributeValue.OfType<XmlNode>());
+                sensitiveElements.AddRange(sensitiveNodesNumberAttributeValue.OfType<XmlElement>());
 
             // Package has an old way of dealing with it.
             var sensitiveNodesStringAttributeValue =
@@ -236,51 +238,42 @@ namespace SsisBuild.Core
                     NamespaceManager);
 
             if (sensitiveNodesStringAttributeValue != null)
-                sensitiveNodes.AddRange(sensitiveNodesStringAttributeValue.OfType<XmlNode>());
+                sensitiveElements.AddRange(sensitiveNodesStringAttributeValue.OfType<XmlElement>());
 
-            return sensitiveNodes;
+            return sensitiveElements;
         }
 
-        protected virtual void DecryptNode(XmlNode node, string password)
+        protected virtual void DecryptElement(XmlElement element, string password)
         {
-            if (string.IsNullOrEmpty(password))
-                throw new InvalidPaswordException();
-
-            if (node == null)
-                throw new ArgumentNullException(nameof(node));
-
-
-            var saltXmlAttribute =  node.GetAttribute("Salt");
-            if (saltXmlAttribute == null)
+            var saltXmlAttributeNode = XmlHelpers.GetAttributeNode(element, "Salt");
+            if (string.IsNullOrEmpty(saltXmlAttributeNode?.Value))
             {
-                throw new Exception($"Encrypted node {node.Name} does not contain required Attribute \"Salt\"");
+                throw new InvalidXmlException($"Encrypted element {element.Name} does not contain required Attribute \"Salt\", or its contents is empty", element);
             }
             byte[] rgbSalt;
             try
             {
-                rgbSalt = Convert.FromBase64String(saltXmlAttribute.Value);
+                rgbSalt = Convert.FromBase64String(saltXmlAttributeNode.Value);
             }
             catch (FormatException)
             {
-                throw new Exception(
-                    $"Invalid value of Attribute \"Salt\" ({saltXmlAttribute.Value}) in encrypted node {node.Name} ");
+                throw new InvalidXmlException($"Invalid value of Attribute \"Salt\" ({saltXmlAttributeNode.Value}) in encrypted element {element.Name}", element);
             }
-            var ivXmlAttribute = node.GetAttribute("IV");
-            if (ivXmlAttribute == null)
+            var ivXmlAttributeNode = XmlHelpers.GetAttributeNode(element, "IV");
+            if (string.IsNullOrEmpty(ivXmlAttributeNode?.Value))
             {
-                throw new Exception($"Encrypted node {node.Name} does not contain required Attribute \"IV\"");
+                throw new InvalidXmlException($"Encrypted element {element.Name} does not contain required Attribute \"IV\", or its contents is empty", element);
             }
-            byte[] numArray;
+            byte[] iv;
             try
             {
-                numArray = Convert.FromBase64String(ivXmlAttribute.Value);
+                iv = Convert.FromBase64String(ivXmlAttributeNode.Value);
             }
             catch (FormatException)
             {
-                throw new Exception(
-                    $"Invalid value of Attribute \"IV\" ({ivXmlAttribute.Value}) in encrypted node {node.Name} ");
+                throw new InvalidXmlException($"Invalid value of Attribute \"IV\" ({ivXmlAttributeNode.Value}) in encrypted element {element.Name} ", element);
             }
-            var cryptoServiceProvider = new TripleDESCryptoServiceProvider {IV = numArray};
+            var cryptoServiceProvider = new TripleDESCryptoServiceProvider {IV = iv};
 
             var passwordDeriveBytes = new PasswordDeriveBytes(password, rgbSalt);
 
@@ -291,12 +284,11 @@ namespace SsisBuild.Core
             byte[] buffer;
             try
             {
-                buffer = Convert.FromBase64String(node.InnerText);
+                buffer = Convert.FromBase64String(element.InnerText);
             }
             catch (FormatException)
             {
-                throw new Exception(
-                    $"Invalid value of encrypted node {node.Name}: {node.InnerText.Substring(0, 64)}");
+                throw new InvalidXmlException($"Invalid value of encrypted element {element.Name}.", element);
             }
             try
             {
@@ -315,27 +307,17 @@ namespace SsisBuild.Core
             {
                 throw new InvalidPaswordException();
             }
-            catch (ArgumentException)
-            {
-                throw new InvalidPaswordException();
-            }
+            
             var xmlDocument = new XmlDocument();
-            try
-            {
-                xmlDocument.LoadXml(xml);
-            }
-            catch (XmlException)
-            {
-                throw new Exception(
-                    $"Invalid decrypted xml in node {node.Name}: {xml.Substring(0, 64)}");
-            }
-            node.Attributes?.Remove(saltXmlAttribute);
-            node.Attributes?.Remove(ivXmlAttribute);
+            xmlDocument.LoadXml(xml);
 
-            foreach (XmlNode childNode in node.ChildNodes)
-                node.RemoveChild(childNode);
-            node.InnerXml = xmlDocument.DocumentElement?.InnerXml;
+            // The reason to not simply import the new node is because namespace declaration will also be imported with the node.
+            element.Attributes.Remove(saltXmlAttributeNode);
+            element.Attributes.Remove(ivXmlAttributeNode);
+
+            foreach (XmlNode childNode in element.ChildNodes)
+                element.RemoveChild(childNode);
+            element.InnerXml = xmlDocument.DocumentElement?.InnerXml;
         }
-
     }
 }

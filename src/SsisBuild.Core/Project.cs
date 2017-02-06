@@ -27,11 +27,11 @@ namespace SsisBuild.Core
 {
     public sealed class Project : IProject
     {
-        public ProtectionLevel ProtectionLevel => _projectManifest?.ProtectonLevel ?? ProtectionLevel.DontSaveSensitive;
+        public ProtectionLevel ProtectionLevel => _projectManifest?.ProtectionLevel ?? ProtectionLevel.DontSaveSensitive;
 
-        public string VersionMajor
+        public int VersionMajor
         {
-            get { return _projectManifest?.VersionMajor; }
+            get { return _projectManifest?.VersionMajor??0; }
             set
             {
                 if (_projectManifest != null)
@@ -39,9 +39,9 @@ namespace SsisBuild.Core
             }
         }
 
-        public string VersionMinor
+        public int VersionMinor
         {
-            get { return _projectManifest?.VersionMinor; }
+            get { return _projectManifest?.VersionMinor??0; }
             set
             {
                 if (_projectManifest != null)
@@ -49,9 +49,9 @@ namespace SsisBuild.Core
             }
         }
 
-        public string VersionBuild
+        public int VersionBuild
         {
-            get { return _projectManifest?.VersionBuild; }
+            get { return _projectManifest?.VersionBuild??0; }
             set
             {
                 if (_projectManifest != null)
@@ -103,7 +103,7 @@ namespace SsisBuild.Core
         public void UpdateParameter(string parameterName, string value, ParameterSource source)
         {
             if (!_isLoaded)
-                throw new ProjectNotLoadedException();
+                throw new ProjectNotInitializedException();
 
             if (_parameters.ContainsKey(parameterName))
                 _parameters[parameterName].SetValue(value, source);
@@ -126,7 +126,7 @@ namespace SsisBuild.Core
         public void Save(string destinationFilePath, ProtectionLevel protectionLevel, string password)
         {
             if (!_isLoaded)
-                throw new ProjectNotLoadedException();
+                throw new ProjectNotInitializedException();
 
             if (Path.GetExtension(destinationFilePath) != ".ispac")
                 throw new Exception($"Destination file name must have an ispac extension. Currently: {destinationFilePath}");
@@ -148,7 +148,7 @@ namespace SsisBuild.Core
         public void Save(Stream destinationStream, ProtectionLevel protectionLevel, string password)
         {
             if (!_isLoaded)
-                throw new ProjectNotLoadedException();
+                throw new ProjectNotInitializedException();
 
             using (var ispacArchive = new ZipArchive(destinationStream, ZipArchiveMode.Create))
             {

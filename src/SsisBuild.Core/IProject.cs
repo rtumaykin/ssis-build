@@ -22,9 +22,9 @@ namespace SsisBuild.Core
     public interface IProject
     {
         ProtectionLevel ProtectionLevel { get; }
-        string VersionMajor { get; set; }
-        string VersionMinor { get; set; }
-        string VersionBuild { get; set; }
+        int VersionMajor { get; set; }
+        int VersionMinor { get; set; }
+        int VersionBuild { get; set; }
         string VersionComments { get; set; }
         string Description { get; set; }
         IReadOnlyDictionary<string, IParameter> Parameters { get; }

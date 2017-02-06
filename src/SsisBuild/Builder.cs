@@ -145,9 +145,9 @@ namespace SsisBuild
                 _logger.LogMessage($"   Overriding Version to {releaseNotes.Version}");
 
 
-                project.VersionMajor = releaseNotes.Version.Major.ToString(CultureInfo.InvariantCulture);
-                project.VersionMinor = releaseNotes.Version.Minor.ToString(CultureInfo.InvariantCulture);
-                project.VersionBuild = releaseNotes.Version.Build.ToString(CultureInfo.InvariantCulture);
+                project.VersionMajor = releaseNotes.Version.Major;
+                project.VersionMinor = releaseNotes.Version.Minor;
+                project.VersionBuild = releaseNotes.Version.Build;
                 _logger.LogMessage($"   Adding Release Notes {string.Join("\r\n", releaseNotes.Notes)}");
                 project.VersionComments = string.Join("\r\n", releaseNotes.Notes);
                 project.Description = string.Join("\r\n", releaseNotes.Notes);
