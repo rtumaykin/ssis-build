@@ -10,7 +10,7 @@ namespace SsisBuild.Core.Tests
 {
     public class ProjectManifestTests : IDisposable
     {
-        private string _workingFolder;
+        private readonly string _workingFolder;
 
         public class ParameterSetupData
         {
@@ -106,7 +106,7 @@ namespace SsisBuild.Core.Tests
             Assert.True(Enum.TryParse(projectProtectionLevel, out testProtectionLevel));
             Assert.Equal(desiredProtectionLevel, testProtectionLevel);
 
-            var packageProtectionLevelNodes = testXmlDoc.SelectNodes("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"ProtectionLevel\"]", testXmlDoc.GetNameSpaceManager());
+            var packageProtectionLevelNodes = testXmlDoc.SelectNodes("//SSIS:Properties/SSIS:Property[@SSIS:Name = \"ProtectionLevel\"]", testXmlDoc.GetNameSpaceManager());
             Assert.NotNull(packageProtectionLevelNodes);
 
             foreach (XmlElement packageProtectionElement in packageProtectionLevelNodes)
@@ -115,6 +115,178 @@ namespace SsisBuild.Core.Tests
             }
 
             Assert.Equal(desiredProtectionLevel, projectManifest.ProtectionLevel);
+        }
+
+        [Theory]
+        [InlineData(ProtectionLevel.EncryptAllWithUserKey)]
+        [InlineData(ProtectionLevel.EncryptSensitiveWithUserKey)]
+        public void Fail_UserKeyProtectionLevel(ProtectionLevel protectionLevel)
+        {
+            var xml = CreateXml(protectionLevel, 1, 1, Helpers.RandomString(20), 1, Helpers.RandomString(20), new string[] {}, new string[] {}, new ParameterSetupData[] {});
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            File.WriteAllText(path, xml);
+            var projectManifest = new ProjectManifest();
+
+            var exception = Record.Exception(() => projectManifest.Initialize(path, null));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidProtectionLevelException>(exception);
+            Assert.Equal(((InvalidProtectionLevelException) exception).ProtectionLevel, protectionLevel);
+        }
+
+        [Fact]
+        public void Fail_NoVersionMajor()
+        {
+            var xml = CreateXml(ProtectionLevel.DontSaveSensitive, 1, 1, Helpers.RandomString(20), 1, Helpers.RandomString(20), new string[] { }, new string[] { }, new ParameterSetupData[] { });
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xml);
+            var versionMajorNode = xmlDoc.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMajor\"]", xmlDoc.GetNameSpaceManager());
+            versionMajorNode?.ParentNode?.RemoveChild(versionMajorNode);
+
+            File.WriteAllText(path, xmlDoc.OuterXml);
+            var projectManifest = new ProjectManifest();
+
+            var exception = Record.Exception(() => projectManifest.Initialize(path, null));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("Major"));
+        }
+
+        [Fact]
+        public void Fail_NoVersionMinor()
+        {
+            var xml = CreateXml(ProtectionLevel.DontSaveSensitive, 1, 1, Helpers.RandomString(20), 1, Helpers.RandomString(20), new string[] { }, new string[] { }, new ParameterSetupData[] { });
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xml);
+            var versionMinorNode = xmlDoc.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMinor\"]", xmlDoc.GetNameSpaceManager());
+            versionMinorNode?.ParentNode?.RemoveChild(versionMinorNode);
+
+            File.WriteAllText(path, xmlDoc.OuterXml);
+            var projectManifest = new ProjectManifest();
+
+            var exception = Record.Exception(() => projectManifest.Initialize(path, null));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("Minor"));
+        }
+
+        [Fact]
+        public void Fail_NoVersionBuild()
+        {
+            var xml = CreateXml(ProtectionLevel.DontSaveSensitive, 1, 1, Helpers.RandomString(20), 1, Helpers.RandomString(20), new string[] { }, new string[] { }, new ParameterSetupData[] { });
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xml);
+            var versionBuildNode = xmlDoc.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionBuild\"]", xmlDoc.GetNameSpaceManager());
+            versionBuildNode?.ParentNode?.RemoveChild(versionBuildNode);
+
+            File.WriteAllText(path, xmlDoc.OuterXml);
+            var projectManifest = new ProjectManifest();
+
+            var exception = Record.Exception(() => projectManifest.Initialize(path, null));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("Build"));
+        }
+
+
+        [Fact]
+        public void Fail_InvalidVersionMajor()
+        {
+            var xml = CreateXml(ProtectionLevel.DontSaveSensitive, 1, 1, Helpers.RandomString(20), 1, Helpers.RandomString(20), new string[] { }, new string[] { }, new ParameterSetupData[] { });
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xml);
+            var versionMajorNode = xmlDoc.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMajor\"]", xmlDoc.GetNameSpaceManager());
+            if (versionMajorNode != null)
+                versionMajorNode.InnerText = Helpers.RandomString(10);
+
+            File.WriteAllText(path, xmlDoc.OuterXml);
+            var projectManifest = new ProjectManifest();
+
+            var exception = Record.Exception(() => projectManifest.Initialize(path, null));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("Major"));
+        }
+
+        [Fact]
+        public void Fail_InvalidVersionMinor()
+        {
+            var xml = CreateXml(ProtectionLevel.DontSaveSensitive, 1, 1, Helpers.RandomString(20), 1, Helpers.RandomString(20), new string[] { }, new string[] { }, new ParameterSetupData[] { });
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xml);
+            var versionMinorNode = xmlDoc.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMinor\"]", xmlDoc.GetNameSpaceManager());
+            if (versionMinorNode != null)
+                versionMinorNode.InnerText = Helpers.RandomString(10); ;
+
+            File.WriteAllText(path, xmlDoc.OuterXml);
+            var projectManifest = new ProjectManifest();
+
+            var exception = Record.Exception(() => projectManifest.Initialize(path, null));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("Minor"));
+        }
+
+        [Fact]
+        public void Fail_InvalidVersionBuild()
+        {
+            var xml = CreateXml(ProtectionLevel.DontSaveSensitive, 1, 1, Helpers.RandomString(20), 1, Helpers.RandomString(20), new string[] { }, new string[] { }, new ParameterSetupData[] { });
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xml);
+            var versionBuildNode = xmlDoc.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionBuild\"]", xmlDoc.GetNameSpaceManager());
+            if (versionBuildNode != null)
+                versionBuildNode.InnerText = Helpers.RandomString(10); ;
+
+            File.WriteAllText(path, xmlDoc.OuterXml);
+            var projectManifest = new ProjectManifest();
+
+            var exception = Record.Exception(() => projectManifest.Initialize(path, null));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("Build"));
+        }
+
+        [Fact]
+        public void Fail_NoVersionComments()
+        {
+            var xml = CreateXml(ProtectionLevel.DontSaveSensitive, 1, 1, Helpers.RandomString(20), 1, Helpers.RandomString(20), new string[] { }, new string[] { }, new ParameterSetupData[] { });
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xml);
+            var versionCommentsNode = xmlDoc.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionComments\"]", xmlDoc.GetNameSpaceManager());
+            versionCommentsNode?.ParentNode?.RemoveChild(versionCommentsNode);
+
+            File.WriteAllText(path, xmlDoc.OuterXml);
+            var projectManifest = new ProjectManifest();
+
+            var exception = Record.Exception(() => projectManifest.Initialize(path, null));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("Comments"));
+        }
+
+        [Fact]
+        public void Fail_NoDescription()
+        {
+            var xml = CreateXml(ProtectionLevel.DontSaveSensitive, 1, 1, Helpers.RandomString(20), 1, Helpers.RandomString(20), new string[] { }, new string[] { }, new ParameterSetupData[] { });
+            var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xml);
+            var descriptionNode = xmlDoc.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"Description\"]", xmlDoc.GetNameSpaceManager());
+            descriptionNode?.ParentNode?.RemoveChild(descriptionNode);
+
+            File.WriteAllText(path, xmlDoc.OuterXml);
+            var projectManifest = new ProjectManifest();
+
+            var exception = Record.Exception(() => projectManifest.Initialize(path, null));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidXmlException>(exception);
+            Assert.True(exception.Message.Contains("Description"));
         }
 
         [Theory, MemberData(nameof(ParameterData))]
@@ -203,7 +375,8 @@ namespace SsisBuild.Core.Tests
             var projectManifestXmlDoc = new XmlDocument();
             var xml = CreateXml(protectionLevel, versionMajor, versionMinor, versionComments, versionBuild, description, packages, connectionManagers, parameters);
             projectManifestXmlDoc.LoadXml(xml);
-            projectManifestXmlDoc.DocumentElement.Attributes["SSIS:ProtectionLevel"].Value = string.Empty;
+            var protectionLevelAttribute = projectManifestXmlDoc.DocumentElement?.Attributes["SSIS:ProtectionLevel"];
+            protectionLevelAttribute?.OwnerElement?.Attributes.Remove(protectionLevelAttribute);
 
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, projectManifestXmlDoc.OuterXml);
@@ -231,7 +404,7 @@ namespace SsisBuild.Core.Tests
             Assert.True(exception.Message.Contains("Invalid Protection Level"));
         }
 
-        private static string CreateXml(ProtectionLevel protectionLevel, int versionMajor, int versionMinor, string versionComments, int versionBuild, string description, string[] packages, string[] connectionManagers, ParameterSetupData[] parameters)
+        internal static string CreateXml(ProtectionLevel protectionLevel, int versionMajor, int versionMinor, string versionComments, int versionBuild, string description, string[] packages, string[] connectionManagers, ParameterSetupData[] parameters)
         {
             return $@"<SSIS:Project SSIS:ProtectionLevel=""{protectionLevel:G}"" xmlns:SSIS=""www.microsoft.com/SqlServer/SSIS"">
 	            <SSIS:Properties>
@@ -264,7 +437,7 @@ namespace SsisBuild.Core.Tests
             </SSIS:Project>";
         }
 
-        private static string CreatePackageMetadataXml(string packageName, ParameterSetupData[] parameters, int versionMajor, int versionMinor, int versionBuild, string versionComments, ProtectionLevel protectionLevel)
+        internal static string CreatePackageMetadataXml(string packageName, ParameterSetupData[] parameters, int versionMajor, int versionMinor, int versionBuild, string versionComments, ProtectionLevel protectionLevel)
         {
             return $@"<SSIS:PackageMetaData SSIS:Name=""{packageName}.dtsx"">
                       <SSIS:Properties>
@@ -286,17 +459,17 @@ namespace SsisBuild.Core.Tests
 	                </SSIS:PackageMetaData>";
         }
 
-        private static string CreatePackageXml(string name)
+        internal static string CreatePackageXml(string name)
         {
             return $@"<SSIS:Package SSIS:Name=""{name}"" SSIS:EntryPoint=""1"" />";
         }
 
-        private static string CreateConnManagerXml(string name)
+        internal static string CreateConnManagerXml(string name)
         {
             return $@"<SSIS:ConnectionManager SSIS:Name=""{name}"" />";
         }
 
-        private static string CreateParameterXml(string name, string value, bool sensitive, DataType dataType)
+        internal static string CreateParameterXml(string name, string value, bool sensitive, DataType dataType)
         {
             var sensitiveInt = sensitive ? 1 : 0;
             var sensitiveAttr = sensitive ? "SSIS:Sensitive =\"1\"" : null;
@@ -323,7 +496,7 @@ namespace SsisBuild.Core.Tests
               </SSIS:Parameter>";
         }
 
-        private static IEnumerable<object[]> ParameterData()
+        internal static IEnumerable<object[]> ParameterData()
         {
             var rnd = new Random(DateTime.Now.Millisecond);
             var protectionLevels = new[] {ProtectionLevel.DontSaveSensitive, ProtectionLevel.EncryptSensitiveWithPassword, ProtectionLevel.EncryptAllWithPassword};
@@ -375,9 +548,9 @@ namespace SsisBuild.Core.Tests
                     protectionLevels[rnd.Next(0, 299) / 100],
                     rnd.Next(0, 100),
                     rnd.Next(0, 100),
-                    Helpers.RandomString(100),
+                    rnd.Next(0, 100) < 30 ? string.Empty : Helpers.RandomString(100),
                     rnd.Next(0, 100),
-                    Helpers.RandomString(100),
+                    rnd.Next(0, 100) < 30 ? string.Empty : Helpers.RandomString(100),
                     packages.ToArray(),
                     connections.ToArray(),
                     paramsData.ToArray()

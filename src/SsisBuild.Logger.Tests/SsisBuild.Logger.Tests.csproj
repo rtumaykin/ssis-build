@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{066D0E51-E30A-4799-BC71-1069FB52E9AC}</ProjectGuid>
+    <ProjectGuid>{F0866407-E091-4871-B956-D15779040290}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SsisBuild.Core.Tests</RootNamespace>
-    <AssemblyName>SsisBuild.Core.Tests</AssemblyName>
+    <RootNamespace>SsisBuild.Logger.Tests</RootNamespace>
+    <AssemblyName>SsisBuild.Logger.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -30,14 +30,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Castle.Core, Version=3.3.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Castle.Core.3.3.3\lib\net45\Castle.Core.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Moq, Version=4.5.30.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
-      <HintPath>..\packages\Moq.4.5.30\lib\net45\Moq.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -64,26 +56,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConfigurationParameterTests.cs" />
-    <Compile Include="ConfigurationTests.cs" />
-    <Compile Include="Helpers.cs" />
-    <Compile Include="PackageTests.cs" />
-    <Compile Include="ProjectConnectionTests.cs" />
-    <Compile Include="ProjectManifestTests.cs" />
-    <Compile Include="ProjectParameterTests.cs" />
-    <Compile Include="ProjectParamsTests.cs" />
-    <Compile Include="ProjectTests.cs" />
+    <Compile Include="LoggerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UserConfigurationTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SsisBuild.Logger\SsisBuild.Logger.csproj">
+      <Project>{6fadb9e9-cf51-4caf-8b82-b4b93fd367eb}</Project>
+      <Name>SsisBuild.Logger</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\SsisBuild.Core\SsisBuild.Core.csproj">
-      <Project>{01657A26-BE3B-4A6E-A193-E175096F54BA}</Project>
-      <Name>SsisBuild.Core</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

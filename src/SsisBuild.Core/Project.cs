@@ -27,7 +27,7 @@ namespace SsisBuild.Core
 {
     public sealed class Project : IProject
     {
-        public ProtectionLevel ProtectionLevel => _projectManifest?.ProtectionLevel ?? ProtectionLevel.DontSaveSensitive;
+        public ProtectionLevel ProtectionLevel => _isLoaded ? _projectManifest.ProtectionLevel : ProtectionLevel.DontSaveSensitive;
 
         public int VersionMajor
         {
@@ -78,8 +78,36 @@ namespace SsisBuild.Core
                     _projectManifest.Description = value;
             }
         }
-        private readonly IDictionary<string, IParameter> _parameters;
-        public IReadOnlyDictionary<string, IParameter> Parameters { get; }
+        private IDictionary<string, IParameter> _parameters;
+
+        private IReadOnlyDictionary<string, IParameter> _readonlyParameters;
+
+        public IReadOnlyDictionary<string, IParameter> Parameters
+        {
+            get
+            {
+                if (_isLoaded && _parameters == null)
+                {
+                    _parameters = new Dictionary<string, IParameter>();
+
+                    if (_projectParams != null)
+                        foreach (var projectParametersParameter in _projectParams.Parameters)
+                        {
+                            _parameters.Add(projectParametersParameter.Key, projectParametersParameter.Value);
+                        }
+
+                    if (_projectManifest != null)
+                        foreach (var projectManifestParameter in _projectManifest.Parameters)
+                        {
+                            _parameters.Add(projectManifestParameter.Key, projectManifestParameter.Value);
+                        }
+
+                    _readonlyParameters = new ReadOnlyDictionary<string, IParameter>(_parameters);
+                }
+
+                return _readonlyParameters;
+            }
+        }
 
         private IProjectManifest _projectManifest;
         private IProjectFile _projectParams;
@@ -90,9 +118,7 @@ namespace SsisBuild.Core
 
         public Project()
         {
-            _parameters = new Dictionary<string, IParameter>();
 
-            Parameters = new ReadOnlyDictionary<string, IParameter>(_parameters);
 
             _packages = new Dictionary<string, IProjectFile>();
             _projectConnections = new Dictionary<string, IProjectFile>();
@@ -105,22 +131,8 @@ namespace SsisBuild.Core
             if (!_isLoaded)
                 throw new ProjectNotInitializedException();
 
-            if (_parameters.ContainsKey(parameterName))
-                _parameters[parameterName].SetValue(value, source);
-        }
-
-        private void LoadParameters()
-        {
-            foreach (var projectParametersParameter in _projectParams.Parameters)
-            {
-                _parameters.Add(projectParametersParameter.Key, projectParametersParameter.Value);
-            }
-
-            foreach (var projectManifestParameter in _projectManifest.Parameters)
-            {
-                _parameters.Add(projectManifestParameter.Key, projectManifestParameter.Value);
-            }
-
+            if (Parameters.ContainsKey(parameterName))
+                Parameters[parameterName].SetValue(value, source);
         }
 
         public void Save(string destinationFilePath, ProtectionLevel protectionLevel, string password)
@@ -129,10 +141,7 @@ namespace SsisBuild.Core
                 throw new ProjectNotInitializedException();
 
             if (Path.GetExtension(destinationFilePath) != ".ispac")
-                throw new Exception($"Destination file name must have an ispac extension. Currently: {destinationFilePath}");
-
-            if (File.Exists(destinationFilePath))
-                File.Delete(destinationFilePath);
+                throw new InvalidExtensionException(destinationFilePath, "ispac");
 
             Directory.CreateDirectory(Path.GetDirectoryName(destinationFilePath));
 
@@ -201,7 +210,7 @@ namespace SsisBuild.Core
                 throw new FileNotFoundException($"File {filePath} does not exist or you don't have permissions to access it.", filePath);
 
             if (!filePath.EndsWith(".ispac", StringComparison.OrdinalIgnoreCase))
-                throw new Exception($"File {filePath} does not have an .ispac extension.");
+                throw new InvalidExtensionException(filePath, "ispac");
 
             using (var ispacStream = new FileStream(filePath, FileMode.Open))
             {
@@ -238,16 +247,11 @@ namespace SsisBuild.Core
 
                                 case ".xml":
                                     break;
-
-                                default:
-                                    throw new Exception($"Unexpected file {fileName} in {filePath}.");
                             }
                         }
                     }
                 }
             }
-
-            LoadParameters();
 
             _isLoaded = true;
         }
@@ -255,10 +259,10 @@ namespace SsisBuild.Core
         public void LoadFromDtproj(string filePath, string configurationName, string password)
         {
             if (!File.Exists(filePath))
-                throw new Exception($"File {filePath} does not exist.");
+                throw new FileNotFoundException($"File {filePath} does not exist.", filePath);
 
             if (!filePath.EndsWith(".dtproj", StringComparison.OrdinalIgnoreCase))
-                throw new Exception($"File {filePath} does not have an .dtproj extension.");
+                throw new InvalidExtensionException(filePath, "dtproj");
 
             var dtprojXmlDoc = new XmlDocument();
             dtprojXmlDoc.Load(filePath);
@@ -269,12 +273,9 @@ namespace SsisBuild.Core
             var projectXmlNode = dtprojXmlDoc.SelectSingleNode("/Project/DeploymentModelSpecificContent/Manifest/SSIS:Project", nsManager);
 
             if (projectXmlNode == null)
-                throw new Exception("Project Manifest Node was not found.");
+                throw new InvalidXmlException("Project Manifest Node was not found.", dtprojXmlDoc);
 
             var projectDirectory = Path.GetDirectoryName(filePath);
-
-            if (string.IsNullOrWhiteSpace(projectDirectory))
-                throw new Exception("Failed to retrieve directory of the source project.");
 
             using (var stream = new MemoryStream())
             {
@@ -306,7 +307,6 @@ namespace SsisBuild.Core
                 _packages.Add(packageName, package);
             }
 
-            LoadParameters();
             _isLoaded = true;
 
             var configuration = new Configuration(configurationName);
@@ -333,7 +333,7 @@ namespace SsisBuild.Core
             var deploymentModel = dtprojXmlDoc.SelectSingleNode("/Project/DeploymentModel")?.InnerText;
 
             if (deploymentModel != "Project")
-                throw new Exception("This build method only apply to Project deployment model.");
+                throw new InvalidDeploymentModelException();
         }
     }
 }

@@ -381,7 +381,7 @@ namespace SsisBuild.Core.Tests
             Directory.Delete(_workingFolder, true);
         }
 
-        private static string CreateXml(string sensitiveParameterValue, int protectionLevel, string sensitivePasswordValue)
+        internal static string CreateXml(string sensitiveParameterValue, int protectionLevel, string sensitivePasswordValue)
         {
             return $@"<?xml version=""1.0""?>
                 <DTS:Executable xmlns:DTS=""www.microsoft.com/SqlServer/Dts""

@@ -680,7 +680,7 @@ namespace SsisBuild.Core.Tests
             Directory.Delete(_workingFolder, true);
         }
 
-        private static string CreateXml(IList<ProjectParamsTests.ParameterSetupData> parameters )
+        internal static string CreateXml(IList<ProjectParamsTests.ParameterSetupData> parameters )
         {
             return $@"<?xml version=""1.0""?>
                 <SSIS:Parameters xmlns:SSIS=""www.microsoft.com/SqlServer/SSIS"">
@@ -688,7 +688,7 @@ namespace SsisBuild.Core.Tests
             </SSIS:Parameters>";
         }
 
-        private static string CreateParameterXml(string name, string value, bool sensitive, DataType dataType)
+        internal static string CreateParameterXml(string name, string value, bool sensitive, DataType dataType)
         {
             var sensitiveInt = sensitive ? 1 : 0;
             var sensitiveAttr = sensitive ? "SSIS:Sensitive =\"1\"" : null;

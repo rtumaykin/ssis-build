@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
-using SsisBuild.Core.Helpers;
 
 namespace SsisBuild.Core
 {
@@ -54,7 +53,7 @@ namespace SsisBuild.Core
 
         public int VersionMajor
         {
-            get { return int.Parse(_versionMajorNodes.FirstOrDefault()?.InnerText); }
+            get { return int.Parse(_versionMajorNodes.FirstOrDefault()?.InnerText??"0"); }
             set
             {
                 foreach (var versionMajorNode in _versionMajorNodes)
@@ -66,7 +65,7 @@ namespace SsisBuild.Core
 
         public int VersionMinor
         {
-            get { return int.Parse(_versionMinorNodes.FirstOrDefault()?.InnerText); ; }
+            get { return int.Parse(_versionMinorNodes.FirstOrDefault()?.InnerText??"0"); }
             set
             {
                 foreach (var versionMinorNode in _versionMinorNodes)
@@ -78,7 +77,7 @@ namespace SsisBuild.Core
 
         public int VersionBuild
         {
-            get { return int.Parse(_versionBuildNodes.FirstOrDefault()?.InnerText); ; }
+            get { return int.Parse(_versionBuildNodes.FirstOrDefault()?.InnerText??"0"); }
             set
             {
                 foreach (var versionBuildNode in _versionBuildNodes)
@@ -90,7 +89,7 @@ namespace SsisBuild.Core
 
         public string VersionComments
         {
-            get { return _versionCommentsNodes.FirstOrDefault()?.InnerText; ; }
+            get { return _versionCommentsNodes.FirstOrDefault()?.InnerText; }
             set
             {
                 foreach (var versionCommentsNode in _versionCommentsNodes)
@@ -102,11 +101,10 @@ namespace SsisBuild.Core
 
         public string Description
         {
-            get { return _descriptionNode?.InnerText; }
+            get { return _descriptionNode.InnerText; }
             set
             {
-                if (_descriptionNode != null)
-                    _descriptionNode.InnerText = value;
+                _descriptionNode.InnerText = value;
             }
         }
 
@@ -147,9 +145,11 @@ namespace SsisBuild.Core
                 _protectionLevelNodes.Add(packageProtectionLevelNode);
             }
 
-            var versionMajorString = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMajor\"]", NamespaceManager)?.InnerText;
-            if (string.IsNullOrWhiteSpace(versionMajorString))
+            var versionMajorNode = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMajor\"]", NamespaceManager);
+            if (versionMajorNode == null)
                 throw new InvalidXmlException("Version Major Xml Node was not found", FileXmlDocument);
+
+            var versionMajorString = versionMajorNode.InnerText;
 
             int test;
             if (!int.TryParse(versionMajorString, out test))
@@ -168,9 +168,11 @@ namespace SsisBuild.Core
                 }
             }
 
-            var versionMinorString = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMinor\"]", NamespaceManager)?.InnerText;
-            if (string.IsNullOrWhiteSpace(versionMinorString))
+            var versionMinorNode = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionMinor\"]", NamespaceManager);
+            if (versionMinorNode == null)
                 throw new InvalidXmlException("Version Minor Xml Node was not found", FileXmlDocument);
+
+            var versionMinorString = versionMinorNode.InnerText;
 
             if (!int.TryParse(versionMinorString, out test))
                 throw new InvalidXmlException($"Invalid value of Version Minor Xml Node: {versionMinorString}.", FileXmlDocument);
@@ -187,10 +189,12 @@ namespace SsisBuild.Core
                     }
                 }
             }
-
-            var versionBuildString = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionBuild\"]", NamespaceManager)?.InnerText;
-            if (string.IsNullOrWhiteSpace(versionBuildString))
+            
+            var versionBuildNode = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionBuild\"]", NamespaceManager);
+            if (versionBuildNode == null)
                 throw new InvalidXmlException("Version Build Xml Node was not found", FileXmlDocument);
+
+            var versionBuildString = versionBuildNode.InnerText;
 
             if (!int.TryParse(versionBuildString, out test))
                 throw new InvalidXmlException($"Invalid value of Version Build Xml Node: {versionBuildString}.", FileXmlDocument);
@@ -208,9 +212,11 @@ namespace SsisBuild.Core
                 }
             }
 
-            var versionCommentsString = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionComments\"]", NamespaceManager)?.InnerText;
-            if (string.IsNullOrWhiteSpace(versionCommentsString))
+            var versionCommentsNode = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"VersionComments\"]", NamespaceManager);
+            if (versionCommentsNode == null)
                 throw new InvalidXmlException("Version Comments Xml Node was not found", FileXmlDocument);
+
+            var versionCommentsString = versionCommentsNode.InnerText;
 
             var versionCommentsNodes = FileXmlDocument.SelectNodes("//*[@SSIS:Name = \"VersionComments\"]", NamespaceManager);
             if (versionCommentsNodes != null)
@@ -226,6 +232,8 @@ namespace SsisBuild.Core
             }
 
             _descriptionNode = FileXmlDocument.SelectSingleNode("/SSIS:Project/SSIS:Properties/SSIS:Property[@SSIS:Name = \"Description\"]", NamespaceManager) as XmlElement;
+            if (_descriptionNode == null)
+                throw new InvalidXmlException("Description Xml Node was not found", FileXmlDocument);
         }
 
         private string[] ExtractPackageNames()

@@ -108,12 +108,7 @@ namespace SsisBuild.Core.Tests
             Assert.Equal(name, (exception as InvalidConfigurationNameException)?.ConfigurationName);
         }
 
-        public void Dispose()
-        {
-
-        }
-
-        private static string GetXml(string configurationName, IDictionary<string, string> parameters)
+        internal static string GetXml(string configurationName, IDictionary<string, string> parameters)
         {
             return $@"<?xml version=""1.0"" encoding=""utf-8""?>
                   <DataTransformationsUserConfiguration xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
@@ -130,7 +125,7 @@ namespace SsisBuild.Core.Tests
                 </DataTransformationsUserConfiguration>";
         }
 
-        private static string GetParameterXml(string name, string value)
+        internal static string GetParameterXml(string name, string value)
         {
             return $@"<ConfigurationSetting>
                         <Id>{Guid.NewGuid():D}</Id>
