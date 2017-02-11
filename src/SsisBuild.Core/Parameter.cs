@@ -16,7 +16,6 @@
 
 using System;
 using System.Xml;
-using SsisBuild.Core.Helpers;
 
 namespace SsisBuild.Core
 {

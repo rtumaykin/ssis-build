@@ -15,11 +15,6 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.ComponentModel;
-using System.Data.SqlClient;
-using System.IO;
-using System.Linq;
-using SsisBuild.Core;
 
 namespace SsisDeploy
 {
