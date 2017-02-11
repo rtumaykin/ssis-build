@@ -14,10 +14,14 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-namespace SsisBuild
+using System;
+
+namespace SsisDeploy
 {
-    public interface IBuilder
+    public class ArgumentsProcessingException : Exception
     {
-        void Build(IBuildArguments buildArguments);
+        public ArgumentsProcessingException(string message) : base (message)
+        {
+        }
     }
 }

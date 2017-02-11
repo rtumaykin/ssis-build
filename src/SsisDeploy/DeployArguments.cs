@@ -16,8 +16,13 @@
 
 namespace SsisDeploy
 {
-    public class DeployArguments
+    public class DeployArguments : IDeployArguments
     {
+        public DeployArguments()
+        {
+            EraseSensitiveInfo = false;
+        }
+
         public string DeploymentFilePath { get; private set; }
 
         public string ServerInstance { get; private set; }
@@ -32,18 +37,13 @@ namespace SsisDeploy
 
         public string ProjectPassword { get; private set; }
 
-        public static DeployArguments ProcessArgs(string[] args)
+        public void ProcessArgs(string[] args)
         {
-            var deploymentArgs = new DeployArguments()
-            {
-                EraseSensitiveInfo = false
-            };
-
             var startPos = 0;
 
             if (!args[0].StartsWith("-"))
             {
-                deploymentArgs.DeploymentFilePath = args[0];
+                DeploymentFilePath = args[0];
                 startPos++;
             }
 
@@ -52,35 +52,46 @@ namespace SsisDeploy
                 switch (args[argPos].ToLowerInvariant())
                 {
                     case "-serverinstance":
-                        deploymentArgs.ServerInstance = args[argPos++ + 1];
+                        ServerInstance = args[argPos++ + 1];
                         break;
 
                     case "-catalog":
-                        deploymentArgs.Catalog = args[argPos++ + 1];
+                        Catalog = args[argPos++ + 1];
                         break;
 
                     case "-folder":
-                        deploymentArgs.Folder = args[argPos++ + 1];
+                        Folder = args[argPos++ + 1];
                         break;
 
                     case "-projectname":
-                        deploymentArgs.ProjectName = args[argPos++ + 1];
+                        ProjectName = args[argPos++ + 1];
                         break;
 
                     case "-erasesensitiveinfo":
-                        deploymentArgs.EraseSensitiveInfo = true;
+                        EraseSensitiveInfo = true;
                         break;
 
                     case "-projectpassword":
-                        deploymentArgs.ProjectPassword = args[argPos++ + 1];
+                        ProjectPassword = args[argPos++ + 1];
                         break;
 
                     default:
-                        throw new InvalidArgumentException(args[argPos]);
+                        throw new InvalidTokenException(args[argPos]);
                 }
             }
 
-            return deploymentArgs;
+            if (string.IsNullOrWhiteSpace(ServerInstance))
+                throw new MissingRequiredArgumentException(nameof(ServerInstance));
+
+            if (string.IsNullOrWhiteSpace(Catalog))
+                throw new MissingRequiredArgumentException(nameof(Catalog));
+
+
+            if (string.IsNullOrWhiteSpace(ServerInstance))
+                throw new MissingRequiredArgumentException(nameof(Folder));
+
+            if (string.IsNullOrWhiteSpace(Folder))
+                throw new MissingRequiredArgumentException(nameof(Folder));
         }
     }
 }

@@ -43,7 +43,7 @@ namespace SsisBuild
         internal static void MainInternal(string[] args, IBuilder builder, IBuildArguments buildArguments)
         {
             buildArguments.ProcessArgs(args);
-            builder.Execute(buildArguments);
+            builder.Build(buildArguments);
         }
 
         private static void Usage()

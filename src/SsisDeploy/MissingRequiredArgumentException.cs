@@ -14,10 +14,10 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-namespace SsisBuild
+namespace SsisDeploy
 {
-    public interface IBuilder
+    public class MissingRequiredArgumentException : ArgumentsProcessingException
     {
-        void Build(IBuildArguments buildArguments);
+        public MissingRequiredArgumentException (string requiredArgument) : base($"{requiredArgument} argument is required.") { }
     }
 }

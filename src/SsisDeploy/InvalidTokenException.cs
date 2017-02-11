@@ -18,9 +18,9 @@ using System;
 
 namespace SsisDeploy
 {
-    public class InvalidArgumentException : Exception
+    public class InvalidTokenException : ArgumentsProcessingException
     {
-        public InvalidArgumentException(string argumentName) : base ($"Invalid argument {argumentName}.")
-        {}
+        public InvalidTokenException(string token) : base($"Invalid token \"{token}\".")
+        { }
     }
 }

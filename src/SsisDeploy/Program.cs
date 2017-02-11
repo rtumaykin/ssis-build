@@ -25,92 +25,13 @@ namespace SsisDeploy
 {
     class Program
     {
-        private enum ObjectTypes : short
-        {
-            Project = 20,
-            Package = 30
-        }
-
-        private class SensitiveParameter
-        {
-            public string Name { get; set; }
-            public Type DataType { get; set; }
-            public string Value { get; set; }
-        }
-
         static void Main(string[] args)
         {
             try
             {
-                var deploymentArguments = DeployArguments.ProcessArgs(args);
-
-                IProject project = new Project();
-                project.LoadFromIspac(deploymentArguments.DeploymentFilePath, deploymentArguments.ProjectPassword);
-
-                var sensitiveParameters = project.Parameters.Where(p => p.Value.Sensitive && p.Value.Value != null)
-                    .ToDictionary(p => string.Copy(p.Key), v => new SensitiveParameter()
-                    {
-                        DataType = v.Value.ParameterDataType,
-                        Name = string.Copy(v.Key),
-                        Value = string.Copy(v.Value.Value)
-                    });
-
-
-                var deploymentProtectionLevel = deploymentArguments.EraseSensitiveInfo ? ProtectionLevel.DontSaveSensitive : ProtectionLevel.ServerStorage;
-
-                var cs = new SqlConnectionStringBuilder()
-                {
-                    ApplicationName = "SSIS Deploy",
-                    DataSource = deploymentArguments.ServerInstance,
-                    InitialCatalog = deploymentArguments.Catalog,
-                    IntegratedSecurity = true
-                };
-
-                using (var zipStream = new MemoryStream())
-                {
-                    project.Save(zipStream, deploymentProtectionLevel, deploymentArguments.ProjectPassword);
-                    zipStream.Flush();
-
-
-
-                    Data.ExecutionScope.ConnectionString = cs.ConnectionString;
-
-                    try
-                    {
-                        Data.Executables.catalog.create_folder.Execute(deploymentArguments.Folder, null);
-                    }
-                    catch (SqlException e)
-                    {
-                        // Ignore if the folder already there
-                        if (e.Number != 27190)
-                            throw;
-                    }
-
-                    Data.Executables.catalog.deploy_project.Execute(deploymentArguments.Folder, deploymentArguments.ProjectName, zipStream.ToArray(), null);
-
-                    if (deploymentArguments.EraseSensitiveInfo)
-                    {
-                        foreach (var sensitiveParameter in sensitiveParameters)
-                        {
-                            var parameterSplit = sensitiveParameter.Key.Split(new[] {"::"}, StringSplitOptions.None);
-                            if (parameterSplit.Length == 2)
-                            {
-                                var objectType = parameterSplit[0].ToLowerInvariant() == "project" ? ObjectTypes.Project : ObjectTypes.Package;
-                                var value = ConvertToObject(sensitiveParameter.Value.Value, sensitiveParameter.Value.DataType);
-                                Data.Executables.catalog.set_object_parameter_value.Execute(
-                                    (short) objectType,
-                                    deploymentArguments.Folder,
-                                    deploymentArguments.ProjectName,
-                                    parameterSplit[1],
-                                    value,
-                                    objectType == ObjectTypes.Project ? parameterSplit[0] : null,
-                                    "V");
-                            }
-                        }
-                    }
-                }
+                MainInternal(new Deployer(), new DeployArguments(), args);
             }
-            catch (InvalidArgumentException x)
+            catch (ArgumentsProcessingException x)
             {
                 Console.WriteLine(x.Message);
                 Usage();
@@ -118,20 +39,55 @@ namespace SsisDeploy
             }
             catch (Exception e)
             {
-
+                Console.WriteLine(e.Message);
                 Environment.Exit(1);
             }
+
+           
+        }
+
+        internal static void MainInternal(IDeployer deployer, IDeployArguments deployArguments, string[] args)
+        {
+            deployArguments.ProcessArgs(args);
+            deployer.Deploy(deployArguments);
         }
 
         private static void Usage()
         {
-            
-        }
+            var usage = new[]
+            {
+                "---------------------------------------------------------------",
+                "Usage:",
+                "",
+                "Syntax:                ssisdeploy [Ispac File] [-<Switch Name> <Value>] [...[-<Switch Name> <Value>]] [-EraseSensitiveInfo]",
+                "",
+                "Description:           Deploys an Ispac file to an SSIS Catalog.",
+                "",
+                "Switches:",
+                "",
+                "  Ispac File:          Full path to an SSIS deployment file (with ispac extension). If a project file is not specified, ssisdeploy searches current working directory",
+                "                       for a file with ispac extension and uses that file.",
+                "",
+                "  -ServerInstance:     Required. Full Name of the target SQL Server instance.",
+                "",
+                "  -Catalog:            Required. Name of the SSIS Catalog on the target server.",
+                "",
+                "  -Folder:             Required. Deployment folder within destination catalog.",
+                "",
+                "  -ProjectName:        Required. Name of the project in the destination folder.",
+                "",
+                "  -ProjectPassword:    Password to decrypt sensitive data for deployment.",
+                "",
+                "  -EraseSensitiveInfo: Option to remove all sensitive info from the deployment ispac and deploy all sensitive parameters separately. If not specified then sensitive data will not be removed.",
+                "",
+                "Example:",
+                "     ssisdeploy sample.ispac -ServerInstance dbserver\\instance -Catalog SSISDB -Folder SampleFolder -ProjectName Sample -ProjectPassword xyz -EraseSensitiveInfo"
+            };
 
-        private static object ConvertToObject(string value, Type type)
-        {
-            var converter = TypeDescriptor.GetConverter(type);
-            return converter.ConvertFromString(value);
+            foreach (var usageLine in usage)
+            {
+                Console.WriteLine(usageLine);
+            }
         }
     }
 }

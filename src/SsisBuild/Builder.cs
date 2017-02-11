@@ -44,7 +44,7 @@ namespace SsisBuild
             _project = project;
         }
 
-        public void Execute(IBuildArguments buildArguments)
+        public void Build(IBuildArguments buildArguments)
         {
             if (buildArguments == null)
                 throw new ArgumentNullException(nameof(buildArguments));

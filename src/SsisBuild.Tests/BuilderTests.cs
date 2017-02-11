@@ -127,7 +127,7 @@ namespace SsisBuild.Tests
             var buildArguments = _buildArgumentsMock.Object;
             var logger = new TestLogger();
             var builder = new Builder(logger, project);
-            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            var exception = Record.Exception(() => builder.Build(buildArguments));
             Assert.Null(exception);
         }
 
@@ -159,7 +159,7 @@ namespace SsisBuild.Tests
             var buildArguments = _buildArgumentsMock.Object;
             var logger = new TestLogger();
             var builder = new Builder(logger, project);
-            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            var exception = Record.Exception(() => builder.Build(buildArguments));
             Assert.NotNull(exception);
             Assert.IsType<PasswordRequiredException>(exception);
         }
@@ -202,7 +202,7 @@ namespace SsisBuild.Tests
             var buildArguments = _buildArgumentsMock.Object;
             var logger = new TestLogger();
             var builder = new Builder(logger, project);
-            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            var exception = Record.Exception(() => builder.Build(buildArguments));
 
             Assert.Null(exception);
             Assert.True(outputParameters.Count == paramsCount);
@@ -238,7 +238,7 @@ namespace SsisBuild.Tests
             var buildArguments = _buildArgumentsMock.Object;
             var logger = new TestLogger();
             var builder = new Builder(logger, project);
-            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            var exception = Record.Exception(() => builder.Build(buildArguments));
             Assert.Null(exception);
         }
 
@@ -259,7 +259,7 @@ namespace SsisBuild.Tests
             var buildArguments = _buildArgumentsMock.Object;
             var logger = new TestLogger();
             var builder = new Builder(logger, project);
-            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            var exception = Record.Exception(() => builder.Build(buildArguments));
             Assert.NotNull(exception);
             Assert.IsType<FileNotFoundException>(exception);
             Assert.Equal(((FileNotFoundException) exception).FileName, releaseNotesPath);
@@ -289,7 +289,7 @@ namespace SsisBuild.Tests
             var buildArguments = _buildArgumentsMock.Object;
             var logger = new TestLogger();
             var builder = new Builder(logger, project);
-            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            var exception = Record.Exception(() => builder.Build(buildArguments));
             Assert.NotNull(exception);
             Assert.IsType<InvalidReleaseNotesException>(exception);
         }
@@ -309,7 +309,7 @@ namespace SsisBuild.Tests
             var buildArguments = _buildArgumentsMock.Object;
             var logger = new TestLogger();
             var builder = new Builder(logger, project);
-            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            var exception = Record.Exception(() => builder.Build(buildArguments));
             Assert.Null(exception);
         }
 
@@ -342,7 +342,7 @@ namespace SsisBuild.Tests
             var buildArguments = _buildArgumentsMock.Object;
             var logger = new TestLogger();
             var builder = new Builder(logger, project);
-            var exception = Record.Exception(() => builder.Execute(buildArguments));
+            var exception = Record.Exception(() => builder.Build(buildArguments));
             Assert.Null(exception);
         }
 
@@ -353,7 +353,7 @@ namespace SsisBuild.Tests
             var project = _projectMock.Object;
             var logger = new TestLogger();
             var builder = new Builder(logger, project);
-            var exception = Record.Exception(() => builder.Execute(null));
+            var exception = Record.Exception(() => builder.Build(null));
             Assert.NotNull(exception);
             Assert.IsType<ArgumentNullException>(exception);
         }

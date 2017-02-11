@@ -50,7 +50,7 @@ namespace SsisBuild.Tests
         {
             var buildArguments = _buildArgumentsMock.Object;
             var testException = new Exception("Some Message");
-            _builderMock.Setup(b => b.Execute(buildArguments)).Throws(testException);
+            _builderMock.Setup(b => b.Build(buildArguments)).Throws(testException);
 
             var exception = Record.Exception(() => Program.MainInternal(new[] { "really anything" }, _builderMock.Object, buildArguments));
 
