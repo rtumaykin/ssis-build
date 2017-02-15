@@ -4,6 +4,7 @@ param (
     [Parameter(Mandatory=$true)][string]$SSISDeploymentFolder,
     [Parameter(Mandatory=$true)][string]$SSISProjectName,
     [Parameter(Mandatory=$true)][string]$Password,
+    [string] $NewPassword,
     [string]$SourceDBName,
     [string]$SourceDBServer,
     [string]$ReleaseNotesFilePath
@@ -21,7 +22,7 @@ $nugetExe = [System.IO.Path]::Combine($Env:LOCALAPPDATA, "Nuget", "Nuget.exe")
 
 
 
-packages\SSISBuild\tools\ssisbuild 'SampleSSISProject\SampleSSISProject.dtproj' -Configuration Deployment -Password "$Password" -OutputFolder "build" -ReleaseNotes "$ReleaseNotesFilePath" "-Parameter:Project::SourceDBServer" "$SourceDBServer" "-Parameter:Project::SourceDBName" "$SourceDBName"
+packages\SSISBuild\tools\ssisbuild 'SampleSSISProject\SampleSSISProject.dtproj' -Configuration Deployment -Password "$Password" -NewPassword "$NewPassword" -OutputFolder "build" -ReleaseNotes "$ReleaseNotesFilePath" "-Parameter:Project::SourceDBServer" "$SourceDBServer" "-Parameter:Project::SourceDBName" "$SourceDBName"
 
 # Copy deploy.ps1 to the artifacts folder
 

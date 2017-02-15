@@ -13,8 +13,8 @@
   DTS:ObjectName="Package 221"
   DTS:PackageType="5"
   DTS:ProtectionLevel="2"
-  DTS:VersionBuild="20"
-  DTS:VersionGUID="{BFED245D-AEEA-4AE7-9C00-F0ED628FCD17}">
+  DTS:VersionBuild="36"
+  DTS:VersionGUID="{F578B857-072F-4171-B14C-F201E61AF7B6}">
   <DTS:Property
     DTS:Name="PackageFormatVersion">6</DTS:Property>
   <DTS:ConnectionManagers>
@@ -43,7 +43,7 @@
               DTS:DataType="130"
               DTS:TextQualified="True"
               DTS:ObjectName="name"
-              DTS:DTSID="{EC26B151-416B-4474-81A1-F57EDF4C3F14}"
+              DTS:DTSID="{C6CEF0F3-0823-4D7A-A00E-D9338442885E}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -51,7 +51,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="id"
-              DTS:DTSID="{8CC85A3D-D4CF-43F1-A58C-576706238513}"
+              DTS:DTSID="{06C72693-5BA8-4B83-8EE1-450399DC5FB7}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -60,7 +60,7 @@
               DTS:DataType="130"
               DTS:TextQualified="True"
               DTS:ObjectName="xtype"
-              DTS:DTSID="{A9A4BA50-AA90-413D-8046-B3246196F420}"
+              DTS:DTSID="{77CB1784-A443-4A19-9342-D0B760F8D951}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -68,7 +68,7 @@
               DTS:DataType="2"
               DTS:TextQualified="True"
               DTS:ObjectName="uid"
-              DTS:DTSID="{31E38096-76A2-4241-A5E3-9448E556ACCB}"
+              DTS:DTSID="{7CA2F2DD-6E21-41B9-B148-C3B749427F2D}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -76,7 +76,7 @@
               DTS:DataType="2"
               DTS:TextQualified="True"
               DTS:ObjectName="info"
-              DTS:DTSID="{D0512513-7441-48C1-9DA8-7D5E21DC79D7}"
+              DTS:DTSID="{4D398397-5093-4630-8793-BFBA6C101892}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -84,7 +84,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="status"
-              DTS:DTSID="{881DAE2B-81B6-46BD-8BD6-EB08F9D05A6B}"
+              DTS:DTSID="{BEE3E00A-E683-4C39-9925-5547BF6ED464}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -92,7 +92,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="base_schema_ver"
-              DTS:DTSID="{E1E39532-FB3B-49EC-B732-CBE3011DC567}"
+              DTS:DTSID="{81943146-4A8F-4956-8D8C-6349C00A2CFA}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -100,7 +100,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="replinfo"
-              DTS:DTSID="{3BFF3DA4-8F0D-4667-BD6A-15EE610A6F14}"
+              DTS:DTSID="{500F72ED-C322-4B3D-849C-F406198BC335}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -108,7 +108,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="parent_obj"
-              DTS:DTSID="{1207587B-0C5A-4971-8E7D-35367228D6CF}"
+              DTS:DTSID="{71A76538-98AE-4CF2-99B9-150F93BAB8A6}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -116,7 +116,7 @@
               DTS:DataType="135"
               DTS:TextQualified="True"
               DTS:ObjectName="crdate"
-              DTS:DTSID="{1B20374F-72D3-4BAB-A21E-8628A20E317E}"
+              DTS:DTSID="{9B9471A6-76E4-4A0F-B948-9A0A67D171F2}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -124,7 +124,7 @@
               DTS:DataType="2"
               DTS:TextQualified="True"
               DTS:ObjectName="ftcatid"
-              DTS:DTSID="{5D640C96-3EF4-43F1-BD8A-209EFF45895D}"
+              DTS:DTSID="{CA469840-EDBC-440D-A538-A5296176ACDB}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -132,7 +132,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="schema_ver"
-              DTS:DTSID="{8EA38041-E1F1-4AEA-B66F-021C487ABCE0}"
+              DTS:DTSID="{1536EA48-2278-4B8D-8008-0E6456C651A8}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -140,7 +140,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="stats_schema_ver"
-              DTS:DTSID="{9D83387A-F758-4F9A-B3A0-0091346920B5}"
+              DTS:DTSID="{3C7FB2B8-61BA-4B27-97CF-5D88A88086F6}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -149,7 +149,7 @@
               DTS:DataType="130"
               DTS:TextQualified="True"
               DTS:ObjectName="type"
-              DTS:DTSID="{908622F9-FD15-4CCE-A868-8F018DD2B0D1}"
+              DTS:DTSID="{E6CF854E-104F-4C63-BA87-79F46DAEE293}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -157,7 +157,7 @@
               DTS:DataType="2"
               DTS:TextQualified="True"
               DTS:ObjectName="userstat"
-              DTS:DTSID="{13C5E461-29D2-43DF-8BB5-C221DF1FE5E6}"
+              DTS:DTSID="{B9BF371A-D14F-4959-B1EB-BA93B7E6A8CA}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -165,7 +165,7 @@
               DTS:DataType="2"
               DTS:TextQualified="True"
               DTS:ObjectName="sysstat"
-              DTS:DTSID="{5EDF45F8-27DA-4096-8950-25C66197B79D}"
+              DTS:DTSID="{82358BF8-125A-49D2-9CB3-16817315ACEC}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -173,7 +173,7 @@
               DTS:DataType="2"
               DTS:TextQualified="True"
               DTS:ObjectName="indexdel"
-              DTS:DTSID="{D1511D8D-80D0-421E-87A8-7D3D4380F0E1}"
+              DTS:DTSID="{16949B4A-9391-466F-AA64-3D89D9D645F3}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -181,7 +181,7 @@
               DTS:DataType="135"
               DTS:TextQualified="True"
               DTS:ObjectName="refdate"
-              DTS:DTSID="{C60CD71C-01FB-4282-9368-8AD7D6E58E81}"
+              DTS:DTSID="{3F0A76CD-1501-4659-82FA-83D648774685}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -189,7 +189,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="version"
-              DTS:DTSID="{37875F54-1E89-40C7-B087-0D0B81692EFA}"
+              DTS:DTSID="{24CBEB69-F3C2-4423-8DD0-4CE2A226068E}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -197,7 +197,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="deltrig"
-              DTS:DTSID="{853C9493-D602-4B92-8E24-96032C118B46}"
+              DTS:DTSID="{20FDAD4B-2E92-45AE-9B1B-83D17F88A82D}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -205,7 +205,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="instrig"
-              DTS:DTSID="{E6047122-283A-471A-95F8-852964860937}"
+              DTS:DTSID="{0D32B039-F497-4F33-BBA6-85D2429C7AE8}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -213,7 +213,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="updtrig"
-              DTS:DTSID="{36921C10-0E8C-416A-A64F-B60E58173999}"
+              DTS:DTSID="{879D7298-BBD8-454D-9243-95C39147C4ED}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -221,7 +221,7 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="seltrig"
-              DTS:DTSID="{8E8DD0C1-CFC1-4423-945A-0C907C20F6BD}"
+              DTS:DTSID="{07873DAE-2CFC-47C5-A614-B679E8F599D4}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -229,15 +229,24 @@
               DTS:DataType="3"
               DTS:TextQualified="True"
               DTS:ObjectName="category"
-              DTS:DTSID="{6D180B9C-D80D-440C-AD27-3C8BC47A90AD}"
+              DTS:DTSID="{92C28E4C-122C-475F-98EC-AADFBF594F7E}"
+              DTS:CreationName="" />
+            <DTS:FlatFileColumn
+              DTS:ColumnType="Delimited"
+              DTS:ColumnDelimiter="_x002C_"
+              DTS:DataType="2"
+              DTS:TextQualified="True"
+              DTS:ObjectName="cache"
+              DTS:DTSID="{48DD4176-70A3-473A-B8A9-21F279EACB6A}"
               DTS:CreationName="" />
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
               DTS:ColumnDelimiter="_x000D__x000A_"
-              DTS:DataType="2"
+              DTS:MaximumWidth="4"
+              DTS:DataType="130"
               DTS:TextQualified="True"
-              DTS:ObjectName="cache"
-              DTS:DTSID="{9132678E-9F84-427A-8F1E-7442BFBD347B}"
+              DTS:ObjectName="DbName"
+              DTS:DTSID="{9FEE53A2-E566-43EE-ADC9-BC801E678CC1}"
               DTS:CreationName="" />
           </DTS:FlatFileColumns>
         </DTS:ConnectionManager>
@@ -255,10 +264,52 @@
         DTS:Name="ServerName">@[User::SourceDBServer]</DTS:PropertyExpression>
       <DTS:ObjectData>
         <DTS:ConnectionManager
-          DTS:ConnectionString="Data Source=db-01;Initial Catalog=msdb;Integrated Security=True;Application Name=SSIS-Package-{B7056363-F8AF-48D5-BD9A-17F57C33F956}db-01.msdb;" />
+          DTS:ConnectionString="Data Source=db-01;User ID=sa;Initial Catalog=msdb;Persist Security Info=True;Application Name=SSIS-Package-{B7056363-F8AF-48D5-BD9A-17F57C33F956}db-01.msdb;">
+          <EncryptedData
+            Type="http://www.w3.org/2001/04/xmlenc#Element"
+            Salt="OUoGJeiDkA=="
+            IV="QcjNO0Dmmro=" xmlns="http://www.w3.org/2001/04/xmlenc#">
+            <EncryptionMethod
+              Algorithm="http://www.w3.org/2001/04/xmlenc#tripledes-cbc" />
+            <CipherData>
+              <CipherValue>QcjNO0DmmroaXlt0IS/GdNdaC4RaYRPDjJ/+jRH/+zfq+wJwj8QFpaHRrMeGeRKgPHI04qGbVfUXn5D7LrLJfch4+hbIZCnxpO0LmNFaJHUss3iqkluCSFxnYgqFrYHsCekro1Dtz/xn1DSStYOZribk0sdHtieillbcuM8M99g=</CipherValue>
+            </CipherData>
+          </EncryptedData>
+        </DTS:ConnectionManager>
       </DTS:ObjectData>
     </DTS:ConnectionManager>
   </DTS:ConnectionManagers>
+  <DTS:PackageParameters>
+    <DTS:PackageParameter
+      DTS:CreationName=""
+      DTS:DataType="3"
+      DTS:DTSID="{DE2BEF67-8332-43A6-B634-49E46FC66E20}"
+      DTS:ObjectName="Parameteraa">
+      <DTS:Property
+        DTS:DataType="3"
+        DTS:Name="ParameterValue">0</DTS:Property>
+    </DTS:PackageParameter>
+    <DTS:PackageParameter
+      DTS:CreationName=""
+      DTS:DataType="3"
+      DTS:DTSID="{D7EAB501-8106-44F2-9B65-691FD746BE96}"
+      DTS:ObjectName="Parameterwere"
+      DTS:Sensitive="True">
+      <DTS:Property
+        DTS:Name="ParameterValue">
+        <EncryptedData
+          IV="DSdxwa1Z9bg="
+          Salt="BD5TixIRQw=="
+          Type="http://www.w3.org/2001/04/xmlenc#Element" xmlns="http://www.w3.org/2001/04/xmlenc#">
+          <EncryptionMethod
+            Algorithm="http://www.w3.org/2001/04/xmlenc#tripledes-cbc" />
+          <CipherData>
+            <CipherValue>DSdxwa1Z9bjVazXDoP2jNMPbRDJrHD8OBFleaf0qjnQEx/RI8iVfEWlY374ai8Zy6Bvo8DioLNhMAl6I7qA+MW0ssDjQ8kMBvBNhPeqMrmWts9IpAqkSNPY2T1v/7EGyNYbO9i3Hn5TFI7QLnGjyBgPIWfJR8hqSCBwsqaTyWNY=</CipherValue>
+          </CipherData>
+        </EncryptedData>
+      </DTS:Property>
+    </DTS:PackageParameter>
+  </DTS:PackageParameters>
   <DTS:Variables>
     <DTS:Variable
       DTS:CreationName=""
@@ -287,6 +338,15 @@
       DTS:ObjectName="SourceDBServer">
       <DTS:VariableValue
         DTS:DataType="8">db-01</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{BFD8C416-8674-4ADC-B793-9704F24FAABF}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="Variable">
+      <DTS:VariableValue
+        DTS:DataType="3">0</DTS:VariableValue>
     </DTS:Variable>
   </DTS:Variables>
   <DTS:Executables>
@@ -841,6 +901,80 @@
               </outputs>
             </component>
             <component
+              refId="Package\Data Flow Task\Derived Column"
+              componentClassID="DTSTransform.DerivedColumn.3"
+              contactInfo="Derived Column;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; All Rights Reserved; http://www.microsoft.com/sql/support;0"
+              description="Creates new column values by applying expressions to transformation input columns. Create new columns or overwrite existing ones. For example, concatenate the values from the 'first name' and 'last name' column to make a 'full name' column."
+              name="Derived Column"
+              usesDispositions="true">
+              <inputs>
+                <input
+                  refId="Package\Data Flow Task\Derived Column.Inputs[Derived Column Input]"
+                  description="Input to the Derived Column Transformation"
+                  name="Derived Column Input">
+                  <externalMetadataColumns />
+                </input>
+              </inputs>
+              <outputs>
+                <output
+                  refId="Package\Data Flow Task\Derived Column.Outputs[Derived Column Output]"
+                  description="Default Output of the Derived Column Transformation"
+                  exclusionGroup="1"
+                  name="Derived Column Output"
+                  synchronousInputId="Package\Data Flow Task\Derived Column.Inputs[Derived Column Input]">
+                  <outputColumns>
+                    <outputColumn
+                      refId="Package\Data Flow Task\Derived Column.Outputs[Derived Column Output].Columns[DbName]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Computation"
+                      errorRowDisposition="FailComponent"
+                      length="4"
+                      lineageId="Package\Data Flow Task\Derived Column.Outputs[Derived Column Output].Columns[DbName]"
+                      name="DbName"
+                      truncationRowDisposition="FailComponent">
+                      <properties>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Derived Column Expression"
+                          name="Expression">@[User::SourceDBName]</property>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Derived Column Friendly Expression"
+                          expressionType="Notify"
+                          name="FriendlyExpression">@[User::SourceDBName]</property>
+                      </properties>
+                    </outputColumn>
+                  </outputColumns>
+                  <externalMetadataColumns />
+                </output>
+                <output
+                  refId="Package\Data Flow Task\Derived Column.Outputs[Derived Column Error Output]"
+                  description="Error Output of the Derived Column Transformation"
+                  exclusionGroup="1"
+                  isErrorOut="true"
+                  name="Derived Column Error Output"
+                  synchronousInputId="Package\Data Flow Task\Derived Column.Inputs[Derived Column Input]">
+                  <outputColumns>
+                    <outputColumn
+                      refId="Package\Data Flow Task\Derived Column.Outputs[Derived Column Error Output].Columns[ErrorCode]"
+                      dataType="i4"
+                      lineageId="Package\Data Flow Task\Derived Column.Outputs[Derived Column Error Output].Columns[ErrorCode]"
+                      name="ErrorCode"
+                      specialFlags="1" />
+                    <outputColumn
+                      refId="Package\Data Flow Task\Derived Column.Outputs[Derived Column Error Output].Columns[ErrorColumn]"
+                      dataType="i4"
+                      lineageId="Package\Data Flow Task\Derived Column.Outputs[Derived Column Error Output].Columns[ErrorColumn]"
+                      name="ErrorColumn"
+                      specialFlags="2" />
+                  </outputColumns>
+                  <externalMetadataColumns />
+                </output>
+              </outputs>
+            </component>
+            <component
               refId="Package\Data Flow Task\Flat File Destination"
               componentClassID="DTSAdapter.FlatFileDestination.3"
               contactInfo="Flat File Destination;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; All Rights Reserved; http://www.microsoft.com/sql/support;0"
@@ -1024,6 +1158,13 @@
                       cachedName="cache"
                       externalMetadataColumnId="Package\Data Flow Task\Flat File Destination.Inputs[Flat File Destination Input].ExternalColumns[cache]"
                       lineageId="Package\Data Flow Task\ADO NET Source.Outputs[ADO NET Source Output].Columns[cache]" />
+                    <inputColumn
+                      refId="Package\Data Flow Task\Flat File Destination.Inputs[Flat File Destination Input].Columns[DbName]"
+                      cachedDataType="wstr"
+                      cachedLength="4"
+                      cachedName="DbName"
+                      externalMetadataColumnId="Package\Data Flow Task\Flat File Destination.Inputs[Flat File Destination Input].ExternalColumns[DbName]"
+                      lineageId="Package\Data Flow Task\Derived Column.Outputs[Derived Column Output].Columns[DbName]" />
                   </inputColumns>
                   <externalMetadataColumns
                     isUsed="True">
@@ -1130,6 +1271,11 @@
                       refId="Package\Data Flow Task\Flat File Destination.Inputs[Flat File Destination Input].ExternalColumns[cache]"
                       dataType="i2"
                       name="cache" />
+                    <externalMetadataColumn
+                      refId="Package\Data Flow Task\Flat File Destination.Inputs[Flat File Destination Input].ExternalColumns[DbName]"
+                      dataType="wstr"
+                      length="4"
+                      name="DbName" />
                   </externalMetadataColumns>
                 </input>
               </inputs>
@@ -1138,9 +1284,14 @@
           <paths>
             <path
               refId="Package\Data Flow Task.Paths[ADO NET Source Output]"
-              endId="Package\Data Flow Task\Flat File Destination.Inputs[Flat File Destination Input]"
+              endId="Package\Data Flow Task\Derived Column.Inputs[Derived Column Input]"
               name="ADO NET Source Output"
               startId="Package\Data Flow Task\ADO NET Source.Outputs[ADO NET Source Output]" />
+            <path
+              refId="Package\Data Flow Task.Paths[Derived Column Output]"
+              endId="Package\Data Flow Task\Flat File Destination.Inputs[Flat File Destination Input]"
+              name="Derived Column Output"
+              startId="Package\Data Flow Task\Derived Column.Outputs[Derived Column Output]" />
           </paths>
         </pipeline>
       </DTS:ObjectData>
@@ -1845,29 +1996,79 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</BinaryItem>
     design-time-name="Package\Data Flow Task">
     <LayoutInfo>
       <GraphLayout
-        Capacity="4" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml">
+        Capacity="8" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml">
+        <NodeLayout
+          Size="154,42"
+          Id="Package\Data Flow Task\Derived Column"
+          TopLeft="306,211" />
+        <NodeLayout
+          Size="158,42"
+          Id="Package\Data Flow Task\ADO NET Source"
+          TopLeft="314,134" />
         <NodeLayout
           Size="172,42"
           Id="Package\Data Flow Task\Flat File Destination"
           TopLeft="309,294" />
-        <NodeLayout
-          Size="158,42"
-          Id="Package\Data Flow Task\ADO NET Source"
-          TopLeft="310,207" />
         <EdgeLayout
-          Id="Package\Data Flow Task.Paths[ADO NET Source Output]"
-          TopLeft="392,249">
+          Id="Package\Data Flow Task.Paths[Derived Column Output]"
+          TopLeft="383,253">
           <EdgeLayout.Curve>
             <mssgle:Curve
               StartConnector="{assembly:Null}"
-              EndConnector="0,45"
+              EndConnector="12,41"
               Start="0,0"
-              End="0,37.5">
+              End="12,33.5">
               <mssgle:Curve.Segments>
                 <mssgle:SegmentCollection
                   Capacity="5">
                   <mssgle:LineSegment
-                    End="0,37.5" />
+                    End="0,16.5" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,16.5"
+                    Point2="0,20.5"
+                    Point3="4,20.5" />
+                  <mssgle:LineSegment
+                    End="8,20.5" />
+                  <mssgle:CubicBezierSegment
+                    Point1="8,20.5"
+                    Point2="12,20.5"
+                    Point3="12,24.5" />
+                  <mssgle:LineSegment
+                    End="12,33.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package\Data Flow Task.Paths[ADO NET Source Output]"
+          TopLeft="393,176">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="-10,35"
+              Start="0,0"
+              End="-10,27.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,13.5" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,13.5"
+                    Point2="0,17.5"
+                    Point3="-4,17.5" />
+                  <mssgle:LineSegment
+                    End="-6,17.5" />
+                  <mssgle:CubicBezierSegment
+                    Point1="-6,17.5"
+                    Point2="-10,17.5"
+                    Point3="-10,21.5" />
+                  <mssgle:LineSegment
+                    End="-10,27.5" />
                 </mssgle:SegmentCollection>
               </mssgle:Curve.Segments>
             </mssgle:Curve>
