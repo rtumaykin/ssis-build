@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Xml;
 using Moq;
 using SsisBuild.Core.Helpers;
+using SsisBuild.Tests.Helpers;
 using Xunit;
 
 namespace SsisBuild.Core.Tests
@@ -39,20 +40,29 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_DtProj()
         {
-            var projectName = $"proj_{Helpers.RandomString(10)}.dtproj";
-            CreateDtprojFiles(projectName);
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.dtproj";
+            var configurationName = Fakes.RandomString();
+            CreateDtprojFiles(projectName, configurationName);
             var proj = new Project();
 
-            proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), "Anything", "123");
+            // Execute
+            proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), configurationName, Fakes.RandomString());
+
+            // Assert
         }
 
         [Fact]
         public void Fail_LoadFromDtproj_FileNotFound()
         {
-            var projectName = $"proj_{Helpers.RandomString(10)}.dtproj";
-
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.dtproj";
             var proj = new Project();
-            var exception = Record.Exception(() => proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), "Anything", "123"));
+
+            // Execute
+            var exception = Record.Exception(() => proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), Fakes.RandomString(), Fakes.RandomString()));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<FileNotFoundException>(exception);
         }
@@ -60,11 +70,16 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_LoadFromDtproj_BadExtension()
         {
-            var projectName = $"proj_{Helpers.RandomString(10)}.xyz";
-            File.Create(Path.Combine(_workingFolder, projectName)).Close();
-
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.xyz";
+            var projectPath = Path.Combine(_workingFolder, projectName);
+            File.Create(projectPath).Close();
             var proj = new Project();
-            var exception = Record.Exception(() => proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), "Anything", "123"));
+
+            // Execute
+            var exception = Record.Exception(() => proj.LoadFromDtproj(projectPath, Fakes.RandomString(), Fakes.RandomString()));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidExtensionException>(exception);
         }
@@ -73,17 +88,24 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_LoadFromDtproj_NoManifest()
         {
-            var projectName = $"proj_{Helpers.RandomString(10)}.dtproj";
-            CreateDtprojFiles(projectName);
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.dtproj";
+            var projectPath = Path.Combine(_workingFolder, projectName);
+            var configurationName = Fakes.RandomString();
+            CreateDtprojFiles(projectName, configurationName);
             var xmlDoc = new XmlDocument();
-            xmlDoc.Load(Path.Combine(_workingFolder, projectName));
+            xmlDoc.Load(projectPath);
             var manifestNode = xmlDoc.SelectSingleNode("//SSIS:Project", xmlDoc.GetNameSpaceManager());
             var parent = manifestNode?.ParentNode;
             parent?.RemoveChild(manifestNode);
-            xmlDoc.Save(Path.Combine(_workingFolder, projectName));
+            xmlDoc.Save(projectPath);
 
             var proj = new Project();
-            var exception = Record.Exception(() => proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), "Anything", "123"));
+
+            // Execute
+            var exception = Record.Exception(() => proj.LoadFromDtproj(projectPath, configurationName, Fakes.RandomString()));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidXmlException>(exception);
             Assert.True(exception.Message.Contains("Manifest"));
@@ -92,8 +114,13 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_UpdateParameter_NotLoaded()
         {
+            // Setup
             var proj = new Project();
-            var exception = Record.Exception(() => proj.UpdateParameter(Helpers.RandomString(10), Helpers.RandomString(10), ParameterSource.Configuration));
+
+            // Execute
+            var exception = Record.Exception(() => proj.UpdateParameter(Fakes.RandomString(), Fakes.RandomString(), ParameterSource.Configuration));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<ProjectNotInitializedException>(exception);
         }
@@ -101,18 +128,24 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_Dtproj_InvalidDeploymentModel()
         {
-            var projectName = $"proj_{Helpers.RandomString(10)}.dtproj";
-            CreateDtprojFiles(projectName);
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.dtproj";
+            var projectPath = Path.Combine(_workingFolder, projectName);
+            var configurationName = Fakes.RandomString();
+            CreateDtprojFiles(projectName, configurationName);
             var xmlDoc = new XmlDocument();
-            xmlDoc.Load(Path.Combine(_workingFolder, projectName));
+            xmlDoc.Load(projectPath);
             var deploymentModelNode = xmlDoc.SelectSingleNode("/Project/DeploymentModel", xmlDoc.GetNameSpaceManager());
             if (deploymentModelNode != null)
-                deploymentModelNode.InnerText = Helpers.RandomString(20);
-
-            xmlDoc.Save(Path.Combine(_workingFolder, projectName));
+                deploymentModelNode.InnerText = Fakes.RandomString();
+            xmlDoc.Save(projectPath);
 
             var proj = new Project();
-            var exception = Record.Exception(() => proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), "Anything", "123"));
+
+            // Execute
+            var exception = Record.Exception(() => proj.LoadFromDtproj(projectPath, configurationName, Fakes.RandomString()));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidDeploymentModelException>(exception);
         }
@@ -120,48 +153,70 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_Save()
         {
-            var projectName = $"proj_{Helpers.RandomString(10)}.dtproj";
-            CreateDtprojFiles(projectName);
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.dtproj";
+            var projectPath = Path.Combine(_workingFolder, projectName);
+            var configurationName = Fakes.RandomString();
+            CreateDtprojFiles(projectName, configurationName);
             var proj = new Project();
+            proj.LoadFromDtproj(projectPath, configurationName, Fakes.RandomString());
 
-            proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), "Anything", "123");
-            var exception = Record.Exception(() => proj.Save(Path.ChangeExtension(Path.Combine(_workingFolder, projectName), ".ispac")));
+            // Execute
+            var exception = Record.Exception(() => proj.Save(Path.ChangeExtension(projectPath, ".ispac")));
+
+            // Assert
             Assert.Null(exception);
         }
 
         [Fact]
         public void Fail_Save_NotInitialized_ToFile()
         {
-            var ispacName = $"proj_{Helpers.RandomString(10)}.ispac";
+            // Setup
+            var ispacName = $"proj_{Fakes.RandomString()}.ispac";
             var proj = new Project();
 
+            // Execute
             var exception = Record.Exception(() => proj.Save(Path.Combine(_workingFolder, ispacName)));
+
+            // Assert
+            Assert.NotNull(exception);
             Assert.IsType<ProjectNotInitializedException>(exception);
         }
 
         [Fact]
         public void Fail_Save_NotInitialized_ToStream()
         {
-            var ispacName = $"proj_{Helpers.RandomString(10)}.ispac";
+            // Setup
+            var ispacName = $"proj_{Fakes.RandomString()}.ispac";
             var proj = new Project();
 
             Exception exception;
             using (var stream = File.OpenWrite(Path.Combine(_workingFolder, ispacName)))
             {
+                // Execute
                 exception = Record.Exception(() => proj.Save(stream, ProtectionLevel.DontSaveSensitive, null));
             }
+
+            // Assert
+            Assert.NotNull(exception);
             Assert.IsType<ProjectNotInitializedException>(exception);
         }
 
         [Fact]
         public void Fail_Save_InvalidExtension()
         {
-            var projectName = $"proj_{Helpers.RandomString(10)}.dtproj";
-            CreateDtprojFiles(projectName);
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.dtproj";
+            var projectPath = Path.Combine(_workingFolder, projectName);
+            var configurationName = Fakes.RandomString();
+            CreateDtprojFiles(projectName, configurationName);
             var proj = new Project();
+            proj.LoadFromDtproj(projectPath, configurationName, Fakes.RandomString());
 
-            proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), "Anything", "123");
-            var exception = Record.Exception(() => proj.Save(Path.ChangeExtension(Path.Combine(_workingFolder, projectName), ".xyz")));
+            // Execute
+            var exception = Record.Exception(() => proj.Save(Path.ChangeExtension(projectPath, ".xyz")));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidExtensionException>(exception);
         }
@@ -169,25 +224,34 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_LoadFromIspac()
         {
-            var projectName = $"proj_{Helpers.RandomString(10)}.dtproj";
-            CreateDtprojFiles(projectName);
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.dtproj";
+            var projectPath = Path.Combine(_workingFolder, projectName);
+            var configurationName = Fakes.RandomString();
+            CreateDtprojFiles(projectName, configurationName);
             var proj = new Project();
-
-            proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), "Anything", "123");
-
-            proj.Save(Path.ChangeExtension(Path.Combine(_workingFolder, projectName), ".ispac"));
-
+            proj.LoadFromDtproj(projectPath, configurationName, Fakes.RandomString());
+            proj.Save(Path.ChangeExtension(projectPath, ".ispac"));
             var newProj = new Project();
-            var exception = Record.Exception(() => newProj.LoadFromIspac(Path.ChangeExtension(Path.Combine(_workingFolder, projectName), ".ispac"), null));
+            
+            // Execute
+            var exception = Record.Exception(() => newProj.LoadFromIspac(Path.ChangeExtension(projectPath, ".ispac"), null));
+
+            // Assert
             Assert.Null(exception);
         }
 
         [Fact]
         public void Fail_LoadFromIspac_FileNotFound()
         {
-            var projectName = $"proj_{Helpers.RandomString(10)}.dtproj";
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.dtproj";
             var proj = new Project();
+
+            // Execute
             var exception = Record.Exception(() => proj.LoadFromIspac(Path.ChangeExtension(Path.Combine(_workingFolder, projectName), ".ispac"), null));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<FileNotFoundException>(exception);
         }
@@ -195,10 +259,16 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_LoadFromIspac_InvalidExtension()
         {
-            var projectName = $"proj_{Helpers.RandomString(10)}.xyz";
-            File.Create(Path.Combine(_workingFolder, projectName)).Close();
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.xyz";
+            var projectPath = Path.Combine(_workingFolder, projectName);
+            File.Create(projectPath).Close();
             var proj = new Project();
-            var exception = Record.Exception(() => proj.LoadFromIspac(Path.Combine(_workingFolder, projectName), null));
+
+            // Execute
+            var exception = Record.Exception(() => proj.LoadFromIspac(projectPath, null));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidExtensionException>(exception);
         }
@@ -206,12 +276,13 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_OriginalParameters()
         {
+            // Setup
             var manifestMock = new Mock<IProjectManifest>();
 
             var manifestParameters = new[]
             {
-                CreateParameter("Project::CN_xyz_1", Helpers.RandomString(20), false, ParameterSource.Original),
-                CreateParameter("Project::CN_xyz_2", Helpers.RandomString(20), false, ParameterSource.Original),
+                CreateParameter($"Project::{Fakes.RandomString()}", Fakes.RandomString(), Fakes.RandomBool(), Fakes.RandomEnum<ParameterSource>()),
+                CreateParameter($"Project::{Fakes.RandomString()}", Fakes.RandomString(), Fakes.RandomBool(), Fakes.RandomEnum<ParameterSource>()),
             }.ToDictionary(p => p.Name, p => p);
 
             manifestMock.Setup(m => m.Parameters).Returns(manifestParameters);
@@ -220,18 +291,20 @@ namespace SsisBuild.Core.Tests
             var projectParamsMock = new Mock<IProjectFile>();
             var projectParameters = new[]
             {
-                CreateParameter("Project::Parameter1", Helpers.RandomString(20), false, ParameterSource.Original),
-                CreateParameter("Project::Parameter2", Helpers.RandomString(20), false, ParameterSource.Original),
+                CreateParameter($"Project::{Fakes.RandomString()}", Fakes.RandomString(), Fakes.RandomBool(), Fakes.RandomEnum<ParameterSource>()),
+                CreateParameter($"Project::{Fakes.RandomString()}", Fakes.RandomString(), Fakes.RandomBool(), Fakes.RandomEnum<ParameterSource>()),
             }.ToDictionary(p => p.Name, p => p);
 
             projectParamsMock.Setup(m => m.Parameters).Returns(projectParameters);
             var projectParams = projectParamsMock.Object;
 
+            // Execute
             var project = new Project();
             typeof(Project).GetField("_projectManifest", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(project, manifest);
             typeof(Project).GetField("_projectParams", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(project, projectParams);
             typeof(Project).GetField("_isLoaded", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(project, true);
 
+            // Assert
             Assert.Equal(4, project.Parameters.Count);
             foreach (var parameter in projectParameters)
             {
@@ -254,12 +327,13 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_UpdateParameters()
         {
+            // Setup
             var manifestMock = new Mock<IProjectManifest>();
 
             var manifestParameters = new[]
             {
-                CreateParameter("Project::CN_xyz_1", Helpers.RandomString(20), false, ParameterSource.Original),
-                CreateParameter("Project::CN_xyz_2", Helpers.RandomString(20), false, ParameterSource.Original),
+                CreateParameter($"Project::{Fakes.RandomString()}", Fakes.RandomString(), Fakes.RandomBool(), ParameterSource.Original),
+                CreateParameter($"Project::{Fakes.RandomString()}", Fakes.RandomString(), Fakes.RandomBool(), ParameterSource.Original),
             }.ToDictionary(p => p.Name, p => p);
 
             manifestMock.Setup(m => m.Parameters).Returns(manifestParameters);
@@ -268,22 +342,24 @@ namespace SsisBuild.Core.Tests
             var projectParamsMock = new Mock<IProjectFile>();
             var projectParameters = new[]
             {
-                CreateParameter("Project::Parameter1", Helpers.RandomString(20), false, ParameterSource.Original),
-                CreateParameter("Project::Parameter2", Helpers.RandomString(20), false, ParameterSource.Original),
+                CreateParameter($"Project::{Fakes.RandomString()}", Fakes.RandomString(), Fakes.RandomBool(), ParameterSource.Original),
+                CreateParameter($"Project::{Fakes.RandomString()}", Fakes.RandomString(), Fakes.RandomBool(), ParameterSource.Original),
             }.ToDictionary(p => p.Name, p => p);
 
             projectParamsMock.Setup(m => m.Parameters).Returns(projectParameters);
             var projectParams = projectParamsMock.Object;
 
+            // Execute
             var project = new Project();
             typeof(Project).GetField("_projectManifest", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(project, manifest);
             typeof(Project).GetField("_projectParams", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(project, projectParams);
             typeof(Project).GetField("_isLoaded", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(project, true);
 
+            // Assert
             Assert.Equal(4, project.Parameters.Count);
             foreach (var parameter in projectParameters)
             {
-                var newValue = Helpers.RandomString(10);
+                var newValue = Fakes.RandomString();
                 project.UpdateParameter(parameter.Value.Name, newValue, ParameterSource.Manual);
 
                 Assert.True(project.Parameters.ContainsKey(parameter.Key));
@@ -292,7 +368,7 @@ namespace SsisBuild.Core.Tests
             }
             foreach (var parameter in manifestParameters)
             {
-                var newValue = Helpers.RandomString(10);
+                var newValue = Fakes.RandomString();
                 project.UpdateParameter(parameter.Value.Name, newValue, ParameterSource.Manual);
 
                 Assert.True(project.Parameters.ContainsKey(parameter.Key));
@@ -305,24 +381,24 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_OriginalVersionInfo()
         {
+            // Setup
             var manifestMock = new Mock<IProjectManifest>();
-
-            var rnd = new Random(DateTime.Now.Millisecond);
 
             manifestMock.SetupAllProperties();
             var manifest = manifestMock.Object;
-            manifest.VersionMajor = rnd.Next();
-            manifest.VersionMinor = rnd.Next();
-            manifest.VersionBuild = rnd.Next();
-            manifest.VersionComments = Helpers.RandomString(100);
-            manifest.Description = Helpers.RandomString(100);
-            manifest.ProtectionLevel  = ProtectionLevel.DontSaveSensitive;
-            ;
-
+            manifest.VersionMajor = Fakes.RandomInt(0, 100);
+            manifest.VersionMinor = Fakes.RandomInt(0, 100);
+            manifest.VersionBuild = Fakes.RandomInt(0, 100);
+            manifest.VersionComments = Fakes.RandomString();
+            manifest.Description = Fakes.RandomString();
+            manifest.ProtectionLevel  = Fakes.RandomEnum<ProtectionLevel>();
+            
+            // Execute
             var project = new Project();
             typeof(Project).GetField("_projectManifest", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(project, manifest);
             typeof(Project).GetField("_isLoaded", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(project, true);
 
+            // Assert
             Assert.Equal(manifest.VersionMajor, project.VersionMajor);
             Assert.Equal(manifest.VersionMinor, project.VersionMinor);
             Assert.Equal(manifest.VersionBuild, project.VersionBuild);
@@ -335,13 +411,11 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_UpdateVersionInfo()
         {
-            var proj = new Project();
+            // Setup
             var manifestMock = new Mock<IProjectManifest>();
 
-            var protectionLevel = ProtectionLevel.DontSaveSensitive;
+            var protectionLevel = Fakes.RandomEnum<ProtectionLevel>();
             manifestMock.SetupGet(m => m.ProtectionLevel).Returns(protectionLevel);
-
-            var rnd = new Random(DateTime.Now.Millisecond);
 
             manifestMock.SetupAllProperties();
             var manifest = manifestMock.Object;
@@ -350,12 +424,14 @@ namespace SsisBuild.Core.Tests
             typeof(Project).GetField("_projectManifest", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(project, manifest);
             typeof(Project).GetField("_isLoaded", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(project, true);
 
-            project.VersionMajor = rnd.Next();
-            project.VersionMinor = rnd.Next();
-            project.VersionBuild = rnd.Next();
-            project.VersionComments = Helpers.RandomString(100);
-            project.Description = Helpers.RandomString(100);
+            // Execute
+            project.VersionMajor = Fakes.RandomInt(0, 100);
+            project.VersionMinor = Fakes.RandomInt(0, 100);
+            project.VersionBuild = Fakes.RandomInt(0, 100);
+            project.VersionComments = Fakes.RandomString();
+            project.Description = Fakes.RandomString();
 
+            // Assert
             Assert.Equal(project.VersionMajor, manifest.VersionMajor);
             Assert.Equal(project.VersionMinor, manifest.VersionMinor);
             Assert.Equal(project.VersionBuild, manifest.VersionBuild);
@@ -383,48 +459,48 @@ namespace SsisBuild.Core.Tests
             return parameterMock.Object;
         }
 
-        internal void CreateDtprojFiles(string projectName)
+        internal void CreateDtprojFiles(string projectName, string configurationName)
         {
-            var packages = new string[] {$"p_{Helpers.RandomString(20)}.dtsx", $"p_{Helpers.RandomString(20)}.dtsx"};
-            var connections = new string[] { $"c_{Helpers.RandomString(20)}.conmgr", $"c_{Helpers.RandomString(20)}.conmgr" };
+            var packages = new[] {$"p_{Fakes.RandomString()}.dtsx", $"p_{Fakes.RandomString()}.dtsx"};
+            var connections = new[] { $"c_{Fakes.RandomString()}.conmgr", $"c_{Fakes.RandomString()}.conmgr" };
 
 
-            var paramName = Helpers.RandomString(10);
+            var paramName = Fakes.RandomString();
 
-            var projectParamsXml = ProjectParamsTests.CreateXml(new List<ProjectParamsTests.ParameterSetupData>(){
-                {new ProjectParamsTests.ParameterSetupData()
+            var projectParamsXml = XmlGenerators.ProjectParamsFile(new List<ParameterSetupData>(){
+                {new ParameterSetupData
                 {
-                    Value = Helpers.RandomString(10),
+                    Value = Fakes.RandomString(),
                     Name = paramName,
                     DataType = DataType.String,
                     Sensitive = false
                 } }
             });
 
-            var projectManifestXml = ProjectManifestTests.CreateXml(ProtectionLevel.DontSaveSensitive, 1, 2, Helpers.RandomString(20), 3, "Descr", packages, connections,
-                new ProjectManifestTests.ParameterSetupData[]
+            var projectManifestXml = XmlGenerators.ProjectManifestFile(ProtectionLevel.DontSaveSensitive, 1, 2, Fakes.RandomString(), 3, "Descr", packages, connections,
+                new[]
                 {
-                    new ProjectManifestTests.ParameterSetupData()
+                    new ParameterSetupData()
                     {
-                        Value = Helpers.RandomString(20),
+                        Value = Fakes.RandomString(),
                         DataType = DataType.String,
-                        Name = Helpers.RandomString(20),
+                        Name = Fakes.RandomString(),
                         Sensitive = false
                     }, 
                 });
-            var configurationXml = ConfigurationTests.GetXml("Anything", new Dictionary<string, string>()
+            var configurationXml = XmlGenerators.ConfigurationFile(configurationName, new Dictionary<string, string>()
             {
                 {
-                    $"Project::{paramName}", Helpers.RandomString(10) 
+                    $"Project::{paramName}", Fakes.RandomString() 
                 }
             });
             var configurationsXmlDoc = new XmlDocument();
             configurationsXmlDoc.LoadXml(configurationXml);
 
-            var userConfigurationXml = UserConfigurationTests.GetXml("Anything", new Dictionary<string, string>()
+            var userConfigurationXml = XmlGenerators.UserConfigurationFile(configurationName, new Dictionary<string, string>()
             {
                 {
-                    $"Project::{paramName}", Helpers.RandomString(10)
+                    $"Project::{paramName}", Fakes.RandomString()
                 }
             });
             var dtprojXml = $@"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -446,27 +522,15 @@ namespace SsisBuild.Core.Tests
             File.WriteAllText($"{Path.Combine(_workingFolder, dtproj)}.user", userConfigurationXml);
             foreach (var package in packages)
             {
-                var packageXml = PackageTests.CreateXml("123", (int)ProtectionLevel.EncryptSensitiveWithPassword, "345");
+                var packageXml = XmlGenerators.PackageFile(Fakes.RandomString(), (int)ProtectionLevel.EncryptSensitiveWithPassword, Fakes.RandomString());
                 File.WriteAllText($"{Path.Combine(_workingFolder, package)}", packageXml);
             }
 
             foreach (var connection in connections)
             {
-                var projectConnectionsXml = CreateProjectConnectionsXml();
+                var projectConnectionsXml = XmlGenerators.ProjectConnectionsFile();
                 File.WriteAllText($"{Path.Combine(_workingFolder, connection)}", projectConnectionsXml);
             }
-        }
-
-        private static string CreateProjectConnectionsXml()
-        {
-            return $@"<?xml version=""1.0""?>
-                <DTS:ConnectionManager xmlns:DTS=""www.microsoft.com/SqlServer/Dts""
-                  DTS:ObjectName=""{Helpers.RandomString(20)}""
-                  DTS:DTSID=""{Guid.NewGuid():B}""
-                  DTS:CreationName=""{Helpers.RandomString(100)}"">
-                  <DTS:ObjectData>
-                  </DTS:ObjectData>
-                </DTS:ConnectionManager>";
         }
 
         public void Dispose()

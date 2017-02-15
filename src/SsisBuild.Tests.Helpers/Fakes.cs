@@ -17,16 +17,32 @@
 using System;
 using System.Linq;
 
-namespace SsisBuild.Core.Tests
+namespace SsisBuild.Tests.Helpers
 {
-    public class Helpers
+    public class Fakes
     {
         private static readonly Random Random = new Random();
-        public static string RandomString(int length)
+        public static string RandomString(int minLength = 10, int maxLength = 100)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length)
+            return new string(Enumerable.Repeat(chars, Random.Next(minLength, maxLength))
               .Select(s => s[Random.Next(s.Length)]).ToArray());
+        }
+
+        public static T RandomEnum<T>()
+        {
+            var v = Enum.GetValues(typeof(T));
+            return (T)v.GetValue(Random.Next(v.Length));
+        }
+
+        public static bool RandomBool()
+        {
+            return Random.NextDouble() < 0.5;
+        }
+
+        public static int RandomInt(int min = int.MinValue, int max = int.MaxValue)
+        {
+            return Random.Next(min, max);
         }
     }
 }

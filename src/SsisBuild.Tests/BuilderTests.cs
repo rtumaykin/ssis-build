@@ -23,40 +23,13 @@ using System.Xml;
 using Moq;
 using SsisBuild.Core;
 using SsisBuild.Logger;
+using SsisBuild.Tests.Helpers;
 using Xunit;
 
 namespace SsisBuild.Tests
 {
     public class BuilderTests : IDisposable
     {
-        private class TestLogger : ILogger
-        {
-            public IList<string> Messages { get; private set; }
-            public IList<string> Warnings{ get; private set; }
-            public IList<string> Errors { get; private set; }
-
-            public TestLogger()
-            {
-                Messages = new List<string>();
-                Warnings = new List<string>();
-                Errors = new List<string>();
-            }
-            public void LogMessage(string message)
-            {
-                Messages.Add(message);
-            }
-
-            public void LogError(string error)
-            {
-                Errors.Add(error);
-            }
-
-            public void LogWarning(string warning)
-            {
-                Warnings.Add(warning);
-            }
-        }
-
         private class TestBuildParameterUpdateResult
         {
             public string Name { get; set; }
@@ -72,12 +45,14 @@ namespace SsisBuild.Tests
 
         private readonly Mock<IProject> _projectMock;
         private readonly Mock<IBuildArguments> _buildArgumentsMock;
-        private string _workingFolder;
+        private readonly string _workingFolder;
+        private readonly Mock<ILogger> _loggerMock;
 
         public BuilderTests()
         {
             _projectMock = new Mock<IProject>();
             _buildArgumentsMock = new Mock<IBuildArguments>();
+            _loggerMock = new Mock<ILogger>();
             _workingFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_workingFolder);
         }
@@ -110,8 +85,9 @@ namespace SsisBuild.Tests
         [InlineData(ProtectionLevel.DontSaveSensitive, null, false, false)]
         public void Pass_Execute_EncryptionLevels_Passwords(ProtectionLevel projectProtectionLevel, string buildArgumentsProtectionLevel, bool sendPassword, bool sendNewPassword)
         {
-            var password = sendPassword ? Helpers.RandomString(30) : null;
-            var newPassword = sendNewPassword ? Helpers.RandomString(30) : null;
+            // Setup
+            var password = sendPassword ? Fakes.RandomString() : null;
+            var newPassword = sendNewPassword ? Fakes.RandomString() : null;
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(projectProtectionLevel);
             _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
@@ -121,13 +97,17 @@ namespace SsisBuild.Tests
             _buildArgumentsMock.Setup(ba => ba.Password).Returns(password);
             _buildArgumentsMock.Setup(ba => ba.NewPassword).Returns(newPassword);
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
-            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Fakes.RandomString());
 
             var project = _projectMock.Object;
             var buildArguments = _buildArgumentsMock.Object;
-            var logger = new TestLogger();
+            var logger = _loggerMock.Object;
             var builder = new Builder(logger, project);
+
+            // Execute
             var exception = Record.Exception(() => builder.Build(buildArguments));
+
+            // Assert
             Assert.Null(exception);
         }
 
@@ -142,8 +122,9 @@ namespace SsisBuild.Tests
         [InlineData(ProtectionLevel.DontSaveSensitive, "EncryptSensitiveWithPassword", false, false)]
         public void Fail_Execute_EncryptionLevels_Passwords(ProtectionLevel projectProtectionLevel, string buildArgumentsProtectionLevel, bool sendPassword, bool sendNewPassword)
         {
-            var password = sendPassword ? Helpers.RandomString(30) : null;
-            var newPassword = sendNewPassword ? Helpers.RandomString(30) : null;
+            // Setup
+            var password = sendPassword ? Fakes.RandomString() : null;
+            var newPassword = sendNewPassword ? Fakes.RandomString() : null;
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(projectProtectionLevel);
             _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
@@ -153,13 +134,17 @@ namespace SsisBuild.Tests
             _buildArgumentsMock.Setup(ba => ba.Password).Returns(password);
             _buildArgumentsMock.Setup(ba => ba.NewPassword).Returns(newPassword);
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
-            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Fakes.RandomString());
 
             var project = _projectMock.Object;
             var buildArguments = _buildArgumentsMock.Object;
-            var logger = new TestLogger();
+            var logger = _loggerMock.Object;
             var builder = new Builder(logger, project);
+
+            // Execute
             var exception = Record.Exception(() => builder.Build(buildArguments));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<PasswordRequiredException>(exception);
         }
@@ -167,17 +152,18 @@ namespace SsisBuild.Tests
         [Fact]
         public void Pass_Execute_BuildArgumentsParametersUpdate()
         {
+            // Setup
             var outputParameters = new List<TestBuildParameterUpdateResult>();
             var inputParameers = new List<TestBuildParameterUpdateInput>();
 
-            var paramsCount = new Random(DateTime.Now.Millisecond).Next(20, 100);
+            var paramsCount = Fakes.RandomInt(20, 100);
             for (var i = 0; i < paramsCount; i++)
             {
                 inputParameers.Add(new TestBuildParameterUpdateInput()
                 {
-                    Value = Helpers.RandomString(paramsCount),
+                    Value = Fakes.RandomString(),
                     // to ensure it is unique
-                    Name = $"{Guid.NewGuid():N}-{Helpers.RandomString(paramsCount)}"
+                    Name = $"{Guid.NewGuid():N}-{Fakes.RandomString()}"
                 });
             }
 
@@ -196,14 +182,17 @@ namespace SsisBuild.Tests
 
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(inputParameers.ToDictionary(i => i.Name, i => i.Value)));
-            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Fakes.RandomString());
 
             var project = _projectMock.Object;
             var buildArguments = _buildArgumentsMock.Object;
-            var logger = new TestLogger();
+            var logger = _loggerMock.Object;
             var builder = new Builder(logger, project);
+
+            // Execute
             var exception = Record.Exception(() => builder.Build(buildArguments));
 
+            // Assert
             Assert.Null(exception);
             Assert.True(outputParameters.Count == paramsCount);
             for (var cnt = 0; cnt < paramsCount; cnt++)
@@ -223,6 +212,7 @@ namespace SsisBuild.Tests
         [InlineData("### New in 1.1.10 (Released 2017/01/01)\r\n* Note 1.\r\n* Note 2.\r\n* Note3.\r\n\r\n### New in 1.1.09 (Released 2016/12/01)\r\n* Note 4.\r\n* Note 5.\r\n* Note6.\r\n")]
         public void Execute_Pass_ValidReleaseNotes(string releaseNotesWithLineBreaks)
         {
+            // Setup
             var releaseNotesPath = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(releaseNotesPath, releaseNotesWithLineBreaks);
 
@@ -231,20 +221,25 @@ namespace SsisBuild.Tests
 
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
-            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Fakes.RandomString());
             _buildArgumentsMock.Setup(ba => ba.ReleaseNotes).Returns(releaseNotesPath);
 
             var project = _projectMock.Object;
             var buildArguments = _buildArgumentsMock.Object;
-            var logger = new TestLogger();
+            var logger = _loggerMock.Object;
             var builder = new Builder(logger, project);
+
+            // Execute
             var exception = Record.Exception(() => builder.Build(buildArguments));
+
+            // Assert
             Assert.Null(exception);
         }
 
         [Fact]
         public void Execute_Fail_InvalidPathReleaseNotes()
         {
+            // Setup
             var releaseNotesPath = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
@@ -252,14 +247,18 @@ namespace SsisBuild.Tests
 
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
-            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Fakes.RandomString());
             _buildArgumentsMock.Setup(ba => ba.ReleaseNotes).Returns(releaseNotesPath);
 
             var project = _projectMock.Object;
             var buildArguments = _buildArgumentsMock.Object;
-            var logger = new TestLogger();
+            var logger = _loggerMock.Object;
             var builder = new Builder(logger, project);
+
+            // Execute
             var exception = Record.Exception(() => builder.Build(buildArguments));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<FileNotFoundException>(exception);
             Assert.Equal(((FileNotFoundException) exception).FileName, releaseNotesPath);
@@ -272,6 +271,7 @@ namespace SsisBuild.Tests
         [InlineData(null)]
         public void Execute_Fail_InvalidContentReleaseNotes(string releaseNotes)
         {
+            // Setup
             var releaseNotesPath = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.Create(releaseNotesPath).Close();
             if (releaseNotes != null)
@@ -282,14 +282,18 @@ namespace SsisBuild.Tests
 
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
-            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Fakes.RandomString());
             _buildArgumentsMock.Setup(ba => ba.ReleaseNotes).Returns(releaseNotesPath);
 
             var project = _projectMock.Object;
             var buildArguments = _buildArgumentsMock.Object;
-            var logger = new TestLogger();
+            var logger = _loggerMock.Object;
             var builder = new Builder(logger, project);
+
+            // Execute
             var exception = Record.Exception(() => builder.Build(buildArguments));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidReleaseNotesException>(exception);
         }
@@ -297,19 +301,24 @@ namespace SsisBuild.Tests
         [Fact]
         public void Execute_Pass_CustomOutputFolder()
         {
+            // Setup
             _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
             _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
 
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
-            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
-            _buildArgumentsMock.Setup(ba => ba.OutputFolder).Returns("something");
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Fakes.RandomString());
+            _buildArgumentsMock.Setup(ba => ba.OutputFolder).Returns(Fakes.RandomString());
 
             var project = _projectMock.Object;
             var buildArguments = _buildArgumentsMock.Object;
-            var logger = new TestLogger();
+            var logger = _loggerMock.Object;
             var builder = new Builder(logger, project);
+
+            // Execute
             var exception = Record.Exception(() => builder.Build(buildArguments));
+
+            // Assert
             Assert.Null(exception);
         }
 
@@ -317,18 +326,17 @@ namespace SsisBuild.Tests
         [Fact]
         public void Execute_Pass_EchoParametersCoverage()
         {
+            // Setup
             var xmlDocument = new XmlDocument();
             xmlDocument.LoadXml("<root><parent><child>123</child></parent></root>");
-            var childNode = xmlDocument.SelectSingleNode("/root/parent/child") as XmlElement;
-
 
             var projectParameters = new Dictionary<string, IParameter>
             {
-                {"Parameter1", CreateParameter("Parameter1", "1", false, ParameterSource.Original)},
+                {"Parameter1", CreateParameter("Parameter1", Fakes.RandomString(), false, ParameterSource.Original)},
                 {"SensitiveOriginalParameterNoValue", CreateParameter("SensitiveOriginalParameterNoValue", null, true, ParameterSource.Original)},
-                {"Parameter2", CreateParameter("Parameter2", "1", false, ParameterSource.Configuration)},
+                {"Parameter2", CreateParameter("Parameter2", Fakes.RandomString(), false, ParameterSource.Configuration)},
                 {"SensitiveConfigParameterNoValue", CreateParameter("SensitiveConfigParameterNoValue", null, true, ParameterSource.Configuration)},
-                {"Parameter3", CreateParameter("Parameter3", "1", false, ParameterSource.Manual)}
+                {"Parameter3", CreateParameter("Parameter3", Fakes.RandomString(), false, ParameterSource.Manual)}
             };
 
             _projectMock.Setup(p => p.ProtectionLevel).Returns(ProtectionLevel.DontSaveSensitive);
@@ -336,13 +344,17 @@ namespace SsisBuild.Tests
 
             _buildArgumentsMock.Setup(ba => ba.ProjectPath).Returns(Path.GetTempFileName());
             _buildArgumentsMock.Setup(ba => ba.Parameters).Returns(new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()));
-            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Helpers.RandomString(30));
+            _buildArgumentsMock.Setup(ba => ba.Configuration).Returns(Fakes.RandomString());
 
             var project = _projectMock.Object;
             var buildArguments = _buildArgumentsMock.Object;
-            var logger = new TestLogger();
+            var logger = _loggerMock.Object;
             var builder = new Builder(logger, project);
+
+            // Execute
             var exception = Record.Exception(() => builder.Build(buildArguments));
+
+            // Assert
             Assert.Null(exception);
         }
 
@@ -350,10 +362,15 @@ namespace SsisBuild.Tests
         [Fact]
         public void Fail_Execute_NoArgs()
         {
+            // Setup
             var project = _projectMock.Object;
-            var logger = new TestLogger();
+            var logger = _loggerMock.Object;
             var builder = new Builder(logger, project);
+
+            // Execute
             var exception = Record.Exception(() => builder.Build(null));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<ArgumentNullException>(exception);
         }
@@ -364,10 +381,14 @@ namespace SsisBuild.Tests
         [InlineData(true, false)]
         public void Fail_New_NullLoggerOrProject(bool passLogger, bool passProject)
         {
-            var logger = passLogger ? new TestLogger() : null;
+            // Setup
+            var logger = passLogger ? _loggerMock.Object : null;
             var project = passProject ? _projectMock.Object : null;
 
+            // Execute
             var exception = Record.Exception(() => new Builder(logger, project));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<ArgumentNullException>(exception);
         }
@@ -375,7 +396,11 @@ namespace SsisBuild.Tests
         [Fact]
         public void Pass_New()
         {
+            // Setup
+            // Execute
             var builder = new Builder();
+
+            // Assert
             Assert.NotNull(builder);
         }
 

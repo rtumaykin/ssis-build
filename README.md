@@ -2,7 +2,7 @@
 ### A command line utility that builds an ispac file from a Visual Studio SSIS project (project deployment model only). 
 ####**Syntax**
 
-`ssisbuild [Project File] [-<Switch Name> <Value>] [...[-<Switch Name> <Value>]] [-Parameter:<Name> <Value>] [...[-Parameter: <Name> <Value>]] [-SensitiveParameter:<Name> <Value>] [...[-SensitiveParameter: <Name> <Value>]]`
+`ssisbuild [Project File] [-<Switch Name> <Value>] [...[-<Switch Name> <Value>]] [-Parameter:<Name> <Value>] [...[-Parameter: <Name> <Value>]]`
 
 ####**Switches**
 - **Project File:**
@@ -11,7 +11,7 @@ Full path to a SSIS project file (with dtproj extension). If a project file is n
 - **-Configuration:**
 Required. Name of project configuration to use.
 
-- **-OutputFolder**
+- **-OutputFolder:**
 Full path to a folder where the ispac file will be created. If ommitted, then the ispac file will be created in the bin/&lt;Configuration&gt; subfolder of the project folder.
 
 - **-ProtectionLevel:**
@@ -26,11 +26,39 @@ Password to encrypt resulting project if its resulting protection level is eithe
 - **-Parameter:**
 Project or Package parameter. Name is a standard full parameter name including the scope. For example `Project::Parameter1`. During the build, these values will replace existing values regardless of what they were originally.
 
-- **-SensitiveParameter:**
-Same as `-Parameter`, but during the build this value will be set to Sensitive, and therefore will be encrypted (or not saved if the target protection level is `DontSaveSensitive`.
-
 - **-ReleaseNotes:**
 Path to a release notes file. Supports simple or complex release notes format, as defined [here](http://fsharp.github.io/FAKE/apidocs/fake-releasenoteshelper.html).
 
 #### Example:
 `ssisbuild example.dtproj -Configuration Release -Parameter:SampleParameter "some value"`
+
+# **SSISDeploy**
+### A command line utility that deploys an ispac file to an SSIS catalog. 
+####**Syntax**
+
+`ssisdeploy [Ispac File] -ServerInstance <ServerInstanceName> -Catalog <CatalogName> -Folder <FolderName> -ProjectName <ProjectName> [-ProjectPassword <ProjectPassword>] [-EraseSensitiveInfo]`
+
+####**Switches**
+- **Ispac File:**
+Full path to an SSIS deployment file (with ispac extension). If a deployment file is not specified, ssisdeploy searches current working directory for a file with ispac extension and uses that file.
+
+- **-ServerInstance:**
+Required. Full Name of the target SQL Server instance.
+
+- **-Catalog:**
+ Required. Name of the SSIS Catalog on the target server.
+
+- **-Folder:**
+Required. Deployment folder within destination catalog..
+
+- **-ProjectName:**
+Required. Name of the project in the destination folder.
+
+- **-ProjectPassword:**
+Password to decrypt sensitive data for deployment.
+
+- **-EraseSensitiveInfo:**
+Option to remove all sensitive info from the deployment ispac and deploy all sensitive parameters separately. If not specified then sensitive data will not be removed.
+
+#### Example:
+`ssisdeploy sample.ispac -ServerInstance dbserver\\instance -Catalog SSISDB -Folder SampleFolder -ProjectName Sample -ProjectPassword xyz -EraseSensitiveInfo`

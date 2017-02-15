@@ -14,6 +14,11 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
+using System.IO;
+using System.Linq;
+using SsisBuild.Core;
+
 namespace SsisDeploy
 {
     public class DeployArguments : IDeployArguments
@@ -41,10 +46,17 @@ namespace SsisDeploy
         {
             var startPos = 0;
 
-            if (!args[0].StartsWith("-"))
+            if (args.Length > 0 && !args[0].StartsWith("-"))
             {
-                DeploymentFilePath = args[0];
+                DeploymentFilePath = Path.IsPathRooted(args[0])
+                    ? Path.GetFullPath(args[0])
+                    : Path.Combine(Environment.CurrentDirectory, args[0]);
+
                 startPos++;
+            }
+            else
+            {
+                DeploymentFilePath = Directory.EnumerateFiles(Environment.CurrentDirectory, "*.ispac").FirstOrDefault();
             }
 
             for (var argPos = startPos; argPos < args.Length; argPos++)
@@ -80,6 +92,12 @@ namespace SsisDeploy
                 }
             }
 
+            if (string.IsNullOrWhiteSpace(DeploymentFilePath)) 
+                throw new DeploymentFileNotFoundException(Environment.CurrentDirectory);
+
+            if (!DeploymentFilePath.EndsWith(".ispac"))
+                throw new InvalidExtensionException(DeploymentFilePath, ".ispac");
+
             if (string.IsNullOrWhiteSpace(ServerInstance))
                 throw new MissingRequiredArgumentException(nameof(ServerInstance));
 
@@ -87,8 +105,8 @@ namespace SsisDeploy
                 throw new MissingRequiredArgumentException(nameof(Catalog));
 
 
-            if (string.IsNullOrWhiteSpace(ServerInstance))
-                throw new MissingRequiredArgumentException(nameof(Folder));
+            if (string.IsNullOrWhiteSpace(ProjectName))
+                throw new MissingRequiredArgumentException(nameof(ProjectName));
 
             if (string.IsNullOrWhiteSpace(Folder))
                 throw new MissingRequiredArgumentException(nameof(Folder));

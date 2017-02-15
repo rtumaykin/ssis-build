@@ -67,7 +67,6 @@
   <ItemGroup>
     <Compile Include="BuildArgumentsTests.cs" />
     <Compile Include="BuilderTests.cs" />
-    <Compile Include="Helpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SsisBuildTests.cs" />
   </ItemGroup>
@@ -82,6 +81,10 @@
     <ProjectReference Include="..\SsisBuild.Logger\SsisBuild.Logger.csproj">
       <Project>{6fadb9e9-cf51-4caf-8b82-b4b93fd367eb}</Project>
       <Name>SsisBuild.Logger</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SsisBuild.Tests.Helpers\SsisBuild.Tests.Helpers.csproj">
+      <Project>{17afe8ad-f52e-44e5-b0f6-1b24f17edb1b}</Project>
+      <Name>SsisBuild.Tests.Helpers</Name>
     </ProjectReference>
     <ProjectReference Include="..\SsisBuild\SsisBuild.csproj">
       <Project>{8b1b1e18-1ba7-4593-afe2-76064bd213c4}</Project>

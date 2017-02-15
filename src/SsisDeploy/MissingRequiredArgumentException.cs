@@ -18,6 +18,11 @@ namespace SsisDeploy
 {
     public class MissingRequiredArgumentException : ArgumentsProcessingException
     {
-        public MissingRequiredArgumentException (string requiredArgument) : base($"{requiredArgument} argument is required.") { }
+        public string RequiredArgument { get; }
+
+        public MissingRequiredArgumentException(string requiredArgument) : base($"{requiredArgument} argument is required.")
+        {
+            RequiredArgument = requiredArgument;
+        }
     }
 }

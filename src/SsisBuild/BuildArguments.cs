@@ -125,9 +125,6 @@ namespace SsisBuild
             if (string.IsNullOrWhiteSpace(ProjectPath))
                 throw new ProjectFileNotFoundException(Environment.CurrentDirectory);
 
-            if (!File.Exists(ProjectPath))
-                throw new FileNotFoundException("Project file not found.", ProjectPath);
-
             if (ProtectionLevel != null && !(new[] { "DontSaveSensitive", "EncryptAllWithPassword", "EncryptSensitiveWithPassword" }.Contains(ProtectionLevel ?? string.Empty, StringComparer.InvariantCultureIgnoreCase)))
                 throw new InvalidArgumentException(nameof(ProtectionLevel), ProtectionLevel);
 

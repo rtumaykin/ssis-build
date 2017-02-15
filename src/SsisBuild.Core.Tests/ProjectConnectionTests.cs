@@ -29,8 +29,10 @@ namespace SsisBuild.Core.Tests
         [InlineData(ProtectionLevel.ServerStorage)]
         public void Pass_ProtectionLevel_ProjectFile(ProtectionLevel protectionLevel)
         {
-            var projectConnection = new ProjectConnection();
-            projectConnection.ProtectionLevel = protectionLevel;
+            // Execute
+            var projectConnection = new ProjectConnection {ProtectionLevel = protectionLevel};
+
+            // Assert
             Assert.Equal(protectionLevel, projectConnection.ProtectionLevel);
         }
         

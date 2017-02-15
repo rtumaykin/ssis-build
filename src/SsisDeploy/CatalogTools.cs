@@ -18,10 +18,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 namespace SsisDeploy
 {
+    [ExcludeFromCodeCoverage]
     public class CatalogTools : ICatalogTools
     {
         public void DeployProject(string connectionString, string folderName, string projectName, bool eraseSensitiveInfo, IDictionary<string, SensitiveParameter> parametersToDeploy, MemoryStream projectStream)

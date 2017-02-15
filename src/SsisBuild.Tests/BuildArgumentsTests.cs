@@ -15,16 +15,15 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
+using SsisBuild.Tests.Helpers;
 using Xunit;
 
 namespace SsisBuild.Tests
 {
     public class BuildArgumentsTests : IDisposable
     {
-        private readonly MethodInfo _parseMethod;
-        private readonly MethodInfo _validateMethod;
         private readonly string _workingFolder;
         private readonly string _oldWorkingFolder;
         
@@ -34,8 +33,6 @@ namespace SsisBuild.Tests
             Directory.CreateDirectory(_workingFolder);
             _oldWorkingFolder = Environment.CurrentDirectory;
             Environment.CurrentDirectory = _workingFolder;
-            _parseMethod = typeof(BuildArguments).GetMethod("Parse", BindingFlags.NonPublic|BindingFlags.Instance);
-            _validateMethod = typeof(BuildArguments).GetMethod("Validate", BindingFlags.NonPublic|BindingFlags.Instance);
         }
 
         public void Dispose()
@@ -44,199 +41,233 @@ namespace SsisBuild.Tests
             Directory.Delete(_workingFolder, true);
         }
 
-
-        #region Resolve tests
         [Fact]
-        public void Pass_Parse_ProjectPath()
+        public void Pass_Process_AllProperties_ExplicitProjectPathNoRoot()
         {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
-            var buildArguments = new BuildArguments();
-            _parseMethod.Invoke(buildArguments, new object[] { new string[] {}});
-            Assert.NotNull(buildArguments);
-            Assert.Equal(buildArguments.ProjectPath, filePath);
-        }
-
-        [Fact]
-        public void Pass_Parse_FullProjectPath()
-        {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
-            var buildArguments = new BuildArguments();
-            _parseMethod.Invoke(buildArguments, new object[] {new[] {"test.dtproj"}});
-            Assert.NotNull(buildArguments);
-            Assert.Equal(buildArguments.ProjectPath, filePath);
-        }
-
-        [Fact]
-        public void Pass_Parse_AllProperties()
-        {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
+            // Setup
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            var protectionLevelString = new[] {"EncryptAllWithPassword", "EncryptSensitiveWithPassword"}[Fakes.RandomInt(0, 200) / 200];
             var args = new[]
             {
-                "test.dtproj",
+                Path.GetFileName(filePath),
                 $"-{nameof(BuildArguments.Configuration)}",
-                "abc",
+                Fakes.RandomString(),
                 $"-{nameof(BuildArguments.ProtectionLevel)}",
-                "EncryptAllWithPassword",
+                protectionLevelString,
                 $"-{nameof(BuildArguments.NewPassword)}",
-                "123",
+                Fakes.RandomString(),
                 $"-{nameof(BuildArguments.Password)}",
-                "234",
+                Fakes.RandomString(),
                 $"-{nameof(BuildArguments.OutputFolder)}",
-                ".\\sss",
+                $".\\{Fakes.RandomString()}",
                 $"-{nameof(BuildArguments.ReleaseNotes)}",
-                ".\\aaa",
-                "-Parameter:Project::Parameter1",
-                "asdfg",
-                "-Parameter:Package1::Parameter1",
-                "qwerty"
+                $".\\{Fakes.RandomString()}",
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
             };
-            var buildArguments = new BuildArguments();
-            _parseMethod.Invoke(buildArguments, new object[] { args });
 
+            // Execute
+            var buildArguments = new BuildArguments();
+            buildArguments.ProcessArgs(args);
+
+            // Assert
             Assert.NotNull(buildArguments);
-            Assert.Equal(buildArguments.Configuration, "abc");
-            Assert.Equal(buildArguments.ProtectionLevel, "EncryptAllWithPassword");
-            Assert.Equal(buildArguments.NewPassword, "123");
-            Assert.Equal(buildArguments.Password, "234");
-            Assert.Equal(buildArguments.OutputFolder, ".\\sss");
-            Assert.Equal(buildArguments.ReleaseNotes, ".\\aaa");
+            Assert.Equal(filePath, buildArguments.ProjectPath);
+            Assert.Equal(args[2], buildArguments.Configuration);
+            Assert.Equal(args[4], buildArguments.ProtectionLevel);
+            Assert.Equal(args[6], buildArguments.NewPassword);
+            Assert.Equal(args[8], buildArguments.Password);
+            Assert.Equal(args[10], buildArguments.OutputFolder);
+            Assert.Equal(args[12], buildArguments.ReleaseNotes);
+
             Assert.NotNull(buildArguments.Parameters);
             Assert.True(buildArguments.Parameters.Count == 2);
-            Assert.Equal(buildArguments.Parameters["Project::Parameter1"], "asdfg");
-            Assert.Equal(buildArguments.Parameters["Package1::Parameter1"], "qwerty");
+            Assert.Equal(args[14], buildArguments.Parameters[args[13].Split(new [] {':'}, 2)[1]]);
+            Assert.Equal(args[16], buildArguments.Parameters[args[15].Split(new[] { ':' }, 2)[1]]);
         }
 
+        [Fact]
+        public void Pass_Process_AllProperties_ExplicitProjectPathWithRoot()
+        {
+            // Setup
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            var protectionLevelString = new[] { "EncryptAllWithPassword", "EncryptSensitiveWithPassword" }[Fakes.RandomInt(0, 200) / 200];
+            var args = new[]
+            {
+                filePath,
+                $"-{nameof(BuildArguments.Configuration)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.ProtectionLevel)}",
+                protectionLevelString,
+                $"-{nameof(BuildArguments.NewPassword)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.Password)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.OutputFolder)}",
+                $".\\{Fakes.RandomString()}",
+                $"-{nameof(BuildArguments.ReleaseNotes)}",
+                $".\\{Fakes.RandomString()}",
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+            };
+
+            // Execute
+            var buildArguments = new BuildArguments();
+            buildArguments.ProcessArgs(args);
+
+            // Assert
+            Assert.NotNull(buildArguments);
+            Assert.Equal(filePath, buildArguments.ProjectPath);
+            Assert.Equal(args[2], buildArguments.Configuration);
+            Assert.Equal(args[4], buildArguments.ProtectionLevel);
+            Assert.Equal(args[6], buildArguments.NewPassword);
+            Assert.Equal(args[8], buildArguments.Password);
+            Assert.Equal(args[10], buildArguments.OutputFolder);
+            Assert.Equal(args[12], buildArguments.ReleaseNotes);
+
+            Assert.NotNull(buildArguments.Parameters);
+            Assert.True(buildArguments.Parameters.Count == 2);
+            Assert.Equal(args[14], buildArguments.Parameters[args[13].Split(new[] { ':' }, 2)[1]]);
+            Assert.Equal(args[16], buildArguments.Parameters[args[15].Split(new[] { ':' }, 2)[1]]);
+        }
 
         [Fact]
-        public void Pass_Parse_Configuration()
+        public void Pass_Process_AllProperties_ImplicitProjectPath()
         {
-            var args = new[] { $"-{nameof(BuildArguments.Configuration)}", "Development" };
+            // Setup
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            File.Create(filePath).Close();
+            var protectionLevelString = new[] { "EncryptAllWithPassword", "EncryptSensitiveWithPassword" }[Fakes.RandomInt(0, 200) / 200];
+            var args = new[]
+            {
+                $"-{nameof(BuildArguments.Configuration)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.ProtectionLevel)}",
+                protectionLevelString,
+                $"-{nameof(BuildArguments.NewPassword)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.Password)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.OutputFolder)}",
+                $".\\{Fakes.RandomString()}",
+                $"-{nameof(BuildArguments.ReleaseNotes)}",
+                $".\\{Fakes.RandomString()}",
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+            };
+
+            // Execute
             var buildArguments = new BuildArguments();
-            _parseMethod.Invoke(buildArguments, new object[] { args });
+            buildArguments.ProcessArgs(args);
+
+            // Assert
             Assert.NotNull(buildArguments);
-            Assert.Equal(buildArguments.Configuration, "Development");
+            Assert.Equal(filePath, buildArguments.ProjectPath);
+            Assert.Equal(args[1], buildArguments.Configuration);
+            Assert.Equal(args[3], buildArguments.ProtectionLevel);
+            Assert.Equal(args[5], buildArguments.NewPassword);
+            Assert.Equal(args[7], buildArguments.Password);
+            Assert.Equal(args[9], buildArguments.OutputFolder);
+            Assert.Equal(args[11], buildArguments.ReleaseNotes);
+
+            Assert.NotNull(buildArguments.Parameters);
+            Assert.True(buildArguments.Parameters.Count == 2);
+            Assert.Equal(args[13], buildArguments.Parameters[args[12].Split(new[] { ':' }, 2)[1]]);
+            Assert.Equal(args[15], buildArguments.Parameters[args[14].Split(new[] { ':' }, 2)[1]]);
         }
 
         [Fact]
         public void Fail_Parse_NoArgumentValue()
         {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
+            // Setup
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            File.Create(filePath).Close();
             // need to set configuration value, otherwise the call will fail;
-            var args = new[] { $"-{nameof(BuildArguments.Configuration)}", "Development", $"-{nameof(BuildArguments.Password)}" };
-
-            var exception = Record.Exception(() => _parseMethod.Invoke(new BuildArguments(), new object[] { args }));
-
-            Assert.NotNull(exception);
-
-            if (exception is TargetInvocationException)
-                exception = exception.InnerException;
-
-            Assert.IsType<NoValueProvidedException>(exception);
-
+            var args = new[]
+            {
+                $"-{nameof(BuildArguments.Configuration)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.Password)}"
+            };
             var testException = new NoValueProvidedException(nameof(BuildArguments.Password));
-            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
-        }
 
-        [Theory]
-        [InlineData("dkjdkjkdj")]
-        [InlineData("password")]
-        [InlineData("-jdhdjhdj")]
-        public void Fail_Parse_InvalidToken(string token)
-        {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
-            // need to set configuration value, otherwise the call will fail;
-            var args = new[] { $"-{nameof(BuildArguments.Configuration)}", "Development", token };
+            // Execute
+            var exception = Record.Exception(() => new BuildArguments().ProcessArgs(args));
 
-            var exception = Record.Exception(() => _parseMethod.Invoke(new BuildArguments(), new object[] { args }));
 
+            // Assert
             Assert.NotNull(exception);
-
-            if (exception is TargetInvocationException)
-                exception = exception.InnerException;
-
-            Assert.IsType<InvalidTokenException>(exception);
-            var testException = new InvalidTokenException(token);
+            Assert.IsType<NoValueProvidedException>(exception);
             Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
-        #endregion // Resolve tests
 
-        #region Validate tests
         [Fact]
-        public void Pass_Validate_ProjectPath()
+        public void Fail_Parse_InvalidToken()
         {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
-            var buildArguments = new BuildArguments();
-            _parseMethod.Invoke(buildArguments, new object[] { new string[] { } });
+            // Setup
+            var token = Fakes.RandomString();
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            File.Create(filePath).Close();
+            // need to set configuration value, otherwise the call will fail;
+            var args = new[]
+            {
+                $"-{nameof(BuildArguments.Configuration)}",
+                Fakes.RandomString(),
+                token
+            };
+            var testException = new InvalidTokenException(token);
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Configuration), "abc");
+            // Execute
+            var exception = Record.Exception(() => new BuildArguments().ProcessArgs(args));
 
-            var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] { }));
-
-            Assert.Null(exception);
+            // Assert
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidTokenException>(exception);
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
         [Fact]
         public void Fail_Validate_NullProjectPath()
         {
+            // Setup
             var buildArguments = new BuildArguments();
-
-            var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] {}));
-
-            Assert.NotNull(exception);
-
-            if (exception is TargetInvocationException)
-                exception = exception.InnerException;
-
-            Assert.IsType<ProjectFileNotFoundException>(exception);
+            var args = new[]
+{
+                $"-{nameof(BuildArguments.Configuration)}",
+                Fakes.RandomString(),
+            };
             var testException = new ProjectFileNotFoundException(Environment.CurrentDirectory);
-            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
-        }
 
-        [Fact]
-        public void Fail_Validate_InvalidProjectPath()
-        {
-            var buildArguments = new BuildArguments();
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "abc.dtproj");
+            // Execute
+            var exception = Record.Exception(() => buildArguments.ProcessArgs(args));
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Configuration), "abc");
-
-            var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] { }));
-
+            // Assert
             Assert.NotNull(exception);
-
-            if (exception is TargetInvocationException)
-                exception = exception.InnerException;
-
-            Assert.IsType<FileNotFoundException>(exception);
+            Assert.IsType<ProjectFileNotFoundException>(exception);
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
         [Fact]
         public void Fail_Validate_NoConfiguration()
         {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
-
+            // Setup
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            File.Create(filePath).Close();
             var buildArguments = new BuildArguments();
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
-
-            var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] { }));
-
-            Assert.NotNull(exception);
-
-            if (exception is TargetInvocationException)
-                exception = exception.InnerException;
-
-            Assert.IsType<MissingRequiredArgumentException>(exception);
             var testException = new MissingRequiredArgumentException(nameof(buildArguments.Configuration));
+            
+            // Execute
+            var exception = Record.Exception(() => buildArguments.ProcessArgs(new string[] { }));
 
+            // Assert
+            Assert.NotNull(exception);
+            Assert.IsType<MissingRequiredArgumentException>(exception);
             Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
@@ -244,32 +275,39 @@ namespace SsisBuild.Tests
         [InlineData("XYZ")]
         [InlineData("ServerStorage")]
         [InlineData("EncryptSensitiveWithUserKey")]
-        public void Fail_Validate_InvalidProtectionLevel(string protectionLevel)
+        public void Fail_Validate_InvalidProtectionLevel(string protectionLevelString)
         {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
+            // Setup
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            File.Create(filePath).Close();
 
-            var buildArguments = new BuildArguments();
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
+            var args = new[]
+            {
+                $"-{nameof(BuildArguments.Configuration)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.ProtectionLevel)}",
+                protectionLevelString,
+                $"-{nameof(BuildArguments.NewPassword)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.Password)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.OutputFolder)}",
+                $".\\{Fakes.RandomString()}",
+                $"-{nameof(BuildArguments.ReleaseNotes)}",
+                $".\\{Fakes.RandomString()}",
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+            };
+            var testException = new InvalidArgumentException(nameof(BuildArguments.ProtectionLevel), protectionLevelString);
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Configuration), "abc");
+            // Execute
+            var exception = Record.Exception(() => new BuildArguments().ProcessArgs(args));
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProtectionLevel), protectionLevel);
-
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Password), "123");
-
-            var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] { }));
-
+            // Assert
             Assert.NotNull(exception);
-
-            if (exception is TargetInvocationException)
-                exception = exception.InnerException;
-
             Assert.IsType<InvalidArgumentException>(exception);
-            var testException = new InvalidArgumentException(nameof(buildArguments.ProtectionLevel), protectionLevel);
             Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
@@ -277,162 +315,197 @@ namespace SsisBuild.Tests
         [InlineData("DontSaveSensitive")]
         [InlineData("EncryptAllWithPassword")]
         [InlineData("EncryptSensitiveWithPassword")]
-        public void Pass_Validate_ValidProtectionLevel(string protectionLevel)
+        public void Pass_Validate_ValidProtectionLevel(string protectionLevelString)
         {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
+            // Setup
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            File.Create(filePath).Close();
 
-            var buildArguments = new BuildArguments();
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
+            var args = new[]
+            {
+                $"-{nameof(BuildArguments.Configuration)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.ProtectionLevel)}",
+                protectionLevelString,
+                $"-{nameof(BuildArguments.Password)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.OutputFolder)}",
+                $".\\{Fakes.RandomString()}",
+                $"-{nameof(BuildArguments.ReleaseNotes)}",
+                $".\\{Fakes.RandomString()}",
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+            };
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Configuration), "abc");
+            // Execute
+            var exception = Record.Exception(() => new BuildArguments().ProcessArgs(args));
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProtectionLevel), protectionLevel);
-
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Password), "123");
-
-            var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] { }));
-
+            // Assert
             Assert.Null(exception);
         }
 
         [Theory]
-        [InlineData("DontSaveSensitive", "123", null)]
-        [InlineData("DontSaveSensitive", null, null)]
-        [InlineData("EncryptAllWithPassword", null, "123")]
-        [InlineData("EncryptAllWithPassword", "234", "123")]
-        [InlineData("EncryptAllWithPassword", "123", null)]
-        [InlineData("EncryptSensitiveWithPassword", null, "123")]
-        [InlineData("EncryptSensitiveWithPassword", "234", "123")]
-        [InlineData("EncryptSensitiveWithPassword", "123", null)]
-        public void Pass_Validate_ProtectionLevelPasswordCombination(string protectionLevel, string password, string newPassword)
+        [InlineData("DontSaveSensitive", true, false)]
+        [InlineData("DontSaveSensitive", false, false)]
+        [InlineData("EncryptAllWithPassword", false, true)]
+        [InlineData("EncryptAllWithPassword", true, true)]
+        [InlineData("EncryptAllWithPassword", true, false)]
+        [InlineData("EncryptSensitiveWithPassword", false, true)]
+        [InlineData("EncryptSensitiveWithPassword", true, true)]
+        [InlineData("EncryptSensitiveWithPassword", true, false)]
+        public void Pass_Validate_ProtectionLevelPasswordCombination(string protectionLevelString, bool password, bool newPassword)
         {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
+            // Setup
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            File.Create(filePath).Close();
 
-            var buildArguments = new BuildArguments();
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
+            var argsList = new List<string>
+            {
+                $"-{nameof(BuildArguments.Configuration)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.ProtectionLevel)}",
+                protectionLevelString,
+                $"-{nameof(BuildArguments.OutputFolder)}",
+                $".\\{Fakes.RandomString()}",
+                $"-{nameof(BuildArguments.ReleaseNotes)}",
+                $".\\{Fakes.RandomString()}",
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+            };
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Configuration), "abc");
+            if (password)
+            {
+                argsList.AddRange(new[]
+                {
+                    $"-{nameof(BuildArguments.Password)}",
+                    Fakes.RandomString(),
+                });
+            }
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProtectionLevel), protectionLevel);
+            if (newPassword)
+            {
+                argsList.AddRange(new[]
+                {
+                    $"-{nameof(BuildArguments.NewPassword)}",
+                    Fakes.RandomString(),
+                });
+            }
 
-            if (password != null)
-                Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Password), password);
 
-            if (newPassword != null)
-                Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.NewPassword), newPassword);
+            // Execute
+            var exception = Record.Exception(() => new BuildArguments().ProcessArgs(argsList.ToArray()));
 
-            var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] { }));
-
+            // Assert
             Assert.Null(exception);
         }
 
         [Theory]
         [InlineData("EncryptAllWithPassword")]
         [InlineData("EncryptSensitiveWithPassword")]
-        public void Fail_Validate_ProtectionLevelPasswordCombination(string protectionLevel)
+        public void Fail_Validate_ProtectionLevelPasswordCombination(string protectionLevelString)
         {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
+            // Setup
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            File.Create(filePath).Close();
 
-            var buildArguments = new BuildArguments();
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
+            var argsList = new List<string>
+            {
+                $"-{nameof(BuildArguments.Configuration)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.ProtectionLevel)}",
+                protectionLevelString,
+                $"-{nameof(BuildArguments.OutputFolder)}",
+                $".\\{Fakes.RandomString()}",
+                $"-{nameof(BuildArguments.ReleaseNotes)}",
+                $".\\{Fakes.RandomString()}",
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+            };
+            var testException = new PasswordRequiredException(protectionLevelString);
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Configuration), "abc");
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProtectionLevel), protectionLevel);
+            // Execute
+            var exception = Record.Exception(() => new BuildArguments().ProcessArgs(argsList.ToArray()));
 
-            var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] { }));
-
+            // Assert
             Assert.NotNull(exception);
-
-            if (exception is TargetInvocationException)
-                exception = exception.InnerException;
-
             Assert.IsType<PasswordRequiredException>(exception);
-            var testException = new PasswordRequiredException(protectionLevel);
             Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
         [Theory]
-        [InlineData("DontSaveSensitive", "123", "123")]
-        [InlineData("DontSaveSensitive", null, "123")]
-        public void Fail_Validate_ProtectionLevelDontSaveSensitiveWithPassword(string protectionLevel, string password, string newPassword)
+        [InlineData("DontSaveSensitive", true, true)]
+        [InlineData("DontSaveSensitive", false, true)]
+        public void Fail_Validate_ProtectionLevelDontSaveSensitiveWithPassword(string protectionLevelString, bool password, bool newPassword)
         {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
+            // Setup
+            var filePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.dtproj");
+            File.Create(filePath).Close();
 
-            var buildArguments = new BuildArguments();
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProjectPath), "test.dtproj");
+            var argsList = new List<string>
+            {
+                $"-{nameof(BuildArguments.Configuration)}",
+                Fakes.RandomString(),
+                $"-{nameof(BuildArguments.ProtectionLevel)}",
+                protectionLevelString,
+                $"-{nameof(BuildArguments.OutputFolder)}",
+                $".\\{Fakes.RandomString()}",
+                $"-{nameof(BuildArguments.ReleaseNotes)}",
+                $".\\{Fakes.RandomString()}",
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+                $"-Parameter:{Fakes.RandomString()}::{Fakes.RandomString()}",
+                Fakes.RandomString(),
+            };
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Configuration), "abc");
+            if (password)
+            {
+                argsList.AddRange(new[]
+                {
+                    $"-{nameof(BuildArguments.Password)}",
+                    Fakes.RandomString(),
+                });
+            }
 
-            // must have to pass validation
-            Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.ProtectionLevel), protectionLevel);
-
-            if (password != null)
-                Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.Password), password);
-
-            if (newPassword != null)
-                Helpers.SetBuildArgumentsValue(buildArguments, nameof(buildArguments.NewPassword), newPassword);
-
-            var exception = Record.Exception(() => _validateMethod.Invoke(buildArguments, new object[] { }));
-
-            Assert.NotNull(exception);
-
-            if (exception is TargetInvocationException)
-                exception = exception.InnerException;
-
-            Assert.IsType<DontSaveSensitiveWithPasswordException>(exception);
+            if (newPassword)
+            {
+                argsList.AddRange(new[]
+                {
+                    $"-{nameof(BuildArguments.NewPassword)}",
+                    Fakes.RandomString(),
+                });
+            }
             var testException = new DontSaveSensitiveWithPasswordException();
-            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
-        }
-        #endregion // Validate tests
-
-        #region ProcessArgs Tests
-        [Fact]
-        public void Pass_ProcessArgs()
-        {
-            var filePath = Path.Combine(_workingFolder, "test.dtproj");
-            File.WriteAllText(filePath, "test");
-
-            var buildArguments = new BuildArguments();
-            var exception = Record.Exception(() => buildArguments.ProcessArgs(new[] {"-configuration", "abc" }));
-
-            Assert.Null(exception);
-            Assert.Equal(buildArguments.ProjectPath, filePath);
-        }
 
 
-        [Fact]
-        public void Fail_ProcessArgs_InvalidProjectPath()
-        {
-            var buildArguments = new BuildArguments();
-            var exception = Record.Exception(() => buildArguments.ProcessArgs(new [] { "abc.dtproj", "-configuration", "abc"}));
+            // Execute
+            var exception = Record.Exception(() => new BuildArguments().ProcessArgs(argsList.ToArray()));
 
+            // Assert
             Assert.NotNull(exception);
-            Assert.IsType<FileNotFoundException>(exception);
+            Assert.IsType<DontSaveSensitiveWithPasswordException>(exception);
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
 
         [Fact]
         public void Fail_ProcessArgs_NullArgs()
         {
+            //Setup
             var buildArguments = new BuildArguments();
+
+            // Execute
             var exception = Record.Exception(() => buildArguments.ProcessArgs(null));
 
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<NullReferenceException>(exception);
 
         }
-        #endregion // ProcessArgs Tests
     }
 }

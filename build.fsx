@@ -106,7 +106,7 @@ Target "CreatePackage" (fun _ ->
 
     mkdir buildDir
 
-    let nuspecFile = @"src\SsisBuild\SsisBuild.nuspec"
+    let nuspecFile = @"./SsisBuild.nuspec"
 
     XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/id" project
     XMLHelper.XmlPokeInnerText nuspecFile @"/package/metadata/version" release.NugetVersion
@@ -133,9 +133,9 @@ Target "CreatePackage" (fun _ ->
             Tags = tags |> String.concat " "
             Title = title
             SymbolPackage = NugetSymbolPackage.ProjectFile
-            WorkingDir = @"src\SsisBuild"
+            WorkingDir = @"."
             Publish = false }) 
-            @"src\SsisBuild\SsisBuild.nuspec"
+            @"./SsisBuild.nuspec"
 )
 
 Target "BuildRelease" DoNothing

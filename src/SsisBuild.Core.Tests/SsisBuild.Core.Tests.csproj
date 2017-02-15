@@ -66,15 +66,17 @@
   <ItemGroup>
     <Compile Include="ConfigurationParameterTests.cs" />
     <Compile Include="ConfigurationTests.cs" />
-    <Compile Include="Helpers.cs" />
     <Compile Include="PackageTests.cs" />
+    <Compile Include="ParameterSetupData.cs" />
     <Compile Include="ProjectConnectionTests.cs" />
+    <Compile Include="ProjectFileTests.cs" />
     <Compile Include="ProjectManifestTests.cs" />
     <Compile Include="ProjectParameterTests.cs" />
     <Compile Include="ProjectParamsTests.cs" />
     <Compile Include="ProjectTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserConfigurationTests.cs" />
+    <Compile Include="XmlGenerators.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -83,6 +85,10 @@
     <ProjectReference Include="..\SsisBuild.Core\SsisBuild.Core.csproj">
       <Project>{01657A26-BE3B-4A6E-A193-E175096F54BA}</Project>
       <Name>SsisBuild.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SsisBuild.Tests.Helpers\SsisBuild.Tests.Helpers.csproj">
+      <Project>{17afe8ad-f52e-44e5-b0f6-1b24f17edb1b}</Project>
+      <Name>SsisBuild.Tests.Helpers</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

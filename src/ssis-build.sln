@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SsisBuild.Logger.Tests", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SsisDeploy.Tests", "SsisDeploy.Tests\SsisDeploy.Tests.csproj", "{24D99EAB-D2A3-444E-828B-A35B6E04C488}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SsisBuild.Tests.Helpers", "SsisBuild.Tests.Helpers\SsisBuild.Tests.Helpers.csproj", "{17AFE8AD-F52E-44E5-B0F6-1B24F17EDB1B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -62,6 +64,10 @@ Global
 		{24D99EAB-D2A3-444E-828B-A35B6E04C488}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24D99EAB-D2A3-444E-828B-A35B6E04C488}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24D99EAB-D2A3-444E-828B-A35B6E04C488}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17AFE8AD-F52E-44E5-B0F6-1B24F17EDB1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17AFE8AD-F52E-44E5-B0F6-1B24F17EDB1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17AFE8AD-F52E-44E5-B0F6-1B24F17EDB1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17AFE8AD-F52E-44E5-B0F6-1B24F17EDB1B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

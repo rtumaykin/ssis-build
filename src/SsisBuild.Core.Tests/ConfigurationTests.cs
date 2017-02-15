@@ -17,32 +17,33 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Xml;
+using SsisBuild.Tests.Helpers;
 using Xunit;
 
 namespace SsisBuild.Core.Tests
 {
-    public class ConfigurationTests : IDisposable
+    public class ConfigurationTests
     {
         [Fact]
         public void Pass_New()
         {
+            // Setup
             var parameters = new Dictionary<string, string>
             {
-                {"Parameter1", "Value1"},
-                {"Parameter2", "Value2"}
+                {Fakes.RandomString(), Fakes.RandomString()},
+                {Fakes.RandomString(), Fakes.RandomString()}
             };
 
-            var name = "Development";
+            var name = Fakes.RandomString();
 
-            var xml = GetXml(name, parameters);
+            var xml = XmlGenerators.ConfigurationFile(name, parameters);
 
             var xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(xml);
 
+            // Execute
             var config = new Configuration(name);
-
             using (var stream = new MemoryStream())
             {
                 using (var writer = new StreamWriter(stream))
@@ -55,26 +56,30 @@ namespace SsisBuild.Core.Tests
                 }
             }
 
+            // Assert
             Assert.NotNull(config.Parameters);
-            Assert.True(config.Parameters.ContainsKey("Parameter1"));
-            Assert.Equal("Value1", config.Parameters["Parameter1"].Value);
-
+            foreach (var parameter in parameters)
+            {
+                Assert.True(config.Parameters.ContainsKey(parameter.Key));
+                Assert.Equal(parameter.Value, config.Parameters[parameter.Key].Value);
+            }
         }
 
         [Fact]
         public void Pass_New_NoParameters()
         {
+            // Setup
             var parameters = new Dictionary<string, string> ();
 
-            var name = "Development";
+            var name = Fakes.RandomString();
 
-            var xml = GetXml(name, parameters);
+            var xml = XmlGenerators.ConfigurationFile(name, parameters);
 
             var xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(xml);
 
+            // Execute
             var config = new Configuration(name);
-
             using (var stream = new MemoryStream())
             {
                 using (var writer = new StreamWriter(stream))
@@ -87,6 +92,7 @@ namespace SsisBuild.Core.Tests
                 }
             }
 
+            // Assert
             Assert.NotNull(config.Parameters);
             Assert.True(config.Parameters.Count == 0);
         }
@@ -94,19 +100,19 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_New_NoConfiguration()
         {
+            // Setup
             var parameters = new Dictionary<string, string>();
 
-            var name = "Development";
+            var name = Fakes.RandomString();
 
-            var xml = GetXml(Guid.NewGuid().ToString("N"), parameters);
+            var xml = XmlGenerators.ConfigurationFile(Fakes.RandomString(), parameters);
 
             var xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(xml);
 
+            // Execute
             var config = new Configuration(name);
-
             Exception exception;
-
             using (var stream = new MemoryStream())
             {
                 using (var writer = new StreamWriter(stream))
@@ -119,46 +125,10 @@ namespace SsisBuild.Core.Tests
                 }
             }
 
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidConfigurationNameException>(exception);
             Assert.Equal(name, (exception as InvalidConfigurationNameException)?.ConfigurationName);
-        }
-
-        public void Dispose()
-        {
-            
-        }
-
-        internal static string GetXml(string configurationName, IDictionary<string, string> parameters )
-        {
-            return $@"<?xml version=""1.0"" encoding=""utf-8""?>
-                  <Project xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
-                  <Configurations>
-                    <Configuration>
-                      <Name>{configurationName}</Name>
-                      <Options>
-                        <OutputPath>bin</OutputPath>
-                        <ConnectionMappings />
-                        <ConnectionProviderMappings />
-                        <ConnectionSecurityMappings />
-                        <DatabaseStorageLocations />
-                        <TargetServerVersion>SQLServer2012</TargetServerVersion>
-                        <ParameterConfigurationValues>
-                          {string.Join("", parameters.Select(p => GetParameterXml(p.Key, p.Value)))}
-                        </ParameterConfigurationValues>
-                      </Options>
-                    </Configuration>
-                  </Configurations>
-                </Project>";
-        }
-
-        internal static string GetParameterXml(string name, string value)
-        {
-            return $@"<ConfigurationSetting>
-                        <Id>{Guid.NewGuid():D}</Id>
-                        <Name>{name}</Name>
-                        <Value xsi:type=""xsd:int"">{value}</Value>
-                    </ConfigurationSetting>";
         }
     }
 }

@@ -15,36 +15,38 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SsisDeploy
 {
     class Program
     {
+        [ExcludeFromCodeCoverage]
         static void Main(string[] args)
+        {
+            if (!MainInternal(new Deployer(), new DeployArguments(), args))
+                Environment.Exit(1);
+        }
+
+        internal static bool MainInternal(IDeployer deployer, IDeployArguments deployArguments, string[] args)
         {
             try
             {
-                MainInternal(new Deployer(), new DeployArguments(), args);
+                deployArguments.ProcessArgs(args);
+                deployer.Deploy(deployArguments);
             }
             catch (ArgumentsProcessingException x)
             {
                 Console.WriteLine(x.Message);
                 Usage();
-                Environment.Exit(1);
+                return false;
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                Environment.Exit(1);
+                return false;
             }
-
-           
-        }
-
-        internal static void MainInternal(IDeployer deployer, IDeployArguments deployArguments, string[] args)
-        {
-            deployArguments.ProcessArgs(args);
-            deployer.Deploy(deployArguments);
+            return true;
         }
 
         private static void Usage()
@@ -60,7 +62,7 @@ namespace SsisDeploy
                 "",
                 "Switches:",
                 "",
-                "  Ispac File:          Full path to an SSIS deployment file (with ispac extension). If a project file is not specified, ssisdeploy searches current working directory",
+                "  Ispac File:          Full path to an SSIS deployment file (with ispac extension). If a deployment file is not specified, ssisdeploy searches current working directory",
                 "                       for a file with ispac extension and uses that file.",
                 "",
                 "  -ServerInstance:     Required. Full Name of the target SQL Server instance.",

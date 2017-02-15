@@ -19,17 +19,12 @@ using System.Collections.Generic;
 using System.Xml;
 using Xunit;
 using SsisBuild.Core.Helpers;
+using SsisBuild.Tests.Helpers;
 
 namespace SsisBuild.Core.Tests
 {
-    public class ProjectParameterTests : IDisposable
+    public class ProjectParameterTests
     {
-        public ProjectParameterTests()
-        {
-            
-
-        }
-
         [Theory]
         [InlineData(false, true, DataType.String)]
         [InlineData(false, false, DataType.Int16)]
@@ -37,15 +32,19 @@ namespace SsisBuild.Core.Tests
         [InlineData(true, false, DataType.Int16)]
         public void Pass_New_ProjectParameter(bool sensitive, bool withValue, DataType type)
         {
-            var name = Helpers.RandomString(50);
-            var value = Helpers.RandomString(30);
-            var scope = Helpers.RandomString(20);
+            // Setup
+            var name = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var scope = Fakes.RandomString();
             var xmldoc  = new XmlDocument();
-            var parameterXml = CreateProjectParameterXml(name, sensitive, withValue, value, type);
+            var parameterXml = XmlGenerators.ProjectFileParameter(name, value, sensitive, type, withValue);
+
             xmldoc.LoadXml(parameterXml);
 
+            // Execute
             var parameter = new ProjectParameter(scope, xmldoc.DocumentElement);
 
+            // Assert
             Assert.NotNull(parameter);
             Assert.Equal(withValue ? value : null, parameter.Value);
             Assert.Equal(type.ToString("G"), parameter.ParameterDataType.Name, StringComparer.InvariantCultureIgnoreCase);
@@ -58,15 +57,18 @@ namespace SsisBuild.Core.Tests
         [InlineData((DataType)1000)]
         public void Pass_New_ProjectParameter_CoverDataTypes(DataType type)
         {
-            var name = Helpers.RandomString(50);
-            var value = Helpers.RandomString(30);
-            var scope = Helpers.RandomString(20);
+            // Setup
+            var name = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var scope = Fakes.RandomString();
             var xmldoc = new XmlDocument();
-            var parameterXml = CreateProjectParameterXml(name, false, true, value, type);
+            var parameterXml = XmlGenerators.ProjectFileParameter(name, value, false, type);
             xmldoc.LoadXml(parameterXml);
 
+            // Execute
             var parameter = new ProjectParameter(scope, xmldoc.DocumentElement);
 
+            // Assert
             Assert.NotNull(parameter);
             Assert.Equal((int) type == 1000 ? null : type.ToString("G"), parameter.ParameterDataType?.Name, StringComparer.InvariantCultureIgnoreCase);
         }
@@ -74,11 +76,12 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_New_ProjectParameter_InvalidDataType()
         {
-            var name = Helpers.RandomString(50);
-            var value = Helpers.RandomString(30);
-            var scope = Helpers.RandomString(20);
+            // Setup
+            var name = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var scope = Fakes.RandomString();
             var xmldoc = new XmlDocument();
-            var parameterXml = CreateProjectParameterXml(name, false, true, value, DataType.Byte);
+            var parameterXml = XmlGenerators.ProjectFileParameter(name, value, false, Fakes.RandomEnum<DataType>());
 
             xmldoc.LoadXml(parameterXml);
 
@@ -86,8 +89,10 @@ namespace SsisBuild.Core.Tests
             if (dataTypeNode != null)
                 dataTypeNode.InnerText = "xyz";
 
+            // Execute
             var parameter = new ProjectParameter(scope, xmldoc.DocumentElement);
 
+            // Assert
             Assert.NotNull(parameter);
             Assert.Equal(null, parameter.ParameterDataType?.Name);
         }
@@ -95,15 +100,18 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_New_ProjectParameter_NoScope()
         {
-            var name = Helpers.RandomString(50);
-            var value = Helpers.RandomString(30);
+            // Setup
+            var name = Fakes.RandomString();
+            var value = Fakes.RandomString();
             var xmldoc = new XmlDocument();
-            var parameterXml = CreateProjectParameterXml(name, false, true, value, DataType.Byte);
+            var parameterXml = XmlGenerators.ProjectFileParameter(name, value, false, Fakes.RandomEnum<DataType>());
 
             xmldoc.LoadXml(parameterXml);
 
+            // Execute
             var exception = Record.Exception(() => new ProjectParameter(null, xmldoc.DocumentElement));
 
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<ArgumentNullException>(exception);
         }
@@ -111,15 +119,18 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_New_ProjectParameter_EmptyName()
         {
+            // Setup
             var name = string.Empty;
-            var value = Helpers.RandomString(30);
+            var value = Fakes.RandomString();
             var xmldoc = new XmlDocument();
-            var parameterXml = CreateProjectParameterXml(name, false, true, value, DataType.Byte);
+            var parameterXml = XmlGenerators.ProjectFileParameter(name, value, Fakes.RandomBool(), Fakes.RandomEnum<DataType>(), Fakes.RandomBool());
 
             xmldoc.LoadXml(parameterXml);
 
-            var exception = Record.Exception(() => new ProjectParameter(Helpers.RandomString(50), xmldoc.DocumentElement));
+            // Execute
+            var exception = Record.Exception(() => new ProjectParameter(Fakes.RandomString(), xmldoc.DocumentElement));
 
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidXmlException>(exception);
             Assert.Equal(xmldoc.DocumentElement?.OuterXml, ((InvalidXmlException)exception).NodeXml);
@@ -129,16 +140,19 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_New_ProjectParameter_NoProperties()
         {
-            var name = Helpers.RandomString(30);
-            var value = Helpers.RandomString(30);
+            // Setup
+            var name = Fakes.RandomString();
+            var value = Fakes.RandomString();
             var xmldoc = new XmlDocument();
             var parameterXml = $@"<SSIS:Parameter SSIS:Name=""{name}"" xmlns:SSIS=""www.microsoft.com/SqlServer/SSIS"">
             </SSIS:Parameter>";
 
             xmldoc.LoadXml(parameterXml);
 
-            var exception = Record.Exception(() => new ProjectParameter(Helpers.RandomString(50), xmldoc.DocumentElement));
+            // Execute
+            var exception = Record.Exception(() => new ProjectParameter(Fakes.RandomString(), xmldoc.DocumentElement));
 
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidXmlException>(exception);
             Assert.Equal(xmldoc.DocumentElement?.OuterXml, ((InvalidXmlException) exception).NodeXml);
@@ -148,8 +162,10 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_New_NoXml()
         {
-            var exception = Record.Exception(() => new ProjectParameter(Helpers.RandomString(50), null));
+            //Execute
+            var exception = Record.Exception(() => new ProjectParameter(Fakes.RandomString(), null));
 
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<ArgumentNullException>(exception);
         }
@@ -161,50 +177,28 @@ namespace SsisBuild.Core.Tests
         [InlineData(false, false, ParameterSource.Configuration)]
         public void Pass_SetValue(bool originalNull, bool setToNull, ParameterSource source)
         {
-            var name = Helpers.RandomString(50);
-            var value = Helpers.RandomString(30);
-            var scope = Helpers.RandomString(20);
+            // Setup
+            var name = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var scope = Fakes.RandomString();
             var xmldoc = new XmlDocument();
-            var parameterXml = CreateProjectParameterXml(name, false, originalNull, value, DataType.String);
+            // var parameterXml = CreateProjectParameterXml(name, false, originalNull, value, DataType.String);
+            var parameterXml = XmlGenerators.ProjectFileParameter(name, value, false, DataType.String, originalNull);
 
             xmldoc.LoadXml(parameterXml);
 
+            // Execute
             var parameter = new ProjectParameter(scope, xmldoc.DocumentElement);
 
-            var newValue = setToNull ? null : Helpers.RandomString(30);
+            var newValue = setToNull ? null : Fakes.RandomString();
 
             parameter.SetValue(newValue, source);
             var testValueFromXml = xmldoc.SelectSingleNode("//*[@SSIS:Name=\"Value\"]", xmldoc.GetNameSpaceManager())?.InnerText;
 
+            // Assert
             Assert.Equal(newValue, parameter.Value);
             Assert.Equal(source, parameter.Source);
             Assert.Equal(newValue, testValueFromXml);
-        }
-
-        public void Dispose()
-        {
-            
-        }
-
-        private static string CreateProjectParameterXml(string name, bool sensitive, bool withValue, string value, DataType dataType)
-        {
-
-            var sensitiveValue = sensitive ? "1" : "0";
-            var valueElement = withValue ? $"<SSIS:Property SSIS:Name=\"Value\">{value}</SSIS:Property>" : null;
-
-
-            return $@"<SSIS:Parameter SSIS:Name=""{name}"" xmlns:SSIS=""www.microsoft.com/SqlServer/SSIS"">
-                <SSIS:Properties>
-                <SSIS:Property SSIS:Name=""ID""></SSIS:Property>
-                <SSIS:Property SSIS:Name=""CreationName""></SSIS:Property>
-                <SSIS:Property SSIS:Name=""Description""></SSIS:Property>
-                <SSIS:Property SSIS:Name=""IncludeInDebugDump"">0</SSIS:Property>
-                <SSIS:Property SSIS:Name=""Required"">0</SSIS:Property>
-                <SSIS:Property SSIS:Name=""Sensitive"">{sensitiveValue}</SSIS:Property>
-                {valueElement}
-                <SSIS:Property SSIS:Name=""DataType"">{dataType:D}</SSIS:Property>
-                </SSIS:Properties>
-            </SSIS:Parameter>";
         }
 
         public static IEnumerable<object[]> DataTypeValues

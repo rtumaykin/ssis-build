@@ -18,6 +18,7 @@ using System;
 using System.IO;
 using System.Xml;
 using SsisBuild.Core.Helpers;
+using SsisBuild.Tests.Helpers;
 using Xunit;
 
 namespace SsisBuild.Core.Tests
@@ -35,11 +36,16 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_Get_ProtectionLevel()
         {
-            var xml = CreateXml(Helpers.RandomString(20), 2, Helpers.RandomString(20));
+            // Setup
+            var xml = XmlGenerators.PackageFile(Fakes.RandomString(), 2, Fakes.RandomString());
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
+
+            // Execute
             var package = new Package();
             package.Initialize(path, null);
+
+            // Assert
             Assert.NotNull(package);
             Assert.Equal((ProtectionLevel) 2, package.ProtectionLevel);
         }
@@ -47,13 +53,16 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_InvalidProtectionLevel()
         {
-            var xml = CreateXml(Helpers.RandomString(20), 1000, Helpers.RandomString(20));
-
-
+            // Setup
+            var xml = XmlGenerators.PackageFile(Fakes.RandomString(), 1000, Fakes.RandomString());
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
+
+            // Execute
             var package = new Package();
             var exception = Record.Exception(() => package.Initialize(path, null));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidXmlException>(exception);
         }
@@ -61,14 +70,17 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_NoProtectionLevel()
         {
-            var xml = CreateXml(Helpers.RandomString(20), 1000, Helpers.RandomString(20));
+            // Setup
+            var xml = XmlGenerators.PackageFile(Fakes.RandomString(), 1000, Fakes.RandomString());
             xml = xml.Replace("DTS:ProtectionLevel=\"1000\"", "");
-
-
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
+
+            // Execute
             var package = new Package();
             var exception = Record.Exception(() => package.Initialize(path, null));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidXmlException>(exception);
         }
@@ -76,14 +88,17 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_UnparsableProtectionLevel()
         {
-            var xml = CreateXml(Helpers.RandomString(20), 1000, Helpers.RandomString(20));
+            // Setup
+            var xml = XmlGenerators.PackageFile(Fakes.RandomString(), 1000, Fakes.RandomString());
             xml = xml.Replace("DTS:ProtectionLevel=\"1000\"", "DTS:ProtectionLevel=\"abc\"");
-
-
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
+
+            // Execute
             var package = new Package();
             var exception = Record.Exception(() => package.Initialize(path, null));
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidXmlException>(exception);
         }
@@ -91,10 +106,13 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Pass_Encrypt()
         {
-            var password = Helpers.RandomString(30);
-            var xml = CreateXml(Helpers.RandomString(20), 2, Helpers.RandomString(20));
+            // Setup
+            var password = Fakes.RandomString();
+            var xml = XmlGenerators.PackageFile(Fakes.RandomString(), 2, Fakes.RandomString());
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
+
+            // Execute
             var package = new Package();
             package.Initialize(path, null);
 
@@ -108,48 +126,50 @@ namespace SsisBuild.Core.Tests
             }
             var xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(encryptedXml);
-            var encryptedNode = xmlDoc.SelectSingleNode("/DTS:Executable/DTS:PackageParameter/DTS:Property[@DTS:Name=\"ParameterValue\"]", xmlDoc.GetNameSpaceManager());
+            
+            // Assert
             Assert.True(xmlDoc.SelectNodes("//*[name(.)=\"EncryptedData\"]")?.Count == 2);
         }
 
         [Fact]
         public void Pass_Decrypt()
         {
-            var password = Helpers.RandomString(30);
-            var value = Helpers.RandomString(40);
-            var value1 = Helpers.RandomString(40);
-            var xml = CreateXml(value, 2, value1);
+            // Setup
+            var password = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var value1 = Fakes.RandomString();
+            var xml = XmlGenerators.PackageFile(value, 2, value1);
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
             var package = new Package();
             package.Initialize(path, null);
 
+            // Execute
             var newPackage = new Package();
-
             using (var stream = new MemoryStream())
             {
                 package.Save(stream, ProtectionLevel.EncryptSensitiveWithPassword, password);
                 stream.Position = 0;
                 newPackage.Initialize(stream, password);
             }
-            // if there is no exception - we are good.
+            // Assert - if there is no exception - we are good.
         }
 
         [Fact]
         public void Fail_Decrypt_NoPassword()
         {
-            var password = Helpers.RandomString(30);
-            var value = Helpers.RandomString(40);
-            var value1 = Helpers.RandomString(40);
-            var xml = CreateXml(value, 2, value1);
+            // Setup
+            var password = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var value1 = Fakes.RandomString();
+            var xml = XmlGenerators.PackageFile(value, 2, value1);
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
             var package = new Package();
             package.Initialize(path, null);
 
+            // Execute
             var newPackage = new Package();
-
-
             Exception exception;
             using (var stream = new MemoryStream())
             {
@@ -157,6 +177,8 @@ namespace SsisBuild.Core.Tests
                 stream.Position = 0;
                 exception = Record.Exception(() => newPackage.Initialize(stream, null));
             }
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidPaswordException>(exception);
         }
@@ -164,25 +186,27 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_Decrypt_BadPassword()
         {
-            var password = Helpers.RandomString(30);
-            var value = Helpers.RandomString(40);
-            var value1 = Helpers.RandomString(40);
-            var xml = CreateXml(value, 2, value1);
+            // Setup
+            var password = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var value1 = Fakes.RandomString();
+            var xml = XmlGenerators.PackageFile(value, 2, value1);
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
             var package = new Package();
             package.Initialize(path, null);
 
+            // Execute
             var newPackage = new Package();
-
-
             Exception exception;
             using (var stream = new MemoryStream())
             {
                 package.Save(stream, ProtectionLevel.EncryptSensitiveWithPassword, password);
                 stream.Position = 0;
-                exception = Record.Exception(() => newPackage.Initialize(stream, Helpers.RandomString(30)));
+                exception = Record.Exception(() => newPackage.Initialize(stream, Fakes.RandomString()));
             }
+
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidPaswordException>(exception);
         }
@@ -190,19 +214,18 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_Decrypt_NoIv()
         {
-            var password = Helpers.RandomString(30);
-            var value = Helpers.RandomString(40);
-            var value1 = Helpers.RandomString(40);
-            var xml = CreateXml(value, 2, value1);
+            // Setup
+            var password = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var value1 = Fakes.RandomString();
+            var xml = XmlGenerators.PackageFile(value, 2, value1);
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
             var package = new Package();
             package.Initialize(path, null);
 
             var newPackage = new Package();
-
             string encryptedXml;
-
             using (var stream = new MemoryStream())
             {
                 package.Save(stream, ProtectionLevel.EncryptSensitiveWithPassword, password);
@@ -223,6 +246,7 @@ namespace SsisBuild.Core.Tests
                         ivAttribute.Value = string.Empty;
                 }
 
+            // Execute
             Exception exception;
             using (var stream = new MemoryStream())
             {
@@ -233,6 +257,7 @@ namespace SsisBuild.Core.Tests
                 exception = Record.Exception(() => newPackage.Initialize(stream, password));
             }
 
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidXmlException>(exception);
             Assert.True(exception.Message.Contains("\"IV\""));
@@ -241,10 +266,11 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_Decrypt_BadIv()
         {
-            var password = Helpers.RandomString(30);
-            var value = Helpers.RandomString(40);
-            var value1 = Helpers.RandomString(40);
-            var xml = CreateXml(value, 2, value1);
+            // Setup
+            var password = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var value1 = Fakes.RandomString();
+            var xml = XmlGenerators.PackageFile(value, 2, value1);
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
             var package = new Package();
@@ -271,9 +297,10 @@ namespace SsisBuild.Core.Tests
                 {
                     var ivAttribute = node.GetAttributeNode("IV");
                     if (ivAttribute != null)
-                        ivAttribute.Value = Helpers.RandomString(30);
+                        ivAttribute.Value = $"*{Fakes.RandomString()}"; // Added * to break Convert.FromBase64 false success
                 }
 
+            // Execute
             Exception exception;
             using (var stream = new MemoryStream())
             {
@@ -284,6 +311,7 @@ namespace SsisBuild.Core.Tests
                 exception = Record.Exception(() => newPackage.Initialize(stream, password));
             }
 
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidXmlException>(exception);
             Assert.True(exception.Message.Contains("\"IV\""));
@@ -292,10 +320,11 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_Decrypt_NoSalt()
         {
-            var password = Helpers.RandomString(30);
-            var value = Helpers.RandomString(40);
-            var value1 = Helpers.RandomString(40);
-            var xml = CreateXml(value, 2, value1);
+            // Setup
+            var password = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var value1 = Fakes.RandomString();
+            var xml = XmlGenerators.PackageFile(value, 2, value1);
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
             var package = new Package();
@@ -325,6 +354,7 @@ namespace SsisBuild.Core.Tests
                         saltAttribute.Value = string.Empty;
                 }
 
+            // Execute
             Exception exception;
             using (var stream = new MemoryStream())
             {
@@ -335,6 +365,7 @@ namespace SsisBuild.Core.Tests
                 exception = Record.Exception(() => newPackage.Initialize(stream, password));
             }
 
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidXmlException>(exception);
             Assert.True(exception.Message.Contains("\"Salt\""));
@@ -343,10 +374,11 @@ namespace SsisBuild.Core.Tests
         [Fact]
         public void Fail_Decrypt_BadSalt()
         {
-            var password = Helpers.RandomString(30);
-            var value = Helpers.RandomString(40);
-            var value1 = Helpers.RandomString(40);
-            var xml = CreateXml(value, 2, value1);
+            // Setup
+            var password = Fakes.RandomString();
+            var value = Fakes.RandomString();
+            var value1 = Fakes.RandomString();
+            var xml = XmlGenerators.PackageFile(value, 2, value1);
             var path = Path.Combine(_workingFolder, Guid.NewGuid().ToString("N"));
             File.WriteAllText(path, xml);
             var package = new Package();
@@ -373,9 +405,10 @@ namespace SsisBuild.Core.Tests
                 {
                     var saltAttribute = node.GetAttributeNode("Salt");
                     if (saltAttribute != null)
-                        saltAttribute.Value = Helpers.RandomString(30);
+                        saltAttribute.Value = $"*{Fakes.RandomString()}"; // Added * to break Convert.FromBase64 false success
                 }
 
+            // Execute
             Exception exception;
             using (var stream = new MemoryStream())
             {
@@ -386,6 +419,7 @@ namespace SsisBuild.Core.Tests
                 exception = Record.Exception(() => newPackage.Initialize(stream, password));
             }
 
+            // Assert
             Assert.NotNull(exception);
             Assert.IsType<InvalidXmlException>(exception);
             Assert.True(exception.Message.Contains("\"Salt\""));
@@ -394,20 +428,6 @@ namespace SsisBuild.Core.Tests
         public void Dispose()
         {
             Directory.Delete(_workingFolder, true);
-        }
-
-        internal static string CreateXml(string sensitiveParameterValue, int protectionLevel, string sensitivePasswordValue)
-        {
-            return $@"<?xml version=""1.0""?>
-                <DTS:Executable xmlns:DTS=""www.microsoft.com/SqlServer/Dts""
-                DTS:ProtectionLevel=""{protectionLevel}"">
-                 <DTS:ConnectionManager DTS:ConnectionString=""{Helpers.RandomString(20)}"">
-                   <DTS:Password DTS:Name=""{Helpers.RandomString(20)}"" Sensitive=""1"">{sensitivePasswordValue}</DTS:Password>
-                </DTS:ConnectionManager>
-                <DTS:PackageParameter DTS:Sensitive=""True"">
-                    <DTS:Property DTS:Name=""ParameterValue"">{sensitiveParameterValue}</DTS:Property>
-                </DTS:PackageParameter>
-                </DTS:Executable>";
         }
     }
 }

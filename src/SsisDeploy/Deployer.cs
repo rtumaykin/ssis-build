@@ -43,12 +43,7 @@ namespace SsisDeploy
             _project.LoadFromIspac(deployArguments.DeploymentFilePath, deployArguments.ProjectPassword);
 
             var parametersToDeploy = _project.Parameters.Where(p => p.Value.Sensitive && p.Value.Value != null)
-                .ToDictionary(p => string.Copy(p.Key), v => new SensitiveParameter()
-                {
-                    DataType = v.Value.ParameterDataType,
-                    Name = string.Copy(v.Key),
-                    Value = string.Copy(v.Value.Value)
-                });
+                .ToDictionary(p => string.Copy(p.Key), v => new SensitiveParameter(string.Copy(v.Key), string.Copy(v.Value.Value), v.Value.ParameterDataType));
 
 
             var deploymentProtectionLevel = deployArguments.EraseSensitiveInfo ? ProtectionLevel.DontSaveSensitive : ProtectionLevel.ServerStorage;

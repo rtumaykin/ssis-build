@@ -14,21 +14,13 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-
-namespace SsisDeploy
+namespace SsisBuild.Core.Tests
 {
-    public class SensitiveParameter
+    public class ParameterSetupData
     {
-        public string Name { get; }
-        public Type DataType { get; }
-        public string Value { get; }
-
-        public SensitiveParameter(string name, string value, Type dataType)
-        {
-            Name = name;
-            Value = value;
-            DataType = dataType;
-        }
+        public string Name { get; set; }
+        public string Value { get; set; }
+        public bool Sensitive { get; set; }
+        public DataType DataType { get; set; }
     }
 }

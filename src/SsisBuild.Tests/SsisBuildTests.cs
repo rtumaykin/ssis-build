@@ -20,7 +20,7 @@ using Xunit;
 
 namespace SsisBuild.Tests
 {
-    public class SsisBuildTests : IDisposable
+    public class SsisBuildTests
     {
         private readonly Mock<IBuildArguments> _buildArgumentsMock;
         private readonly Mock<IBuilder> _builderMock;
@@ -34,13 +34,16 @@ namespace SsisBuild.Tests
         [Fact]
         public void Fail_Main_ArgumentProcessingException()
         {
+            // Setup
             var buildArguments = _buildArgumentsMock.Object;
             var testException = new InvalidArgumentException("SomeProp", "SomeValue");
 
             _buildArgumentsMock.Setup(b => b.ProcessArgs(It.IsAny<string[]>())).Throws(testException);
 
+            // Execute
             var exception = Record.Exception(() => Program.MainInternal(new[] {"really anything"}, _builderMock.Object, buildArguments));
 
+            // Assert
             Assert.IsType<InvalidArgumentException>(exception);
             Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
@@ -48,12 +51,15 @@ namespace SsisBuild.Tests
         [Fact]
         public void Fail_Main_BuilderException()
         {
+            // Setup
             var buildArguments = _buildArgumentsMock.Object;
             var testException = new Exception("Some Message");
             _builderMock.Setup(b => b.Build(buildArguments)).Throws(testException);
 
+            // Execute
             var exception = Record.Exception(() => Program.MainInternal(new[] { "really anything" }, _builderMock.Object, buildArguments));
 
+            // Assert
             Assert.IsType<Exception>(exception);
             Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
@@ -62,16 +68,14 @@ namespace SsisBuild.Tests
         [Fact]
         public void Pass_Main_NoException()
         {
+            // Setup
             var buildArguments = _buildArgumentsMock.Object;
 
+            // Execute
             var exception = Record.Exception(() => Program.MainInternal(new[] { "really anything" }, _builderMock.Object, buildArguments));
 
+            // Assert
             Assert.Null(exception);
-        }
-
-        public void Dispose()
-        {
-
         }
     }
 }

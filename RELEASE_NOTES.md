@@ -1,3 +1,9 @@
+#### 2.0.0 (Released 2017/02/15)
+* Completely removed Microsoft DTS dependencies from the library. The tool can work standalone with no need to install any dependencies
+* Added SsisDeploy application which is capable of deploying any ispac deployment packages
+* Added unit tests with 100% code coverage
+* Removed SensitiveParameter Build Argument because it was causing runtime issues
+
 #### 1.3.0 (Released 2017/01/11)
 * Fixed an issue with Project connections decryption. 
 

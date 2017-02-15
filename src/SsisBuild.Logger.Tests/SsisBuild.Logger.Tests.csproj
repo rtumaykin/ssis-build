@@ -64,6 +64,10 @@
       <Project>{6fadb9e9-cf51-4caf-8b82-b4b93fd367eb}</Project>
       <Name>SsisBuild.Logger</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SsisBuild.Tests.Helpers\SsisBuild.Tests.Helpers.csproj">
+      <Project>{17AFE8AD-F52E-44E5-B0F6-1B24F17EDB1B}</Project>
+      <Name>SsisBuild.Tests.Helpers</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

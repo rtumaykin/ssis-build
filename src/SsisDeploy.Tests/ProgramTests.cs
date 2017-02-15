@@ -16,78 +16,79 @@
 
 using System;
 using System.IO;
+using Moq;
 using SsisBuild.Tests.Helpers;
 using Xunit;
 
-namespace SsisBuild.Logger.Tests
+namespace SsisDeploy.Tests
 {
-    public class LoggerTests
+    public class ProgramTests
     {
-        [Fact]
-        public void Pass_Message()
+        private readonly Mock<IDeployer> _deployerMock;
+        private readonly Mock<IDeployArguments> _deployArgsMock;
+
+        public ProgramTests()
         {
-            // Setup
-            var stdOut = Console.Out;
-            var consoleOutput = new StringWriter();
-            var message = Fakes.RandomString();
-            var logger = new ConsoleLogger();
-
-            // Execute
-            try
-            {
-                Console.SetOut(consoleOutput);
-                logger.LogMessage(message);
-
-            }
-            finally
-            {
-                Console.SetOut(stdOut);
-            }
-
-            // Assert
-            Assert.True(consoleOutput.ToString().Contains(message));
+            _deployerMock = new Mock<IDeployer>();
+            _deployArgsMock = new Mock<IDeployArguments>();
         }
 
         [Fact]
-        public void Pass_Warning()
+        public void Pass_MainInternal()
         {
             // Setup
-            var stdOut = Console.Out;
-            var consoleOutput = new StringWriter();
-            var message = Fakes.RandomString();
-            var logger = new ConsoleLogger();
 
             // Execute
-            try
-            {
-                Console.SetOut(consoleOutput);
-                logger.LogWarning(message);
-
-            }
-            finally
-            {
-                Console.SetOut(stdOut);
-            }
+            var result = Program.MainInternal(_deployerMock.Object, _deployArgsMock.Object, new string []{});
 
             // Assert
-            Assert.True(consoleOutput.ToString().Contains(message));
+            Assert.NotNull(result);
+            Assert.True(result);
         }
 
         [Fact]
-        public void Pass_Error()
+        public void Fail_MainInternal_Usage()
         {
             // Setup
             var stdOut = Console.Out;
-            var consoleOutput = new StringWriter();
             var message = Fakes.RandomString();
-            var logger = new ConsoleLogger();
-
-            // Execute
+            _deployArgsMock.Setup(a => a.ProcessArgs(It.IsAny<string[]>())).Throws(new MissingRequiredArgumentException(message));
+            var consoleOutput = new StringWriter();
+            bool? result;
             try
             {
                 Console.SetOut(consoleOutput);
-                logger.LogError(message);
 
+                // Execute
+                result = Program.MainInternal(_deployerMock.Object, _deployArgsMock.Object, new string[] { });
+            }
+            finally
+            {
+                Console.SetOut(stdOut);
+            }
+
+            // Assert
+            Assert.True(consoleOutput.ToString().Contains("Usage"));
+            Assert.True(consoleOutput.ToString().Contains(message));
+            Assert.NotNull(result);
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void Fail_MainInternal_OtherException()
+        {
+            // Setup
+            var stdOut = Console.Out;
+            var message = Fakes.RandomString();
+            _deployArgsMock.Setup(a => a.ProcessArgs(It.IsAny<string[]>())).Throws(new Exception(message));
+            var consoleOutput = new StringWriter();
+            bool? result;
+            try
+            {
+                Console.SetOut(consoleOutput);
+
+                // Execute
+                result = Program.MainInternal(_deployerMock.Object, _deployArgsMock.Object, new string[] { });
             }
             finally
             {
@@ -96,6 +97,8 @@ namespace SsisBuild.Logger.Tests
 
             // Assert
             Assert.True(consoleOutput.ToString().Contains(message));
+            Assert.NotNull(result);
+            Assert.False(result);
         }
     }
 }
