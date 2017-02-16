@@ -14,12 +14,9 @@
       <SSIS:Property
         SSIS:Name="Required">0</SSIS:Property>
       <SSIS:Property
-        SSIS:Name="Sensitive">1</SSIS:Property>
+        SSIS:Name="Sensitive">0</SSIS:Property>
       <SSIS:Property
-        SSIS:Name="Value"
-        SSIS:Sensitive="1"
-        SSIS:Salt="d/f0bPt2dw=="
-        SSIS:IV="dKubjW/3WKs=">VZOuSRklYIBciESpkZZZq1pAxFOaxER+HN6JN0QuArFz2erjjFCzSZQbiHLtq149Ztgs+aULoER8KYAlqTBoDiGtbJeZRcbHp040kM/NIKd+GNnj+pejtNXNrY/8O7nNmUncbXHouOpf60Sn2v+NURANV3lz6nDQWCISvl+H92Y=</SSIS:Property>
+        SSIS:Name="Value">db-01112</SSIS:Property>
       <SSIS:Property
         SSIS:Name="DataType">18</SSIS:Property>
     </SSIS:Properties>
@@ -42,8 +39,8 @@
       <SSIS:Property
         SSIS:Name="Value"
         SSIS:Sensitive="1"
-        SSIS:Salt="kDaR5yoOpw=="
-        SSIS:IV="gO56vnkXprM=">q4knEO3CqWkVssH91geuJQGNwamkCLXH+hctqtd9r90reRIMwxi3zpdt3V/ndFiHB0Ki5qldb9rmuCMnSmG5GjEWSiyH26F8KGg+I4vAjNuIhb3jVEfp6FLFtsXMhFH9gctwa+KNyIcCHUS459Z5Kk4DtIkBahrliCGIikeZTL4=</SSIS:Property>
+        SSIS:Salt="epador5i2A=="
+        SSIS:IV="0PJQ+7Nwxuw=">gGo7345pq07rm5e1VMMMYLU4x4OcHONBmq6QtTfsO3q1edVDeucZlwuyaXCdpPfazTs97AiqJ5yM0tc/7IK3xRHw6iIi5nT59IgtOhUF29GMcCL9MZHxtottfqkJ/0AcHq3brrgifVOaHPIfdyS9kxdPEiiYwiYK5dmYai6sBYs=</SSIS:Property>
       <SSIS:Property
         SSIS:Name="DataType">18</SSIS:Property>
     </SSIS:Properties>

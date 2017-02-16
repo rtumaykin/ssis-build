@@ -1,0 +1,20 @@
+﻿<?xml version="1.0"?>
+<DTS:ConnectionManager xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:ObjectName="FTP Connection Manager"
+  DTS:DTSID="{2F498BE7-5736-4AC7-8C8C-111C8B66F192}"
+  DTS:CreationName="FTP">
+  <DTS:ObjectData>
+    <DTS:ConnectionManager
+      DTS:ConnectionString="ss.ee:21">
+      <DTS:FtpConnection
+        DTS:ServerName="ss.ee"
+        DTS:ServerUserName="anonymous1">
+        <DTS:Property
+          DTS:Name="ServerPassword"
+          Sensitive="1"
+          p5:Salt="a5Q6/fVnKw=="
+          p5:IV="q/9W/LWhO9I=" xmlns:p5="www.microsoft.com/SqlServer/SSIS">kU+1vA+7JpkTCMMi3FyW6QDnI5SiPpdeMn00Sf+cFCPjrp78b1qktgzEBmIbOj2lTFUCfuXQP9BYum8IYe20LrSjN9xdX2W4I9OXTWvUY3a0Kvyv67Se3knsixn2fAZxbxO90ENDtUJGDcWBS9M5DMvhW5oiUYKNvXEjcXHRbh4=</DTS:Property>
+      </DTS:FtpConnection>
+    </DTS:ConnectionManager>
+  </DTS:ObjectData>
+</DTS:ConnectionManager>

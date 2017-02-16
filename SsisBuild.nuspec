@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>SSISBuild</id>
+    <version>2.0.0</version>
+    <title>SSIS Build</title>
+    <authors>Roman Tumaykin</authors>
+    <owners>Roman Tumaykin</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>https://github.com/rtumaykin/ssis-build/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A command line utility that builds an ispac file from a Visual Studio SSIS project (project deployment model only)</description>
+    <releaseNotes>Completely removed Microsoft DTS dependencies from the library. The tool can work standalone with no need to install any dependencies
+Added SsisDeploy application which is capable of deploying any ispac deployment packages
+Added unit tests with 100% code coverage
+Removed SensitiveParameter Build Argument because it was causing runtime issues</releaseNotes>
+    <copyright>Copyright © 2017 Roman Tumaykin</copyright>
+    <tags>SSIS build tools</tags>
+  </metadata>
+  <files>
+    <file src="src\SsisBuild\bin\$configuration$\*.dll" target="tools" />
+    <file src="src\SsisBuild\bin\$configuration$\ssisbuild.exe" target="tools" />
+    <file src="src\SsisBuild\bin\$configuration$\ssisbuild.exe.config" target="tools" />
+    <file src="src\SsisDeploy\bin\$configuration$\*.dll" target="tools" exclude="**\SsisBuild.Core.dll;**\SsisBuild.Logger.dll" />
+    <file src="src\SsisDeploy\bin\$configuration$\ssisdeploy.exe" target="tools" />
+    <file src="src\SsisDeploy\bin\$configuration$\ssisdeploy.exe.config" target="tools" />
+  </files>
+</package>

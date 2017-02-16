@@ -1,0 +1,16 @@
+﻿<?xml version="1.0"?>
+<DTS:ConnectionManager xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:ObjectName="db-01 msdb"
+  DTS:DTSID="{8E8B81F6-EBE1-4CBB-AF18-083F97AEF664}"
+  DTS:CreationName="ADO.NET:System.Data.SqlClient.SqlConnection, System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <DTS:ObjectData>
+    <DTS:ConnectionManager
+      DTS:ConnectionString="Data Source=db-01;User ID=sa;Initial Catalog=msdb;Persist Security Info=True;Application Name=SSIS-SampleSSISProject-{8E8B81F6-EBE1-4CBB-AF18-083F97AEF664}db-01.msdb;">
+      <DTS:Password
+        DTS:Name="Password"
+        Sensitive="1"
+        p4:Salt="m3bNfFshBg=="
+        p4:IV="Xy+UAWKJ71A=" xmlns:p4="www.microsoft.com/SqlServer/SSIS">zxfZBGrK57N99PRIU4lPgB58CxWtFpDqK3wFyT2Wm6exRAJjEmdOFPG7xhpOqcXph/OVCxS0PVFufMXlF1XD7L87AyIdfr/TpHaOqt12K59/irCoaldbCKLEmxBEaavtVH99kRF5bsD02TdIMLZWdvHQhc5K1h/h1s1be+dTzMI=</DTS:Password>
+    </DTS:ConnectionManager>
+  </DTS:ObjectData>
+</DTS:ConnectionManager>
