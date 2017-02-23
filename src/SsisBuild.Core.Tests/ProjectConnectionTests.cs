@@ -14,6 +14,7 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
+using SsisBuild.Core.ProjectManagement;
 using Xunit;
 
 namespace SsisBuild.Core.Tests

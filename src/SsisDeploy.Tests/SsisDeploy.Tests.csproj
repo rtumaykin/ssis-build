@@ -64,9 +64,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DeployArgumentsTests.cs" />
-    <Compile Include="DeployerTests.cs" />
-    <Compile Include="ProgramTests.cs" />
+    <Compile Include="SsisDeployTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

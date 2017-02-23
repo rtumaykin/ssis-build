@@ -18,7 +18,8 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using Xunit;
-using SsisBuild.Core.Helpers;
+using SsisBuild.Core.ProjectManagement;
+using SsisBuild.Core.ProjectManagement.Helpers;
 using SsisBuild.Tests.Helpers;
 
 namespace SsisBuild.Core.Tests

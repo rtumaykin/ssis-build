@@ -16,38 +16,117 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
+using SsisBuild.Core.Deployer;
 
 namespace SsisDeploy
 {
     class Program
     {
+        private static readonly string[] ParameterNames = {
+            nameof(DeployArguments.Catalog),
+            nameof(DeployArguments.DeploymentFilePath),
+            nameof(DeployArguments.EraseSensitiveInfo),
+            nameof(DeployArguments.Folder),
+            nameof(DeployArguments.ProjectName),
+            nameof(DeployArguments.ProjectPassword),
+            nameof(DeployArguments.ServerInstance),
+        };
+
+
         [ExcludeFromCodeCoverage]
         static void Main(string[] args)
         {
-            if (!MainInternal(new Deployer(), new DeployArguments(), args))
+            try
+            {
+                MainInternal(new Deployer(), args);
+            }
+            catch
+            {
                 Environment.Exit(1);
+            }
         }
 
-        internal static bool MainInternal(IDeployer deployer, IDeployArguments deployArguments, string[] args)
+        internal static void MainInternal(IDeployer deployer, string[] args)
         {
             try
             {
-                deployArguments.ProcessArgs(args);
+                var deployArguments = ParseCommandLineArguments(args);
                 deployer.Deploy(deployArguments);
-            }
-            catch (ArgumentsProcessingException x)
-            {
-                Console.WriteLine(x.Message);
-                Usage();
-                return false;
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                return false;
+                Console.WriteLine($"ERROR: {e.Message}");
+                if (e is CommandLineParsingException || e is DeployArgumentsValidationException)
+                    Usage();
+                throw;
             }
-            return true;
         }
+
+        internal static DeployArguments ParseCommandLineArguments(string[] args)
+        {
+            var startPos = 0;
+
+            string deploymentFilePath = null;
+            string serverInstance = null;
+            string catalog = null;
+            string folder = null;
+            string projectName = null;
+            string projectPassword = null;
+            var eraseSensitiveInfo = false;
+
+            if (args.Length > 0 && !args[0].StartsWith("-"))
+            {
+                deploymentFilePath = args[0];
+
+                startPos++;
+            }
+
+            for (var argPos = startPos; argPos < args.Length; argPos++)
+            {
+                var argName = args[argPos];
+                var argValue = argPos == args.Length - 1 ? null : args[argPos + 1];
+
+                if (!argName.StartsWith("-"))
+                    throw new InvalidTokenException(argName);
+
+                var lookupArgName = ParameterNames.FirstOrDefault(n => n.Equals(argName.Substring(1), StringComparison.InvariantCultureIgnoreCase)) ?? argName.Substring(1);
+
+                switch (lookupArgName)
+                {
+                    case nameof(DeployArguments.ServerInstance):
+                        serverInstance = args[argPos++ + 1];
+                        break;
+
+                    case nameof(DeployArguments.Catalog):
+                        catalog = args[argPos++ + 1];
+                        break;
+
+                    case nameof(DeployArguments.Folder):
+                        folder = args[argPos++ + 1];
+                        break;
+
+                    case nameof(DeployArguments.ProjectName):
+                        projectName = args[argPos++ + 1];
+                        break;
+
+                    case nameof(DeployArguments.EraseSensitiveInfo):
+                        eraseSensitiveInfo = true;
+                        break;
+
+                    case nameof(DeployArguments.ProjectPassword):
+                        projectPassword = args[argPos++ + 1];
+                        break;
+
+                    default:
+                        throw new InvalidTokenException(argName);
+                }
+            }
+
+            return new DeployArguments(Environment.CurrentDirectory, deploymentFilePath, serverInstance, catalog, folder, projectName, projectPassword, eraseSensitiveInfo);
+        }
+
 
         private static void Usage()
         {

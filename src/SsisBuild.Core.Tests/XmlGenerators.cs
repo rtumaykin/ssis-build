@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SsisBuild.Core.ProjectManagement;
 using SsisBuild.Tests.Helpers;
 
 namespace SsisBuild.Core.Tests

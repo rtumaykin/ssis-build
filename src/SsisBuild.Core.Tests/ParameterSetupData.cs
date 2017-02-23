@@ -14,6 +14,8 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
+using SsisBuild.Core.ProjectManagement;
+
 namespace SsisBuild.Core.Tests
 {
     public class ParameterSetupData

@@ -15,35 +15,124 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using SsisBuild.Core.Builder;
 
 namespace SsisBuild
 {
     class Program
     {
+        private static readonly string[] ParameterNames = {
+            nameof(BuildArguments.OutputFolder),
+            nameof(BuildArguments.Configuration),
+            nameof(BuildArguments.ProtectionLevel),
+            nameof(BuildArguments.Password),
+            nameof(BuildArguments.ReleaseNotes),
+            nameof(BuildArguments.NewPassword)
+        };
 
         static void Main(string[] args)
         {
             try
             {
-                MainInternal(args, new Builder(), new BuildArguments());
+                MainInternal(new Builder(), args);
             }
-            catch (ArgumentsProcessingException x)
+            catch
             {
-                Console.WriteLine(x.Message);
-                Usage();
-                Environment.Exit(1);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
                 Environment.Exit(1);
             }
         }
 
-        internal static void MainInternal(string[] args, IBuilder builder, IBuildArguments buildArguments)
+        internal static void MainInternal(IBuilder builder, string[] args)
         {
-            buildArguments.ProcessArgs(args);
-            builder.Build(buildArguments);
+            try
+            {
+                var buildArguments = ParseCommandLineArguments(args);
+                builder.Build(buildArguments);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"ERROR: {e.Message}");
+                if (e is CommandLineParsingException || e is BuildArgumentsValidationException)
+                    Usage();
+                throw;
+            }
+        }
+
+        private static BuildArguments ParseCommandLineArguments(string[] args)
+        {
+            var startPos = 0;
+
+            string projectPath = null;
+            string configuration = null;
+            string outputFolder = null;
+            string protectionLevel = null;
+            string password = null;
+            string newPassword = null;
+            string releaseNotes = null;
+            var parameters = new Dictionary<string, string>();
+
+
+            if (args.Length > 0 && !args[0].StartsWith("-"))
+            {
+                projectPath = args[0];
+                startPos++;
+            }
+
+            for (var argPos = startPos; argPos < args.Length; argPos += 2)
+            {
+                var argName = args[argPos];
+                var argValue = argPos == args.Length - 1 ? null : args[argPos + 1];
+
+                if (!argName.StartsWith("-"))
+                    throw new InvalidTokenException(argName);
+
+                var lookupArgName = ParameterNames.FirstOrDefault(n => n.Equals(argName.Substring(1), StringComparison.InvariantCultureIgnoreCase)) ?? argName.Substring(1);
+
+                switch (lookupArgName)
+                {
+                    case nameof(BuildArguments.Configuration):
+                        configuration = argValue;
+                        break;
+
+                    case nameof(BuildArguments.OutputFolder):
+                        outputFolder = argValue;
+                        break;
+
+                    case nameof(BuildArguments.ProtectionLevel):
+                        protectionLevel = argValue;
+                        break;
+
+                    case nameof(BuildArguments.Password):
+                        password = argValue;
+                        break;
+
+                    case nameof(BuildArguments.NewPassword):
+                        newPassword = argValue;
+                        break;
+
+                    case nameof(BuildArguments.ReleaseNotes):
+                        releaseNotes = argValue;
+                        break;
+
+                    default:
+                        if (argName.StartsWith("-Parameter:", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            parameters.Add(argName.Substring(11), argValue);
+                        }
+                        else
+                        {
+                            throw new InvalidTokenException(argName);
+                        }
+                        break;
+                }
+
+                if (argValue == null)
+                    throw new NoValueProvidedException(lookupArgName);
+            }
+
+            return new BuildArguments(Environment.CurrentDirectory, projectPath, outputFolder, protectionLevel, password, newPassword, configuration, releaseNotes, parameters); 
         }
 
         private static void Usage()

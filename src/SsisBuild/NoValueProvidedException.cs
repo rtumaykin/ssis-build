@@ -14,9 +14,11 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
+using System;
+
 namespace SsisBuild
 {
-    public class NoValueProvidedException : ArgumentsProcessingException
+    public class NoValueProvidedException : CommandLineParsingException
     {
         public NoValueProvidedException(string argumentName) : base($"No value provided for an argument {argumentName}.")
         {
