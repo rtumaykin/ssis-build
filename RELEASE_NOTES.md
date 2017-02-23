@@ -1,3 +1,6 @@
+#### 2.1.0 (Released 2017/02/22)
+* Added Powershell functionality
+
 #### 2.0.0 (Released 2017/02/15)
 * Completely removed Microsoft DTS dependencies from the library. The tool can work standalone with no need to install any dependencies
 * Added SsisDeploy application which is capable of deploying any ispac deployment packages
