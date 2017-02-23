@@ -85,6 +85,8 @@ namespace SsisBuild.Core.Deployer
                 _catalogTools.DeployProject(connectionString, deployArguments.Folder, deployArguments.ProjectName, deployArguments.EraseSensitiveInfo, parametersToDeploy, zipStream);
             }
 
+            _logger.LogMessage("");
+            _logger.LogMessage("Deployment completed successfully");
         }
 
         private void LogDeploymentInfo(IDeployArguments deployArguments, Dictionary<string, SensitiveParameter> parametersToDeploy, ProtectionLevel deploymentProtectionLevel)

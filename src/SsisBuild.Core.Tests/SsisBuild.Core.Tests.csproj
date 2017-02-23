@@ -70,6 +70,7 @@
   <ItemGroup>
     <Compile Include="BuildArgumentsTests.cs" />
     <Compile Include="BuilderTests.cs" />
+    <Compile Include="SsisDeployPowershellTests.cs" />
     <Compile Include="ConfigurationParameterTests.cs" />
     <Compile Include="ConfigurationTests.cs" />
     <Compile Include="DeployArgumentsTests.cs" />

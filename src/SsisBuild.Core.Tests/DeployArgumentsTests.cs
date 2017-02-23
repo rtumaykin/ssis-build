@@ -25,9 +25,6 @@ namespace SsisBuild.Core.Tests
 {
     public class DeployArgumentsTests
     {
-        private readonly string _workingFolder;
-        private readonly string _oldWorkingFolder;
-
         [Fact]
         public void Pass_New_AllArguments()
         {
@@ -53,7 +50,7 @@ namespace SsisBuild.Core.Tests
             Assert.Equal(folder, deployArguments.Folder);
             Assert.Equal(projectName, deployArguments.ProjectName);
             Assert.Equal(projectPassword, deployArguments.ProjectPassword);
-            Assert.Equal(true, deployArguments.EraseSensitiveInfo);
+            Assert.Equal(eraseSensitiveInfo, deployArguments.EraseSensitiveInfo);
         }
 
         [Fact]

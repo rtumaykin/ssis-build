@@ -27,7 +27,7 @@ namespace SsisBuild.Core.Tests
 {
     public class SsisBuildPowershellTests
     {
-        private Mock<IBuilder> _builder;
+        private readonly Mock<IBuilder> _builder;
 
         public SsisBuildPowershellTests()
         {

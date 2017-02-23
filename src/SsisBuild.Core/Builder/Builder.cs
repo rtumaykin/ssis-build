@@ -82,7 +82,12 @@ namespace SsisBuild.Core.Builder
             // parse release notes if provided
             if (!string.IsNullOrWhiteSpace(buildArguments.ReleaseNotes))
             {
-                ApplyReleaseNotes(buildArguments.ReleaseNotes, _project);
+                var releaseNotesPath = Path.GetFullPath(
+                    Path.IsPathRooted(buildArguments.ReleaseNotes)
+                        ? buildArguments.ReleaseNotes
+                        : Path.Combine(buildArguments.WorkingFolder, buildArguments.ReleaseNotes)
+                );
+                ApplyReleaseNotes(releaseNotesPath, _project);
             }
 
             EchoFinalParameterValues(_project.Parameters.Values.ToArray());
@@ -117,6 +122,8 @@ namespace SsisBuild.Core.Builder
                 _project.Save(destinationPath, finalProtectionLevel, encryptionPassword);
             }
 
+            _logger.LogMessage("");
+            _logger.LogMessage("Build completed successfully");
         }
 
         private void EchoFinalParameterValues(IParameter[] parameterValues)

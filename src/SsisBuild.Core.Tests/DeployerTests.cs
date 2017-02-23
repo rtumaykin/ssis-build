@@ -29,7 +29,7 @@ using Xunit;
 
 namespace SsisBuild.Core.Tests
 {
-    public class DeployerTests
+    public class DeployerTests : IDisposable
     {
 
         private readonly Mock<IProject> _projectMock;
@@ -37,12 +37,17 @@ namespace SsisBuild.Core.Tests
         private readonly Mock<IDeployArguments> _deployArgumentsMock;
         private readonly Mock<ILogger> _loggerMock;
 
+        private readonly string _workingFolder;
+
         public DeployerTests()
         {
             _projectMock = new Mock<IProject>();
             _catalogToolsMock = new Mock<ICatalogTools>();
             _deployArgumentsMock = new Mock<IDeployArguments>();
             _loggerMock = new Mock<ILogger>();
+
+            _workingFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(_workingFolder);
         }
 
         [Fact]
@@ -60,6 +65,7 @@ namespace SsisBuild.Core.Tests
             _deployArgumentsMock.Setup(d => d.ProjectPassword).Returns(Fakes.RandomString());
             _deployArgumentsMock.Setup(d => d.EraseSensitiveInfo).Returns(Fakes.RandomBool());
             _deployArgumentsMock.Setup(d => d.ServerInstance).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.WorkingFolder).Returns(Fakes.RandomString());
 
             string passedCatalog = null;
             string passedServerInstance = null;
@@ -106,6 +112,65 @@ namespace SsisBuild.Core.Tests
         }
 
         [Fact]
+        public void Pass_Deploy_ImplicitDeploymentFilePath()
+        {
+            // Setup
+            var parameters = GenerateRandomParameters();
+            _projectMock.SetupAllProperties();
+            _projectMock.Setup(p => p.Parameters).Returns(new ReadOnlyDictionary<string, IParameter>(parameters));
+
+            _deployArgumentsMock.Setup(d => d.Catalog).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.Folder).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.ProjectName).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.ProjectPassword).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.EraseSensitiveInfo).Returns(Fakes.RandomBool());
+            _deployArgumentsMock.Setup(d => d.ServerInstance).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.WorkingFolder).Returns(_workingFolder);
+
+            var realDeploymentFilePath = Path.Combine(_workingFolder, $"{Fakes.RandomString()}.ispac");
+            File.Create(realDeploymentFilePath).Close();
+
+            string receivedDeploymentFilePath = null;
+
+            _projectMock.Setup(p => p.LoadFromIspac(It.IsAny<string>(), It.IsAny<string>()))
+                .Callback((string deploymentFilePath, string password) => receivedDeploymentFilePath = deploymentFilePath);
+
+            var deployer = new Deployer.Deployer(_loggerMock.Object, _projectMock.Object, _catalogToolsMock.Object);
+
+            // Execute
+            deployer.Deploy(_deployArgumentsMock.Object);
+
+            // Assert
+            Assert.Equal(realDeploymentFilePath, receivedDeploymentFilePath);
+        }
+
+        [Fact]
+        public void Fail_Deploy_DeploymentFileNotFoundException()
+        {
+            // Setup
+            var parameters = GenerateRandomParameters();
+            _projectMock.SetupAllProperties();
+            _projectMock.Setup(p => p.Parameters).Returns(new ReadOnlyDictionary<string, IParameter>(parameters));
+
+            _deployArgumentsMock.Setup(d => d.Catalog).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.Folder).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.ProjectName).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.ProjectPassword).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.EraseSensitiveInfo).Returns(Fakes.RandomBool());
+            _deployArgumentsMock.Setup(d => d.ServerInstance).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.WorkingFolder).Returns(_workingFolder);
+
+            var deployer = new Deployer.Deployer(_loggerMock.Object, _projectMock.Object, _catalogToolsMock.Object);
+
+            // Execute
+            var exception = Record.Exception(() => deployer.Deploy(_deployArgumentsMock.Object));
+
+            // Assert
+            Assert.NotNull(exception);
+            Assert.IsType<DeploymentFileNotFoundException>(exception);
+        }
+
+        [Fact]
         public void Pass_Deployer()
         {
             // Setup
@@ -132,6 +197,7 @@ namespace SsisBuild.Core.Tests
             _deployArgumentsMock.Setup(d => d.ProjectPassword).Returns(Fakes.RandomString());
             _deployArgumentsMock.Setup(d => d.EraseSensitiveInfo).Returns(Fakes.RandomBool());
             _deployArgumentsMock.Setup(d => d.ServerInstance).Returns(Fakes.RandomString());
+            _deployArgumentsMock.Setup(d => d.WorkingFolder).Returns(Fakes.RandomString());
 
             _catalogToolsMock.Setup(c => c.DeployProject(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IDictionary<string, SensitiveParameter>>(), It.IsAny<MemoryStream>()))
                 .Throws(new Exception("TEST"));
@@ -165,6 +231,11 @@ namespace SsisBuild.Core.Tests
                 parameters.Add(parameterMock.Object.Name, parameterMock.Object);
             }
             return parameters;
+        }
+
+        public void Dispose()
+        {
+            Directory.Delete(_workingFolder, true);
         }
     }
 }
