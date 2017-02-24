@@ -13,7 +13,7 @@ open Fake.FileUtils
 let authors = [ "Roman Tumaykin" ]
 let copyright = "Copyright © 2017 Roman Tumaykin"
 let company = "Roman Tumaykin"
-let description = "A command line utility that builds an ispac file from a Visual Studio SSIS project (project deployment model only)"
+let description = "A set of utilities that allow to autonomously build a Visual Studio SSIS project (dtproj) into a deployment package (ispac), and deploy the package to an SSIS catalog."
 let tags = ["SSIS";"build";"tools"]
 let configuration = "Release"
 

@@ -9,7 +9,7 @@
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <projectUrl>https://github.com/rtumaykin/ssis-build/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>A command line utility that builds an ispac file from a Visual Studio SSIS project (project deployment model only)</description>
+    <description>A set of utilities that allow to autonomously build a Visual Studio SSIS project (dtproj) into a deployment package (ispac), and deploy the package to an SSIS catalog.</description>
     <releaseNotes>Added Powershell functionality</releaseNotes>
     <copyright>Copyright © 2017 Roman Tumaykin</copyright>
     <tags>SSIS build tools</tags>
