@@ -4,4 +4,4 @@ Open command prompt in the root solution folder and execute the following comman
 
 #**Deploying your SSIS Package with SSISBuild**
 Open command prompt in the artifacts folder (.\build\ in the previous example) and execute the following command:
-`powershell -Command .\deploy.ps1 -SSISInstanceName <Yiur SSIS Server Full Instance Name> -SSISCatalog <Target SSIS Catalog> -SSISDeploymentFolder <Target Folder> -SSISProjectName <Target Project Name> -Password <Password To Decrypt Package Contents>`
+`powershell -Command .\deploy.ps1 -SSISInstanceName <Your SSIS Server Full Instance Name> -SSISCatalog <Target SSIS Catalog> -SSISDeploymentFolder <Target Folder> -SSISProjectName <Target Project Name> -Password <Password To Decrypt Package Contents>`
