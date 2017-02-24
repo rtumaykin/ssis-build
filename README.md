@@ -127,7 +127,7 @@ A PowerShell Cmdlet that that deploys an SSIS deployment package to an SSIS cata
     New-SsisDeploymentPackage .\SampleSSISProject\SampleSSISProject.dtproj -ProtectionLevel $DeploymentProtectionLevel -Configuration $Configuration -Password $Password -NewPassword $NewPassword -OutputFolder .\build -ReleaseNotes $ReleaseNotesFilePath -Parameters @{"Project::SourceDBServer" = $SourceDBServer; "Project::SourceDBName" = $SourceDBName}
     
     # Copy module to the artifacts folder so we can use it during the deployment without having to redownload it
-    Copy-Item .\packages\SSISBuild\tools\SsisBuild.Core.dll .\build
+    Copy-Item .\packages\SSISBuild\tools\*.dll .\build
     
     # Add deployment script to the build artifacts
 	Copy-Item .\deploy.ps1 .\build
