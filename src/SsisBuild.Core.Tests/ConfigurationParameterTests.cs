@@ -16,6 +16,7 @@
 
 using System;
 using System.Xml;
+using SsisBuild.Core.ProjectManagement;
 using SsisBuild.Tests.Helpers;
 using Xunit;
 

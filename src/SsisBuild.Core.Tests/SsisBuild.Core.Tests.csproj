@@ -40,6 +40,10 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.PowerShell.5.ReferenceAssemblies.1.0.0\lib\net4\System.Management.Automation.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -64,8 +68,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BuildArgumentsTests.cs" />
+    <Compile Include="BuilderTests.cs" />
+    <Compile Include="SsisDeployPowershellTests.cs" />
     <Compile Include="ConfigurationParameterTests.cs" />
     <Compile Include="ConfigurationTests.cs" />
+    <Compile Include="DeployArgumentsTests.cs" />
+    <Compile Include="DeployerTests.cs" />
     <Compile Include="PackageTests.cs" />
     <Compile Include="ParameterSetupData.cs" />
     <Compile Include="ProjectConnectionTests.cs" />
@@ -75,6 +84,7 @@
     <Compile Include="ProjectParamsTests.cs" />
     <Compile Include="ProjectTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SsisBuildPowershellTests.cs" />
     <Compile Include="UserConfigurationTests.cs" />
     <Compile Include="XmlGenerators.cs" />
   </ItemGroup>
@@ -85,6 +95,10 @@
     <ProjectReference Include="..\SsisBuild.Core\SsisBuild.Core.csproj">
       <Project>{01657A26-BE3B-4A6E-A193-E175096F54BA}</Project>
       <Name>SsisBuild.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SsisBuild.Logger\SsisBuild.Logger.csproj">
+      <Project>{6fadb9e9-cf51-4caf-8b82-b4b93fd367eb}</Project>
+      <Name>SsisBuild.Logger</Name>
     </ProjectReference>
     <ProjectReference Include="..\SsisBuild.Tests.Helpers\SsisBuild.Tests.Helpers.csproj">
       <Project>{17afe8ad-f52e-44e5-b0f6-1b24f17edb1b}</Project>

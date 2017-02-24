@@ -21,7 +21,8 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 using Moq;
-using SsisBuild.Core.Helpers;
+using SsisBuild.Core.ProjectManagement;
+using SsisBuild.Core.ProjectManagement.Helpers;
 using SsisBuild.Tests.Helpers;
 using Xunit;
 

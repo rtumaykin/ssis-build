@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using SsisBuild.Core.ProjectManagement;
 using SsisBuild.Tests.Helpers;
 using Xunit;
 

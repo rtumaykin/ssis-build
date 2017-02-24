@@ -4,7 +4,7 @@ param (
     [Parameter(Mandatory=$true)][string]$SSISDeploymentFolder,
     [Parameter(Mandatory=$true)][string]$SSISProjectName,
     [Parameter(Mandatory=$true)][string]$Password,
-    [string] $NewPassword,
+    [string]$NewPassword,
     [string]$SourceDBName,
     [string]$SourceDBServer,
     [string]$ReleaseNotesFilePath
@@ -24,15 +24,15 @@ $nugetExe = [System.IO.Path]::Combine($Env:LOCALAPPDATA, "Nuget", "Nuget.exe")
 
 packages\SSISBuild\tools\ssisbuild 'SampleSSISProject\SampleSSISProject.dtproj' -Configuration Deployment -Password "$Password" -NewPassword "$NewPassword" -OutputFolder "build" -ReleaseNotes "$ReleaseNotesFilePath" "-Parameter:Project::SourceDBServer" "$SourceDBServer" "-Parameter:Project::SourceDBName" "$SourceDBName"
 
-# Copy deploy.ps1 to the artifacts folder
-
-Copy-Item ".\deploy.ps1" "build\"
+# Copy SSISDeploy to the artifacts folder
+Copy-Item "packages\SSISBuild\tools\ssisdeploy.exe" "build\"
 
 # Escape parenthesis in variables
 
 # Now create deploy.cmd file with all proper parameters
 $cmd = "@echo off
 pushd %~dp0
+ssisdeploy.exe 
 powershell -Command "".\deploy.ps1"" -SSISInstanceName `'$SSISInstanceName`' -SSISCatalog `'$SSISCatalog`' -SSISDeploymentFolder `'$SSISDeploymentFolder`' -SSISProjectName `'$SSISProjectName`'
 popd"
 Set-Content -Path build\deploy.cmd -Value $cmd

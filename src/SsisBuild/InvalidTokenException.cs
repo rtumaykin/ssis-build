@@ -16,7 +16,7 @@
 
 namespace SsisBuild
 {
-    public class InvalidTokenException : ArgumentsProcessingException
+    public class InvalidTokenException : CommandLineParsingException
     {
         public InvalidTokenException(string token) : base($"Invalid token \"{token}\".")
         {

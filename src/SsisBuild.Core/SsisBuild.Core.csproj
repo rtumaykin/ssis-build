@@ -40,6 +40,10 @@
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.PowerShell.5.ReferenceAssemblies.1.0.0\lib\net4\System.Management.Automation.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Security" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -53,32 +57,63 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="ConfigurationParameter.cs" />
-    <Compile Include="Helpers\XmlHelper.cs" />
-    <Compile Include="InvalidConfigurationNameException.cs" />
-    <Compile Include="InvalidDeploymentModelException.cs" />
-    <Compile Include="InvalidExtensionException.cs" />
-    <Compile Include="InvalidPaswordException.cs" />
-    <Compile Include="Configuration.cs" />
-    <Compile Include="DataType.cs" />
-    <Compile Include="InvalidProtectionLevelException.cs" />
-    <Compile Include="InvalidXmlException.cs" />
-    <Compile Include="IParameter.cs" />
-    <Compile Include="IProject.cs" />
-    <Compile Include="IProjectFile.cs" />
-    <Compile Include="IProjectManifest.cs" />
-    <Compile Include="Package.cs" />
-    <Compile Include="Parameter.cs" />
-    <Compile Include="ParameterSource.cs" />
-    <Compile Include="Project.cs" />
-    <Compile Include="ProjectConnection.cs" />
-    <Compile Include="ProjectFile.cs" />
-    <Compile Include="ProjectManifest.cs" />
-    <Compile Include="ProjectNotInitializedException.cs" />
-    <Compile Include="ProjectParameter.cs" />
-    <Compile Include="ProjectParams.cs" />
-    <Compile Include="ProtectionLevel.cs" />
-    <Compile Include="UserConfiguration.cs" />
+    <Compile Include="Builder\BuildArgumentsValidationException.cs" />
+    <Compile Include="Builder\BuildArguments.cs" />
+    <Compile Include="Builder\Builder.cs" />
+    <Compile Include="Builder\DontSaveSensitiveWithPasswordException.cs" />
+    <Compile Include="Builder\IBuildArguments.cs" />
+    <Compile Include="Builder\IBuilder.cs" />
+    <Compile Include="Builder\InvalidArgumentException.cs" />
+    <Compile Include="Builder\InvalidReleaseNotesException.cs" />
+    <Compile Include="Builder\MissingRequiredArgumentException.cs" />
+    <Compile Include="Builder\PasswordRequiredException.cs" />
+    <Compile Include="Builder\ProjectFileNotFoundException.cs" />
+    <Compile Include="Builder\ReleaseNotes.cs" />
+    <Compile Include="Builder\ReleaseNotesHelper.cs" />
+    <Compile Include="Builder\SsisBuildPowershell.cs" />
+    <Compile Include="Deployer\DeployArgumentsValidationException.cs" />
+    <Compile Include="Deployer\CatalogTools.cs" />
+    <Compile Include="Deployer\DeployArguments.cs" />
+    <Compile Include="Deployer\Deployer.cs" />
+    <Compile Include="Deployer\ICatalogTools.cs" />
+    <Compile Include="Deployer\IDeployArguments.cs" />
+    <Compile Include="Deployer\IDeployer.cs" />
+    <Compile Include="Deployer\MissingRequiredArgumentException.cs" />
+    <Compile Include="Deployer\ObjectTypes.cs" />
+    <Compile Include="Deployer\ProjectFileNotFoundException.cs" />
+    <Compile Include="Deployer\SensitiveParameter.cs" />
+    <Compile Include="Deployer\Sql\ValidateProject.cs" />
+    <Compile Include="Deployer\Sql\CreateFolder.cs" />
+    <Compile Include="Deployer\Sql\DeployProject.cs" />
+    <Compile Include="Deployer\Sql\ExecutionScope.cs" />
+    <Compile Include="Deployer\Sql\SetObjectParameterValue.cs" />
+    <Compile Include="Deployer\SsisDeployPowershell.cs" />
+    <Compile Include="ProjectManagement\ConfigurationParameter.cs" />
+    <Compile Include="ProjectManagement\Helpers\XmlHelper.cs" />
+    <Compile Include="ProjectManagement\InvalidConfigurationNameException.cs" />
+    <Compile Include="ProjectManagement\InvalidDeploymentModelException.cs" />
+    <Compile Include="ProjectManagement\InvalidExtensionException.cs" />
+    <Compile Include="ProjectManagement\InvalidPaswordException.cs" />
+    <Compile Include="ProjectManagement\Configuration.cs" />
+    <Compile Include="ProjectManagement\DataType.cs" />
+    <Compile Include="ProjectManagement\InvalidProtectionLevelException.cs" />
+    <Compile Include="ProjectManagement\InvalidXmlException.cs" />
+    <Compile Include="ProjectManagement\IParameter.cs" />
+    <Compile Include="ProjectManagement\IProject.cs" />
+    <Compile Include="ProjectManagement\IProjectFile.cs" />
+    <Compile Include="ProjectManagement\IProjectManifest.cs" />
+    <Compile Include="ProjectManagement\Package.cs" />
+    <Compile Include="ProjectManagement\Parameter.cs" />
+    <Compile Include="ProjectManagement\ParameterSource.cs" />
+    <Compile Include="ProjectManagement\Project.cs" />
+    <Compile Include="ProjectManagement\ProjectConnection.cs" />
+    <Compile Include="ProjectManagement\ProjectFile.cs" />
+    <Compile Include="ProjectManagement\ProjectManifest.cs" />
+    <Compile Include="ProjectManagement\ProjectNotInitializedException.cs" />
+    <Compile Include="ProjectManagement\ProjectParameter.cs" />
+    <Compile Include="ProjectManagement\ProjectParams.cs" />
+    <Compile Include="ProjectManagement\ProtectionLevel.cs" />
+    <Compile Include="ProjectManagement\UserConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -90,6 +125,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
