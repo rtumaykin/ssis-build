@@ -18,8 +18,16 @@ using System;
 
 namespace SsisBuild
 {
+    /// <summary>
+    /// Base class for all ssisbuild.exe command line arguments parsing exceptions.
+    /// Derives from <see cref="Exception"/>.
+    /// </summary>
     public class CommandLineParsingException : Exception
     {
+        /// <summary>
+        /// Constructor for <see cref="CommandLineParsingException"/> class. 
+        /// </summary>
+        /// <param name="message">Exception message</param>
         public CommandLineParsingException(string message) : base (message) { }
     }
 }

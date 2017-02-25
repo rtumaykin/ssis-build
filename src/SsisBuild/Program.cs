@@ -44,6 +44,11 @@ namespace SsisBuild
             }
         }
 
+        /// <summary>
+        /// Internal method that allows injecting custom objects during the Unit testing sessions
+        /// </summary>
+        /// <param name="builder">Implementation of <see cref="IBuilder"/> interface.</param>
+        /// <param name="args">Command line arguments.</param>
         internal static void MainInternal(IBuilder builder, string[] args)
         {
             try
@@ -60,6 +65,11 @@ namespace SsisBuild
             }
         }
 
+        /// <summary>
+        /// Parses Command Line arguments
+        /// </summary>
+        /// <param name="args">Command line arguments</param>
+        /// <returns>an instance of <see cref="BuildArguments"/> class</returns>
         private static BuildArguments ParseCommandLineArguments(string[] args)
         {
             var startPos = 0;
@@ -135,6 +145,9 @@ namespace SsisBuild
             return new BuildArguments(Environment.CurrentDirectory, projectPath, outputFolder, protectionLevel, password, newPassword, configuration, releaseNotes, parameters); 
         }
 
+        /// <summary>
+        /// Displays the ssisbuild.exe usage.
+        /// </summary>
         private static void Usage()
         {
             var usage = new[]
