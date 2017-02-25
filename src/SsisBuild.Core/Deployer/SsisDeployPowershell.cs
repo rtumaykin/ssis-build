@@ -22,29 +22,31 @@ namespace SsisBuild.Core.Deployer
     [Cmdlet(VerbsData.Publish, "SsisDeploymentPackage")]
     public class SsisDeployPowershell : PSCmdlet
     {
-        [Parameter(
-            Position = 0,
-            HelpMessage =
-                "Full path to a SSIS deployment file (with ispac extension). If a project file is not specified, ssisdeploy searches current working directory, for a file with ispac extension and uses that file."
+        [Parameter(HelpMessage = "Full path to an SSIS deployment file (with ispac extension). If a deployment file is not specified, " +
+                                 "ssisdeploy searches current working directory for a file with ispac extension and uses that file.",
+                   Position = 0
         )]
         public string DeploymentFilePath { get; set; }
 
-        [Parameter(Mandatory = true)]
+        [Parameter(HelpMessage= "Required. Full Name of the target SQL Server instance.",
+                   Mandatory = true)]
         public string ServerInstance { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Name of the SSIS Catalog on the target server. If not supplied, then SSISDB value is used.")]
         public string Catalog { get; set; }
 
-        [Parameter(Mandatory = true)]
+        [Parameter(HelpMessage = "Required. Deployment folder within destination catalog.",
+                   Mandatory = true)]
         public string Folder { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Name of the project in the destination folder. If not supplied, then deployment file name is used.")]
         public string ProjectName { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Password to decrypt sensitive data for deployment.")]
         public string ProjectPassword { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Option to remove all sensitive info from the deployment ispac and deploy all sensitive parameters separately. " +
+                                 "If not specified then sensitive data will not be removed.")]
         public SwitchParameter EraseSensitiveInfo { get; set; }
 
         private IDeployer _deployer;

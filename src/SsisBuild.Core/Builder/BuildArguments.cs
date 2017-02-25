@@ -69,16 +69,6 @@ namespace SsisBuild.Core.Builder
 
             if (Configuration == null)
                 throw new MissingRequiredArgumentException(nameof(Configuration));
-
-            if (new[] {
-                nameof(ProjectManagement.ProtectionLevel.EncryptAllWithPassword),
-                nameof(ProjectManagement.ProtectionLevel.EncryptSensitiveWithPassword)
-            }.Contains(ProtectionLevel) && string.IsNullOrWhiteSpace(NewPassword ?? Password))
-                throw new PasswordRequiredException(ProtectionLevel);
-
-            if (ProtectionLevel == nameof(ProjectManagement.ProtectionLevel.DontSaveSensitive) && !string.IsNullOrWhiteSpace(NewPassword))
-                throw new DontSaveSensitiveWithPasswordException();
-
         }
     }
 }

@@ -47,7 +47,7 @@ namespace SsisBuild.Core.Tests
             var outputFolder = Fakes.RandomString();
             var releaseNotes = Fakes.RandomString();
 
-            var parametersCount = Fakes.RandomInt(0, 10);
+            var parametersCount = Fakes.RandomInt(1, 10);
             var parameters = new Dictionary<string, string>();
             for (var i = 0; i < parametersCount; i++)
             {

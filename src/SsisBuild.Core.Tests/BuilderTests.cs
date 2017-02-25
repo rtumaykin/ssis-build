@@ -438,6 +438,52 @@ namespace SsisBuild.Core.Tests
             Assert.NotNull(builder);
         }
 
+        [Theory]
+        [InlineData(nameof(ProtectionLevel.DontSaveSensitive), true, false)]
+        [InlineData(nameof(ProtectionLevel.DontSaveSensitive), false, false)]
+        [InlineData(nameof(ProtectionLevel.EncryptAllWithPassword), false, true)]
+        [InlineData(nameof(ProtectionLevel.EncryptAllWithPassword), true, true)]
+        [InlineData(nameof(ProtectionLevel.EncryptAllWithPassword), true, false)]
+        [InlineData(nameof(ProtectionLevel.EncryptSensitiveWithPassword), false, true)]
+        [InlineData(nameof(ProtectionLevel.EncryptSensitiveWithPassword), true, true)]
+        [InlineData(nameof(ProtectionLevel.EncryptSensitiveWithPassword), true, false)]
+        public void Pass_Validate_ProtectionLevelPasswordCombination(string protectionLevelString, bool password, bool newPassword)
+        {
+            // Setup
+            var builder = new Builder.Builder(_loggerMock.Object, _projectMock.Object);
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
+
+            // Execute
+            var exception =
+                Record.Exception(
+                    () =>
+                        builder.Build(new BuildArguments(Fakes.RandomString(), Fakes.RandomString(), null, protectionLevelString, password ? Fakes.RandomString() : null, newPassword ? Fakes.RandomString() : null,
+                            Fakes.RandomString(), null, null)));
+
+            // Assert
+            Assert.Null(exception);
+        }
+
+        [Theory]
+        [InlineData(nameof(ProtectionLevel.EncryptAllWithPassword))]
+        [InlineData(nameof(ProtectionLevel.EncryptSensitiveWithPassword))]
+        public void Fail_Validate_ProtectionLevelPasswordCombination(string protectionLevelString)
+        {
+            // Setup
+            var builder = new Builder.Builder(_loggerMock.Object, _projectMock.Object);
+            _projectMock.Setup(p => p.Parameters).Returns(new Dictionary<string, IParameter>());
+            var testException = new PasswordRequiredException(protectionLevelString);
+
+
+            // Execute
+            var exception = Record.Exception(() => builder.Build(new BuildArguments(Fakes.RandomString(), Fakes.RandomString(), null, protectionLevelString, null, null, Fakes.RandomString(), null, null)));
+
+            // Assert
+            Assert.NotNull(exception);
+            Assert.IsType<PasswordRequiredException>(exception);
+            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
+        }
+
         private IParameter CreateParameter(string name, string value, bool sensitive, ParameterSource source)
         {
             var parameterMock = new Mock<IParameter>();

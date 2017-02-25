@@ -24,32 +24,38 @@ namespace SsisBuild.Core.Builder
     [Cmdlet(VerbsCommon.New, "SsisDeploymentPackage")]
     public class SsisBuildPowershell : PSCmdlet
     {
-        [Parameter(
-            Position = 0,
-            HelpMessage =
-                "Full path to a SSIS project file (with dtproj extension). If a project file is not specified, ssisbuild searches current working directory, for a file with dtproj extension and uses that file."
-        )]
+        [Parameter(HelpMessage = "Full path to a SSIS project file (with dtproj extension). " +
+                                 "If a project file is not specified, ssisbuild searches current working directory for a " +
+                                 "file with dtproj extension and uses that file.",
+                Position = 0
+            )]
         public string ProjectPath { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Full path to a folder where the ispac file will be created. " +
+                                 "If ommitted, then the ispac file will be created in the bin/<Configuration> subfolder of the project folder.")]
         public string OutputFolder { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Overrides current project protection level. " +
+                                 "Available values are DontSaveSensitive, EncryptAllWithPassword, EncryptSensitiveWithPassword")]
         public string ProtectionLevel { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Password to decrypt original project data if its current protection level is either EncryptAllWithPassword or " +
+                                 "EncryptSensitiveWithPassword, in which case the value should be supplied, otherwise build will fail.")]
         public string Password { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Password to encrypt resulting deployment packageif its resulting protection level is either EncryptAllWithPassword " +
+                                 "or EncryptSensitiveWithPassword. If ommitted, the value of the -Password switch is used for encryption, " +
+                                 "unless original protection level was DontSaveSensitive. In this case the value should be supplied, otherwise build will fail.")]
         public string NewPassword { get; set; }
 
-        [Parameter(Mandatory = true)]
+        [Parameter(Mandatory = true, HelpMessage = "Required. Name of project configuration to use.")]
         public string Configuration { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Path to a release notes file. Supports simple or complex release notes format, as defined here: " +
+                                 "http://fsharp.github.io/FAKE/apidocs/fake-releasenoteshelper.html")]
         public string ReleaseNotes { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "A collection of replacement project parameters.")]
         public Hashtable Parameters { get; set; }
 
         private IBuilder _builder;

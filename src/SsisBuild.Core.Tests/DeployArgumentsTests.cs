@@ -65,34 +65,6 @@ namespace SsisBuild.Core.Tests
         }
 
         [Fact]
-        public void Fail_New_MissingCatalog()
-        {
-            // Setup
-
-            // Execute
-            var exception = Record.Exception(() => new DeployArguments(null, null, Fakes.RandomString(), null, Fakes.RandomString(), Fakes.RandomString(), null, Fakes.RandomBool()));
-
-            // Assert
-            Assert.NotNull(exception);
-            Assert.IsType<MissingRequiredArgumentException>(exception);
-            Assert.True(((MissingRequiredArgumentException)exception).MissingArgument == nameof(DeployArguments.Catalog));
-        }
-
-        [Fact]
-        public void Fail_New_MissingProjectName()
-        {
-            // Setup
-
-            // Execute
-            var exception = Record.Exception(() => new DeployArguments(null, null, Fakes.RandomString(), Fakes.RandomString(), Fakes.RandomString(), null, null, Fakes.RandomBool()));
-
-            // Assert
-            Assert.NotNull(exception);
-            Assert.IsType<MissingRequiredArgumentException>(exception);
-            Assert.True(((MissingRequiredArgumentException)exception).MissingArgument == nameof(DeployArguments.ProjectName));
-        }
-
-        [Fact]
         public void Fail_New_MissingFolder()
         {
             // Setup

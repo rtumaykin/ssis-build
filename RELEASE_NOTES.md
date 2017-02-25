@@ -1,3 +1,8 @@
+#### 2.1.2 (Released 2017/02/25)
+* Added powershell parameters documentation
+* Made Catalog and ProjectName parameters Optional in deployer
+
+
 #### 2.1.1 (Released 2017/02/25)
 * Fixed an issue with Powershell passing empty strings instead of nulls in parameters
 * Replaced parameter type for EraseSensitiveInfo from bool to SwitchParameter in Publish-SsisDeploymentPackage powershell CmdLet
