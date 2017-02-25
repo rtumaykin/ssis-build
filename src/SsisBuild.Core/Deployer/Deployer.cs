@@ -59,6 +59,10 @@ namespace SsisBuild.Core.Deployer
                 );
             }
 
+            var catalog = deployArguments.Catalog ?? "SSISDB";
+
+            var projectName = deployArguments.ProjectName ?? Path.GetFileNameWithoutExtension(deploymentFilePath);
+
             _project.LoadFromIspac(deploymentFilePath, deployArguments.ProjectPassword);
 
             var parametersToDeploy = _project.Parameters.Where(p => p.Value.Sensitive && p.Value.Value != null)
@@ -67,13 +71,24 @@ namespace SsisBuild.Core.Deployer
 
             var deploymentProtectionLevel = deployArguments.EraseSensitiveInfo ? ProtectionLevel.DontSaveSensitive : ProtectionLevel.ServerStorage;
 
-            LogDeploymentInfo(deployArguments, parametersToDeploy, deploymentProtectionLevel);
+            LogDeploymentInfo(
+                new DeployArguments(
+                    deployArguments.WorkingFolder, 
+                    deploymentFilePath, 
+                    deployArguments.ServerInstance, 
+                    catalog, deployArguments.Folder, 
+                    projectName, 
+                    deployArguments.ProjectPassword, 
+                    deployArguments.EraseSensitiveInfo
+                ), 
+                parametersToDeploy, 
+                deploymentProtectionLevel);
 
             var connectionString = new SqlConnectionStringBuilder()
             {
                 ApplicationName = "SSIS Deploy",
                 DataSource = deployArguments.ServerInstance,
-                InitialCatalog = deployArguments.Catalog,
+                InitialCatalog = catalog,
                 IntegratedSecurity = true
             }.ConnectionString;
 
@@ -82,7 +97,7 @@ namespace SsisBuild.Core.Deployer
                 _project.Save(zipStream, deploymentProtectionLevel, deployArguments.ProjectPassword);
                 zipStream.Flush();
 
-                _catalogTools.DeployProject(connectionString, deployArguments.Folder, deployArguments.ProjectName, deployArguments.EraseSensitiveInfo, parametersToDeploy, zipStream);
+                _catalogTools.DeployProject(connectionString, deployArguments.Folder, projectName, deployArguments.EraseSensitiveInfo, parametersToDeploy, zipStream);
             }
 
             _logger.LogMessage("");

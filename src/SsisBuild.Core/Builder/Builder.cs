@@ -14,7 +14,6 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-
 using System;
 using System.IO;
 using System.Linq;
@@ -65,7 +64,19 @@ namespace SsisBuild.Core.Builder
                 );
             }
 
-            EchoBuildArguments(buildArguments);
+            EchoBuildArguments(
+                new BuildArguments(
+                    buildArguments.WorkingFolder, 
+                    projectPath, 
+                    buildArguments.OutputFolder, 
+                    buildArguments.ProtectionLevel, 
+                    buildArguments.Password, 
+                    buildArguments.NewPassword, 
+                    buildArguments.Configuration, 
+                    buildArguments.ReleaseNotes, 
+                    buildArguments.Parameters
+                )
+            );
 
             _logger.LogMessage("-------------------------------------------------------------------------------");
             _logger.LogMessage($"Starting build. Loading project files from {projectPath}.");

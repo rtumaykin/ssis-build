@@ -1,4 +1,20 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+//   Copyright 2017 Roman Tumaykin
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//-----------------------------------------------------------------------
+
+using System;
 using System.Collections;
 using System.Linq;
 using System.Management.Automation;
@@ -51,14 +67,14 @@ namespace SsisBuild.Core.Builder
             _workingFolder = _workingFolder ?? CurrentProviderLocation("FileSystem").ProviderPath;
 
             var buildArguments = new BuildArguments(
-                _workingFolder, 
-                ProjectPath, 
-                OutputFolder, 
-                ProtectionLevel, 
-                Password, 
-                NewPassword, 
-                Configuration, 
-                ReleaseNotes,
+                string.IsNullOrWhiteSpace(_workingFolder) ? null : _workingFolder, 
+                string.IsNullOrWhiteSpace(ProjectPath) ? null : ProjectPath,
+                string.IsNullOrWhiteSpace(OutputFolder) ? null : OutputFolder,
+                string.IsNullOrWhiteSpace(ProtectionLevel) ? null : ProtectionLevel,
+                string.IsNullOrWhiteSpace(Password) ? null : Password,
+                string.IsNullOrWhiteSpace(NewPassword) ? null : NewPassword,
+                string.IsNullOrWhiteSpace(Configuration) ? null : Configuration,
+                string.IsNullOrWhiteSpace(ReleaseNotes) ? null : ReleaseNotes,
                 Parameters.OfType<DictionaryEntry>().ToDictionary(e => e.Key as string, e => e.Value as string)
             );
 

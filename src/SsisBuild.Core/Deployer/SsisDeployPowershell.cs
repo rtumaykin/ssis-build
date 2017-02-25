@@ -1,8 +1,21 @@
-﻿using System;
-using System.Collections;
-using System.Linq;
+﻿//-----------------------------------------------------------------------
+//   Copyright 2017 Roman Tumaykin
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//-----------------------------------------------------------------------
+
+using System;
 using System.Management.Automation;
-using SsisBuild.Core.Builder;
 
 namespace SsisBuild.Core.Deployer
 {
@@ -19,20 +32,20 @@ namespace SsisBuild.Core.Deployer
         [Parameter(Mandatory = true)]
         public string ServerInstance { get; set; }
 
-        [Parameter(Mandatory = true)]
+        [Parameter]
         public string Catalog { get; set; }
 
         [Parameter(Mandatory = true)]
         public string Folder { get; set; }
 
-        [Parameter(Mandatory = true)]
+        [Parameter]
         public string ProjectName { get; set; }
 
         [Parameter]
         public string ProjectPassword { get; set; }
 
         [Parameter]
-        public bool EraseSensitiveInfo { get; set; }
+        public SwitchParameter EraseSensitiveInfo { get; set; }
 
         private IDeployer _deployer;
         private string _workingFolder;
@@ -49,13 +62,13 @@ namespace SsisBuild.Core.Deployer
             _workingFolder = _workingFolder ?? CurrentProviderLocation("FileSystem").ProviderPath;
 
             var deployArguments = new DeployArguments(
-                _workingFolder, 
-                DeploymentFilePath, 
-                ServerInstance, 
-                Catalog, 
-                Folder, 
-                ProjectName, 
-                ProjectPassword, 
+                string.IsNullOrWhiteSpace(_workingFolder) ? null : _workingFolder,
+                string.IsNullOrWhiteSpace(DeploymentFilePath) ? null : DeploymentFilePath,
+                string.IsNullOrWhiteSpace(ServerInstance) ? null : ServerInstance,
+                string.IsNullOrWhiteSpace(Catalog) ? null : Catalog,
+                string.IsNullOrWhiteSpace(Folder) ? null : Folder,
+                string.IsNullOrWhiteSpace(ProjectName) ? null : ProjectName,
+                string.IsNullOrWhiteSpace(ProjectPassword) ? null : ProjectPassword, 
                 EraseSensitiveInfo
             );
 

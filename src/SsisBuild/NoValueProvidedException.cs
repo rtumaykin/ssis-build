@@ -14,8 +14,6 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-
 namespace SsisBuild
 {
     public class NoValueProvidedException : CommandLineParsingException

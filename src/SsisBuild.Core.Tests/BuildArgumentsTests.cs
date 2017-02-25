@@ -102,6 +102,7 @@ namespace SsisBuild.Core.Tests
         }
 
         [Theory]
+        [InlineData(null)]
         [InlineData(nameof(ProtectionLevel.DontSaveSensitive))]
         [InlineData(nameof(ProtectionLevel.EncryptAllWithPassword))]
         [InlineData(nameof(ProtectionLevel.EncryptSensitiveWithPassword))]
