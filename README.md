@@ -59,13 +59,13 @@ Full path to an SSIS deployment file (with ispac extension). If a deployment fil
 Required. Full Name of the target SQL Server instance.
 
 - **-Catalog:**
- Required. Name of the SSIS Catalog on the target server.
+ Name of the SSIS Catalog on the target server. If not supplied, then SSISDB value is used.
 
 - **-Folder:**
-Required. Deployment folder within destination catalog..
+Required. Deployment folder within destination catalog.
 
 - **-ProjectName:**
-Required. Name of the project in the destination folder.
+Name of the project in the destination folder. If not supplied, then deployment file name is used.
 
 - **-ProjectPassword:**
 Password to decrypt sensitive data for deployment.

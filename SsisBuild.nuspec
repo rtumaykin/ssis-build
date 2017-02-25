@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>SSISBuild</id>
-    <version>2.1.1</version>
+    <version>2.1.2</version>
     <title>SSIS Build</title>
     <authors>Roman Tumaykin</authors>
     <owners>Roman Tumaykin</owners>
@@ -10,8 +10,8 @@
     <projectUrl>https://github.com/rtumaykin/ssis-build/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A set of utilities that allow to autonomously build a Visual Studio SSIS project (dtproj) into a deployment package (ispac), and deploy the package to an SSIS catalog.</description>
-    <releaseNotes>Fixed an issue with Powershell passing empty strings instead of nulls in parameters
-Replaced parameter type for EraseSensitiveInfo from bool to SwitchParameter in Publish-SsisDeploymentPackage powershell CmdLet</releaseNotes>
+    <releaseNotes>Added powershell parameters documentation
+Made Catalog and ProjectName parameters Optional in deployer</releaseNotes>
     <copyright>Copyright © 2017 Roman Tumaykin</copyright>
     <tags>SSIS build tools</tags>
   </metadata>

@@ -52,13 +52,6 @@ namespace SsisBuild.Core.Deployer
             if (string.IsNullOrWhiteSpace(ServerInstance))
                 throw new MissingRequiredArgumentException(nameof(ServerInstance));
 
-            if (string.IsNullOrWhiteSpace(Catalog))
-                throw new MissingRequiredArgumentException(nameof(Catalog));
-
-
-            if (string.IsNullOrWhiteSpace(ProjectName))
-                throw new MissingRequiredArgumentException(nameof(ProjectName));
-
             if (string.IsNullOrWhiteSpace(Folder))
                 throw new MissingRequiredArgumentException(nameof(Folder));
         }

@@ -68,12 +68,12 @@ namespace SsisBuild.Core.Tests
             }
         }
 
-  
+
         [Fact]
         public void Fail_Validate_NoConfiguration()
         {
             // Setup
-            
+
             // Execute
             var exception = Record.Exception(() => new BuildArguments(null, null, null, null, null, null, null, null, null));
 
@@ -115,70 +115,6 @@ namespace SsisBuild.Core.Tests
 
             // Assert
             Assert.Null(exception);
-        }
-
-        [Theory]
-        [InlineData(nameof(ProtectionLevel.DontSaveSensitive), true, false)]
-        [InlineData(nameof(ProtectionLevel.DontSaveSensitive), false, false)]
-        [InlineData(nameof(ProtectionLevel.EncryptAllWithPassword), false, true)]
-        [InlineData(nameof(ProtectionLevel.EncryptAllWithPassword), true, true)]
-        [InlineData(nameof(ProtectionLevel.EncryptAllWithPassword), true, false)]
-        [InlineData(nameof(ProtectionLevel.EncryptSensitiveWithPassword), false, true)]
-        [InlineData(nameof(ProtectionLevel.EncryptSensitiveWithPassword), true, true)]
-        [InlineData(nameof(ProtectionLevel.EncryptSensitiveWithPassword), true, false)]
-        public void Pass_Validate_ProtectionLevelPasswordCombination(string protectionLevelString, bool password, bool newPassword)
-        {
-            // Setup
-
-            // Execute
-            var exception =
-                Record.Exception(
-                    () =>
-                        new BuildArguments(null, null, null, protectionLevelString, password ? Fakes.RandomString() : null, newPassword ? Fakes.RandomString() : null,
-                            Fakes.RandomString(), null, null));
-
-            // Assert
-            Assert.Null(exception);
-        }
-
-        [Theory]
-        [InlineData(nameof(ProtectionLevel.EncryptAllWithPassword))]
-        [InlineData(nameof(ProtectionLevel.EncryptSensitiveWithPassword))]
-        public void Fail_Validate_ProtectionLevelPasswordCombination(string protectionLevelString)
-        {
-            // Setup
-            var testException = new PasswordRequiredException(protectionLevelString);
-
-
-            // Execute
-            var exception = Record.Exception(() => new BuildArguments(null, null, null, protectionLevelString, null, null, Fakes.RandomString(), null, null));
-
-            // Assert
-            Assert.NotNull(exception);
-            Assert.IsType<PasswordRequiredException>(exception);
-            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
-        }
-
-        [Theory]
-        [InlineData(nameof(ProtectionLevel.DontSaveSensitive), true, true)]
-        [InlineData(nameof(ProtectionLevel.DontSaveSensitive), false, true)]
-        public void Fail_Validate_ProtectionLevelDontSaveSensitiveWithPassword(string protectionLevelString, bool password, bool newPassword)
-        {
-            // Setup
-            var testException = new DontSaveSensitiveWithPasswordException();
-
-
-            // Execute
-            var exception =
-                Record.Exception(
-                    () =>
-                        new BuildArguments(null, null, null, protectionLevelString, password ? Fakes.RandomString() : null, newPassword ? Fakes.RandomString() : null,
-                            Fakes.RandomString(), null, null));
-
-            // Assert
-            Assert.NotNull(exception);
-            Assert.IsType<DontSaveSensitiveWithPasswordException>(exception);
-            Assert.Equal(exception.Message, testException.Message, StringComparer.InvariantCultureIgnoreCase);
         }
     }
 }
