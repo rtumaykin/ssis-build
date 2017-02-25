@@ -14,10 +14,7 @@
 //   limitations under the License.
 //-----------------------------------------------------------------------
 
-using System;
-using System.IO;
 using SsisBuild.Core.Deployer;
-using SsisBuild.Core.ProjectManagement;
 using SsisBuild.Tests.Helpers;
 using Xunit;
 

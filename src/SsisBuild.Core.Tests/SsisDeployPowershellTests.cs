@@ -15,12 +15,8 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Moq;
-using SsisBuild.Core.Builder;
 using SsisBuild.Core.Deployer;
-using SsisBuild.Core.ProjectManagement;
 using SsisBuild.Tests.Helpers;
 using Xunit;
 
