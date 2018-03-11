@@ -47,10 +47,13 @@ namespace SsisBuild.Core.ProjectManagement
         {
             _protectionLevelAttribute = FileXmlDocument.SelectSingleNode("/DTS:Executable", NamespaceManager)?.Attributes?["DTS:ProtectionLevel"];
 
+            // At least in Visual Studio 2017 (14.0.0800.98), the DTS:ProtectionLevel elemented is ommited in case it is set to DontSaveSensitive.
+            if (_protectionLevelAttribute == null) {
+                var attr = FileXmlDocument.CreateAttribute("DTS:ProtectionLevel");
+                attr.Value = "DontSaveSensitive";
+                _protectionLevelAttribute = attr;
+            }
             var protectionLevelValue = _protectionLevelAttribute?.Value;
-
-            if (protectionLevelValue == null)
-                throw new InvalidXmlException("Failed to determine protection level. DTS:ProtectionLevel attribute was not found.", FileXmlDocument);
 
             ProtectionLevel protectionLevel;
             if (!Enum.TryParse(protectionLevelValue, true, out protectionLevel))
