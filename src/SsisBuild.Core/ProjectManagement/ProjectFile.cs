@@ -134,15 +134,15 @@ namespace SsisBuild.Core.ProjectManagement
             var xmlToSave = new XmlDocument();
             xmlToSave.LoadXml(FileXmlDocument.OuterXml);
 
-            if (!new []
+            if (!new[]
             {
                 ProtectionLevel.DontSaveSensitive,
+                ProtectionLevel.EncryptSensitiveWithUserKey,
                 ProtectionLevel.EncryptAllWithPassword,
                 ProtectionLevel.EncryptSensitiveWithPassword,
                 ProtectionLevel.ServerStorage
             }.Contains(protectionLevel))
                 throw new InvalidProtectionLevelException(protectionLevel);
-
 
             if (protectionLevel == ProtectionLevel.EncryptAllWithPassword)
             {
