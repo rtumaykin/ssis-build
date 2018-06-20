@@ -69,6 +69,7 @@ namespace SsisBuild.Core.Tests
         }
 
         [Fact]
+        [Obsolete]
         public void Fail_NoProtectionLevel()
         {
             // Setup
