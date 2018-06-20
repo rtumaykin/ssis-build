@@ -139,6 +139,7 @@ namespace SsisBuild.Core.Tests
         [Theory]
         [InlineData(ProtectionLevel.EncryptAllWithUserKey)]
         [InlineData(ProtectionLevel.EncryptSensitiveWithUserKey)]
+        [Obsolete]
         public void Fail_UserKeyProtectionLevel(ProtectionLevel protectionLevel)
         {
             // Setup

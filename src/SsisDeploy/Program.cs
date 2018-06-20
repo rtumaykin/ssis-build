@@ -31,6 +31,8 @@ namespace SsisDeploy
             nameof(DeployArguments.ProjectName),
             nameof(DeployArguments.ProjectPassword),
             nameof(DeployArguments.ServerInstance),
+            nameof(DeployArguments.ServerInstanceUserID),
+            nameof(DeployArguments.ServerInstancePassword),
         };
 
 
@@ -69,6 +71,8 @@ namespace SsisDeploy
 
             string deploymentFilePath = null;
             string serverInstance = null;
+            string ServerInstanceUserID = null;
+            string ServerInstancePassword = null;
             string catalog = null;
             string folder = null;
             string projectName = null;
@@ -118,12 +122,20 @@ namespace SsisDeploy
                         projectPassword = args[argPos++ + 1];
                         break;
 
+                    case nameof(DeployArguments.ServerInstanceUserID):
+                        ServerInstanceUserID = args[argPos++ + 1];
+                        break;
+                    
+                    case nameof(DeployArguments.ServerInstancePassword):
+                        ServerInstancePassword = args[argPos++ + 1];
+                        break;
+
                     default:
                         throw new InvalidTokenException(argName);
                 }
             }
 
-            return new DeployArguments(Environment.CurrentDirectory, deploymentFilePath, serverInstance, catalog, folder, projectName, projectPassword, eraseSensitiveInfo);
+            return new DeployArguments(Environment.CurrentDirectory, deploymentFilePath, serverInstance, catalog, folder, projectName, projectPassword, eraseSensitiveInfo, ServerInstanceUserID, ServerInstancePassword);
         }
 
 
@@ -144,6 +156,10 @@ namespace SsisDeploy
                 "                       for a file with ispac extension and uses that file.",
                 "",
                 "  -ServerInstance:     Required. Full Name of the target SQL Server instance.",
+                "",
+                "  -ServerInstanceUserID:  User in case SQL Server Authentication is used (e.g. SSIS in ADFv2)",
+                "",
+                "  -ServerInstancePassword: Password in case SQL Server Authentication is used (e.g. SSIS in ADFv2)",
                 "",
                 "  -Catalog:            Required. Name of the SSIS Catalog on the target server.",
                 "",

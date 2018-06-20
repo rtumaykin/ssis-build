@@ -131,7 +131,8 @@ namespace SsisBuild.Core.ProjectManagement
             if (!Enum.TryParse(protectionLevelString, out protectionLevel))
                 throw new InvalidXmlException($"Invalid Protection Level {protectionLevelString}.", manifestXml);
 
-            if (protectionLevel == ProtectionLevel.EncryptAllWithUserKey || protectionLevel == ProtectionLevel.EncryptSensitiveWithUserKey)
+            // EncryptAllWithUserKey cannot be decrypted. However, in case of EncryptSensitiveWithUserKey we just loose the sensitive information.
+            if (protectionLevel == ProtectionLevel.EncryptAllWithUserKey)
                 throw new InvalidProtectionLevelException(protectionLevel);
 
             _protectionLevelNodes.Add(projectProtectionLevelAttribute);
@@ -278,9 +279,9 @@ namespace SsisBuild.Core.ProjectManagement
             {
                 foreach (XmlNode packageParameterXmlNode in packageParameterXmlNodes)
                 {
-                    var packageName = packageParameterXmlNode.SelectSingleNode("../../SSIS:Properties/SSIS:Property[@SSIS:Name = \"Name\"]", NamespaceManager)?.InnerText;
+                    var packageName = packageParameterXmlNode.SelectSingleNode("../../@SSIS:Name", NamespaceManager).Value;
                     
-                    parameters.Add(new ProjectParameter(packageName, packageParameterXmlNode));
+                    parameters.Add(new ProjectParameter(packageName.Remove(packageName.Length - 5), packageParameterXmlNode));
                 }
             }
 
