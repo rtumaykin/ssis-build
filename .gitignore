@@ -253,3 +253,6 @@ paket-files/
 
 # Build artifacts/
 **/build/
+/src/build.zip
+/src/Version/Version.cs
+/src/after.ssis-build.sln.targets
