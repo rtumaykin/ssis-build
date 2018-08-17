@@ -258,15 +258,11 @@ namespace SsisBuild.Core.ProjectManagement
 
         public void LoadFromDtproj(string filePath, string configurationName, string password)
         {
-            Console.WriteLine("1");
-
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"File {filePath} does not exist.", filePath);
 
             if (!filePath.EndsWith(".dtproj", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidExtensionException(filePath, "dtproj");
-
-            Console.WriteLine("2");
 
             var dtprojXmlDoc = new XmlDocument();
             dtprojXmlDoc.Load(filePath);
@@ -275,8 +271,6 @@ namespace SsisBuild.Core.ProjectManagement
             var nsManager = dtprojXmlDoc.GetNameSpaceManager();
 
             var projectXmlNode = dtprojXmlDoc.SelectSingleNode("/Project/DeploymentModelSpecificContent/Manifest/SSIS:Project", nsManager);
-
-            Console.WriteLine("3");
 
             if (projectXmlNode == null)
                 throw new InvalidXmlException("Project Manifest Node was not found.", dtprojXmlDoc);
@@ -296,8 +290,6 @@ namespace SsisBuild.Core.ProjectManagement
                 }
             }
 
-            Console.WriteLine("4");
-
             _projectParams = new ProjectParams();
             _projectParams.Initialize(Path.Combine(projectDirectory, "Project.params"), password);
 
@@ -308,16 +300,12 @@ namespace SsisBuild.Core.ProjectManagement
                 _projectConnections.Add(connectionManagerName, projectConnection);
             }
 
-            Console.WriteLine("5");
-
             foreach (var packageName in _projectManifest.PackageNames)
             {
                 var package = new Package();
                 package.Initialize(Path.Combine(projectDirectory, packageName), password);
                 _packages.Add(packageName, package);
             }
-
-            Console.WriteLine("6");
 
             _isLoaded = true;
 
@@ -327,8 +315,6 @@ namespace SsisBuild.Core.ProjectManagement
             {
                 UpdateParameter(configurationParameter.Key, configurationParameter.Value.Value, ParameterSource.Configuration);
             }
-
-            Console.WriteLine("7");
 
             var userConfigurationFilePath = $"{filePath}.user";
             var userConfiguration = new UserConfiguration(configurationName);
@@ -340,8 +326,6 @@ namespace SsisBuild.Core.ProjectManagement
                     UpdateParameter(userConfigurationParameter.Key, null, ParameterSource.Configuration);
                 }
             }
-
-            Console.WriteLine("8");
         }
 
         private static void ValidateDeploymentMode(XmlNode dtprojXmlDoc)
