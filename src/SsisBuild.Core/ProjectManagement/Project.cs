@@ -317,6 +317,7 @@ namespace SsisBuild.Core.ProjectManagement
             }
 
             var userConfigurationFilePath = $"{filePath}.user";
+
             if (File.Exists(userConfigurationFilePath))
             {
                 var userConfiguration = new UserConfiguration(configurationName);
