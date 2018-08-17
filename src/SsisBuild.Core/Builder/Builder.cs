@@ -84,6 +84,9 @@ namespace SsisBuild.Core.Builder
             // Load and process project
             _project.LoadFromDtproj(projectPath, buildArguments.Configuration, buildArguments.Password);
 
+            _logger.LogMessage("-------------------------------------------------------------------------------");
+            _logger.LogMessage($"Finished loading project files from {projectPath}.");
+
             // replace parameter values
             foreach (var buildArgumentsParameter in buildArguments.Parameters)
             {
