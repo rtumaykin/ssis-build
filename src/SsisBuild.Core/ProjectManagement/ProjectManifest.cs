@@ -279,9 +279,9 @@ namespace SsisBuild.Core.ProjectManagement
             {
                 foreach (XmlNode packageParameterXmlNode in packageParameterXmlNodes)
                 {
-                    var packageName = packageParameterXmlNode.SelectSingleNode("../../@SSIS:Name", NamespaceManager).Value;
+                    var packageName = packageParameterXmlNode.SelectSingleNode("../../SSIS:Properties/SSIS:Property[@SSIS:Name = \"Name\"]", NamespaceManager)?.InnerText;
                     
-                    parameters.Add(new ProjectParameter(packageName.Remove(packageName.Length - 5), packageParameterXmlNode));
+                    parameters.Add(new ProjectParameter(packageName, packageParameterXmlNode));
                 }
             }
 

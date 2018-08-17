@@ -28,17 +28,9 @@ namespace SsisBuild.Core.Deployer
         )]
         public string DeploymentFilePath { get; set; }
 
-        [Parameter(HelpMessage = "Required. Full Name of the target SQL Server instance.",
+        [Parameter(HelpMessage= "Required. Full Name of the target SQL Server instance.",
                    Mandatory = true)]
         public string ServerInstance { get; set; }
-
-        [Parameter(HelpMessage = "Required. Full Name of the target SQL Server instance.",
-           Mandatory = true)]
-        public string ServerInstanceUserID { get; set; }
-
-        [Parameter(HelpMessage = "Required. Full Name of the target SQL Server instance.",
-           Mandatory = true)]
-        public string ServerInstancePassword { get; set; }
 
         [Parameter(HelpMessage = "Name of the SSIS Catalog on the target server. If not supplied, then SSISDB value is used.")]
         public string Catalog { get; set; }
@@ -79,9 +71,7 @@ namespace SsisBuild.Core.Deployer
                 string.IsNullOrWhiteSpace(Folder) ? null : Folder,
                 string.IsNullOrWhiteSpace(ProjectName) ? null : ProjectName,
                 string.IsNullOrWhiteSpace(ProjectPassword) ? null : ProjectPassword, 
-                EraseSensitiveInfo,
-                string.IsNullOrWhiteSpace(ServerInstanceUserID) ? null : ServerInstanceUserID,
-                string.IsNullOrWhiteSpace(ServerInstancePassword) ? null : ServerInstancePassword
+                EraseSensitiveInfo
             );
 
             _deployer = _deployer ?? new Deployer();
