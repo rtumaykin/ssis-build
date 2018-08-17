@@ -79,9 +79,7 @@ namespace SsisBuild.Core.Deployer
                     catalog, deployArguments.Folder, 
                     projectName, 
                     deployArguments.ProjectPassword, 
-                    deployArguments.EraseSensitiveInfo,
-                    deployArguments.ServerInstanceUserID,
-                    deployArguments.ServerInstancePassword
+                    deployArguments.EraseSensitiveInfo
                 ), 
                 parametersToDeploy, 
                 deploymentProtectionLevel);
@@ -90,23 +88,16 @@ namespace SsisBuild.Core.Deployer
             {
                 ApplicationName = "SSIS Deploy",
                 DataSource = deployArguments.ServerInstance,
-                InitialCatalog = catalog
-            };
-
-            if (string.IsNullOrWhiteSpace(deployArguments.ServerInstanceUserID))
-            {
-                connectionString.IntegratedSecurity = true;
-            } else {
-                connectionString.UserID = deployArguments.ServerInstanceUserID;
-                connectionString.Password = deployArguments.ServerInstancePassword;
-            }
+                InitialCatalog = catalog,
+                IntegratedSecurity = true
+            }.ConnectionString;
 
             using (var zipStream = new MemoryStream())
             {
                 _project.Save(zipStream, deploymentProtectionLevel, deployArguments.ProjectPassword);
                 zipStream.Flush();
 
-                _catalogTools.DeployProject(connectionString.ConnectionString, deployArguments.Folder, projectName, deployArguments.EraseSensitiveInfo, parametersToDeploy, zipStream);
+                _catalogTools.DeployProject(connectionString, deployArguments.Folder, projectName, deployArguments.EraseSensitiveInfo, parametersToDeploy, zipStream);
             }
 
             _logger.LogMessage("");

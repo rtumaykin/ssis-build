@@ -29,8 +29,6 @@ namespace SsisBuild.Core.Tests
             var workingFolder = Fakes.RandomString();
             var deploymentFilePath = Fakes.RandomString();
             var serverInstance = Fakes.RandomString();
-            var serverInstanceUserID = Fakes.RandomString();
-            var serverInstancePassword = Fakes.RandomString();
             var catalog = Fakes.RandomString();
             var folder = Fakes.RandomString();
             var projectName = Fakes.RandomString();
@@ -39,14 +37,12 @@ namespace SsisBuild.Core.Tests
 
 
             // Execute
-            var deployArguments = new DeployArguments(workingFolder, deploymentFilePath, serverInstance, catalog, folder, projectName, projectPassword, eraseSensitiveInfo, serverInstanceUserID, serverInstancePassword);
+            var deployArguments = new DeployArguments(workingFolder, deploymentFilePath, serverInstance, catalog, folder, projectName, projectPassword, eraseSensitiveInfo);
 
             // Assert
             Assert.Equal(workingFolder, deployArguments.WorkingFolder);
             Assert.Equal(deploymentFilePath, deployArguments.DeploymentFilePath);
             Assert.Equal(serverInstance, deployArguments.ServerInstance);
-            Assert.Equal(serverInstanceUserID, deployArguments.ServerInstanceUserID);
-            Assert.Equal(serverInstancePassword, deployArguments.ServerInstancePassword);
             Assert.Equal(catalog, deployArguments.Catalog);
             Assert.Equal(folder, deployArguments.Folder);
             Assert.Equal(projectName, deployArguments.ProjectName);
@@ -60,7 +56,7 @@ namespace SsisBuild.Core.Tests
             // Setup
 
             // Execute
-            var exception = Record.Exception(() => new DeployArguments(null, null, null, Fakes.RandomString(), Fakes.RandomString(), Fakes.RandomString(), null, Fakes.RandomBool(), null, null));
+            var exception = Record.Exception(() => new DeployArguments(null, null, null, Fakes.RandomString(), Fakes.RandomString(), Fakes.RandomString(), null, Fakes.RandomBool()));
 
             // Assert
             Assert.NotNull(exception);
@@ -74,7 +70,7 @@ namespace SsisBuild.Core.Tests
             // Setup
 
             // Execute
-            var exception = Record.Exception(() => new DeployArguments(null, null, Fakes.RandomString(), Fakes.RandomString(), null, Fakes.RandomString(), null, Fakes.RandomBool(), null, null));
+            var exception = Record.Exception(() => new DeployArguments(null, null, Fakes.RandomString(), Fakes.RandomString(), null, Fakes.RandomString(), null, Fakes.RandomBool()));
 
             // Assert
             Assert.NotNull(exception);
