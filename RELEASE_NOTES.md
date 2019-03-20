@@ -1,3 +1,6 @@
+#### 2.2.0 (Released 2019/03/19)
+* Added support for Azure deployment
+
 #### 2.1.2 (Released 2017/02/25)
 * Added powershell parameters documentation
 * Made Catalog and ProjectName parameters Optional in deployer
