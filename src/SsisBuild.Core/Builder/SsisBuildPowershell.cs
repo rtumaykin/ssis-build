@@ -81,7 +81,7 @@ namespace SsisBuild.Core.Builder
                 string.IsNullOrWhiteSpace(NewPassword) ? null : NewPassword,
                 string.IsNullOrWhiteSpace(Configuration) ? null : Configuration,
                 string.IsNullOrWhiteSpace(ReleaseNotes) ? null : ReleaseNotes,
-                Parameters.OfType<DictionaryEntry>().ToDictionary(e => e.Key as string, e => e.Value as string)
+                Parameters?.OfType<DictionaryEntry>().ToDictionary(e => e.Key as string, e => e.Value as string)
             );
 
             _builder = _builder ?? new Builder();
