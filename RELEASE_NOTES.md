@@ -1,3 +1,6 @@
+#### 2.2.1 (Released 2019/03/19)
+* Increased timeout for SSIS deployment SQL commands
+
 #### 2.2.0 (Released 2019/03/19)
 * Added support for Azure deployment
 
