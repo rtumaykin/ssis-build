@@ -48,7 +48,7 @@ namespace SsisBuild.Core.Deployer.Sql
         }
         public ParametersCollection Parameters { get; private set; }
         public int ReturnValue { get; private set; }
-        public static async Task<SetObjectParameterValue> ExecuteAsync(short? objectType, string folderName, string projectName, string parameterName, object parameterValue, string objectName, string valueType, ExecutionScope executionScope = null, int commandTimeout = 30)
+        public static async Task<SetObjectParameterValue> ExecuteAsync(short? objectType, string folderName, string projectName, string parameterName, object parameterValue, string objectName, string valueType, ExecutionScope executionScope = null, int commandTimeout = 300)
         {
             var retValue = new SetObjectParameterValue();
             {
@@ -108,7 +108,7 @@ namespace SsisBuild.Core.Deployer.Sql
             }
         }
 
-        public static SetObjectParameterValue Execute(short? objectType, string folderName, string projectName, string parameterName, object parameterValue, string objectName, string valueType, ExecutionScope executionScope = null, int commandTimeout = 30)
+        public static SetObjectParameterValue Execute(short? objectType, string folderName, string projectName, string parameterName, object parameterValue, string objectName, string valueType, ExecutionScope executionScope = null, int commandTimeout = 300)
         {
             var retValue = new SetObjectParameterValue();
             {

@@ -16,8 +16,16 @@
 
 namespace SsisBuild
 {
+    /// <summary>
+    /// An exception class which is raised when a command line argument is not recognized. 
+    /// Derives from <see cref="CommandLineParsingException"/> class.
+    /// </summary>
     public class InvalidTokenException : CommandLineParsingException
     {
+        /// <summary>
+        /// Constructor for <see cref="InvalidTokenException"/> class. 
+        /// </summary>
+        /// <param name="token">Name of an invalid token.</param>
         public InvalidTokenException(string token) : base($"Invalid token \"{token}\".")
         {
         }

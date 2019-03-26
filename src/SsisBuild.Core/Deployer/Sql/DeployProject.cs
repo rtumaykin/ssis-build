@@ -42,7 +42,7 @@ namespace SsisBuild.Core.Deployer.Sql
         }
         public ParametersCollection Parameters { get; private set; }
         public int ReturnValue { get; private set; }
-        public static async Task<DeployProject> ExecuteAsync(string folderName, string projectName, byte[] projectStream, long? operationId, ExecutionScope executionScope = null, int commandTimeout = 30)
+        public static async Task<DeployProject> ExecuteAsync(string folderName, string projectName, byte[] projectStream, long? operationId, ExecutionScope executionScope = null, int commandTimeout = 300)
         {
             var retValue = new DeployProject();
             {
@@ -99,7 +99,7 @@ namespace SsisBuild.Core.Deployer.Sql
             }
         }
 
-        public static DeployProject Execute(string folderName, string projectName, byte[] projectStream, long? operationId, ExecutionScope executionScope = null, int commandTimeout = 30)
+        public static DeployProject Execute(string folderName, string projectName, byte[] projectStream, long? operationId, ExecutionScope executionScope = null, int commandTimeout = 300)
         {
             var retValue = new DeployProject();
             {

@@ -38,7 +38,7 @@ namespace SsisBuild.Core.Deployer.Sql
         }
         public ParametersCollection Parameters { get; private set; }
         public int ReturnValue { get; private set; }
-        public static async Task<CreateFolder> ExecuteAsync(string folderName, long? folderId, ExecutionScope executionScope = null, int commandTimeout = 30)
+        public static async Task<CreateFolder> ExecuteAsync(string folderName, long? folderId, ExecutionScope executionScope = null, int commandTimeout = 300)
         {
             var retValue = new CreateFolder();
             {
@@ -93,7 +93,7 @@ namespace SsisBuild.Core.Deployer.Sql
             }
         }
 
-        public static CreateFolder Execute(string folderName, long? folderId, ExecutionScope executionScope = null, int commandTimeout = 30)
+        public static CreateFolder Execute(string folderName, long? folderId, ExecutionScope executionScope = null, int commandTimeout = 300)
         {
             var retValue = new CreateFolder();
             {
