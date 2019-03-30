@@ -61,13 +61,21 @@ namespace SsisBuild.Core.ProjectManagement
         {
             _isInitialized = true;
             Load(fileStream);
-            Decrypt(password);
+            Decrypt(password);            
             var parameters = ExtractParameters();
             if (parameters != null)
             {
                 foreach (var parameter in parameters)
                 {
-                    _parameters.Add(parameter.Name, parameter);
+                    try
+                    {
+                        _parameters.Add(parameter.Name, parameter);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        string errMsg = $"{e.GetType().Name}: {e.Message}\n\nCheck .dtproj file for duplicate package name of {parameter.Name.Split(new string[] { "::" }, StringSplitOptions.None)[0]} in SSIS:PackageMetaData.";
+                        throw new Exception (errMsg);
+                    }
                 }
             }
 
