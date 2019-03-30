@@ -488,8 +488,8 @@ namespace SsisBuild.Core.Tests
                     paramsData.Add(new ParameterSetupData()
                     {
                         Name = Fakes.RandomString(),
-                        Value = Fakes.RandomString(),
                         DataType = DataType.String,
+                        Value = Fakes.RandomString(),
                         Sensitive = Fakes.RandomBool()
                     });
                 }

@@ -54,6 +54,22 @@ namespace SsisBuild.Core.Tests
         }
 
         [Fact]
+        public void Pass_DtProjNoUserFile()
+        {
+            // Setup
+            var projectName = $"proj_{Fakes.RandomString()}.dtproj";
+            var configurationName = Fakes.RandomString();
+            CreateDtprojFiles(projectName, configurationName);
+            var proj = new Project();
+            File.Delete(Path.Combine(_workingFolder, $"{projectName}.user"));
+
+            // Execute
+            proj.LoadFromDtproj(Path.Combine(_workingFolder, projectName), configurationName, Fakes.RandomString());
+
+            // Assert
+        }
+
+        [Fact]
         public void Fail_LoadFromDtproj_FileNotFound()
         {
             // Setup

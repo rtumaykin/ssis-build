@@ -45,9 +45,10 @@ namespace SsisBuild.Core.ProjectManagement
             var value = valueXmlElement?.InnerText;
 
             Name = $"{ScopeName}::{name}";
-            Value = value;
             ParentElement = propertiesXmlElement;
             ValueElement = valueXmlElement;
+            ParameterDataType = ExtractDataType();
+            Value = value;
             Sensitive = ParentElement.SelectSingleNode("./SSIS:Property[@SSIS:Name = \"Sensitive\"]", ParentElement.GetNameSpaceManager())?.InnerText == "1";
 
             if (valueXmlElement == null)
@@ -61,8 +62,6 @@ namespace SsisBuild.Core.ProjectManagement
             {
                 ValueElement = valueXmlElement;
             }
-
-            ParameterDataType = ExtractDataType();
         }
 
         private Type ExtractDataType()
