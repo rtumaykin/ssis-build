@@ -54,8 +54,8 @@ namespace SsisBuild.Core.Tests
             Assert.Equal(ParameterSource.Original, parameter.Source);
         }
 
-        [Theory, MemberData(nameof(DataTypeValues))]
-        [InlineData((DataType)1000)]
+//        [Theory, MemberData(nameof(DataTypeValues))]
+        [InlineData(DataType.String)]
         public void Pass_New_ProjectParameter_CoverDataTypes(DataType type)
         {
             // Setup
@@ -75,7 +75,7 @@ namespace SsisBuild.Core.Tests
         }
 
         [Fact]
-        public void Pass_New_ProjectParameter_InvalidDataType()
+        public void Fail_New_ProjectParameter_InvalidDataType()
         {
             // Setup
             var name = Fakes.RandomString();
@@ -91,11 +91,31 @@ namespace SsisBuild.Core.Tests
                 dataTypeNode.InnerText = "xyz";
 
             // Execute
+            var exception = Record.Exception(() => new ProjectParameter(scope, xmldoc.DocumentElement));
+
+            // Assert
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidCastException>(exception);
+        }
+
+        [Fact]
+        public void Pass_New_ProjectParameter_DataTypeValidation()
+        {
+            // Setup
+            var name = Fakes.RandomString();
+            var value = "False";
+            var scope = Fakes.RandomString();
+            var xmldoc = new XmlDocument();
+            var parameterXml = XmlGenerators.ProjectFileParameter(name, value, false, DataType.Boolean);
+
+            xmldoc.LoadXml(parameterXml);
+
+            // Execute
             var parameter = new ProjectParameter(scope, xmldoc.DocumentElement);
 
             // Assert
             Assert.NotNull(parameter);
-            Assert.Equal(null, parameter.ParameterDataType?.Name);
+            Assert.Equal("false", parameter.Value);
         }
 
         [Fact]

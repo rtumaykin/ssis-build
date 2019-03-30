@@ -81,7 +81,7 @@ namespace SsisBuild.Core.Tests
             return $@"<{rootnode} xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
             <Id>{Guid.NewGuid():B}</Id>
             <Name>{name}</Name>
-            <Value xsi:type=""xsd:int"">{value}</Value>
+            <Value xsi:type=""xsd:string"">{value}</Value>
           </{rootnode}>";
         } 
     }

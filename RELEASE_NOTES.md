@@ -1,3 +1,6 @@
+#### 2.3.0 (Released 2019/03/29)
+* Added parameter data type validations
+
 #### 2.2.1 (Released 2019/03/19)
 * Increased timeout for SSIS deployment SQL commands
 

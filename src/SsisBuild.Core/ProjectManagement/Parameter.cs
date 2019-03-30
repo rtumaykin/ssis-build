@@ -15,6 +15,8 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.ComponentModel;
+using System.Globalization;
 using System.Xml;
 
 namespace SsisBuild.Core.ProjectManagement
@@ -22,7 +24,52 @@ namespace SsisBuild.Core.ProjectManagement
     public abstract class Parameter : IParameter
     {
         public string Name { get; protected set; }
-        public string Value { get; protected set; }
+
+        public string Value
+        {
+            get { return _value; }
+            protected set
+            {
+                if (ParameterDataType == null)
+                    throw new InvalidCastException("Parameter Data Type is not set.");
+
+                if (ParameterDataType != typeof(string) && !string.IsNullOrEmpty(value))
+                {
+                    if (ParameterDataType == typeof(DateTime))
+                    {
+                        try
+                        {
+                            _value = DateTime.Parse(value).ToString("s");
+                        }
+                        catch (Exception e)
+                        {
+                            throw new NotSupportedException($"Conversion to datetime failed for value {value}", e);
+                        }
+                    }
+                    else if (ParameterDataType == typeof(bool))
+                    {
+                        try
+                        {
+                            _value = Boolean.Parse(value).ToString().ToLowerInvariant();
+                        }
+                        catch (Exception e)
+                        {
+                            throw new NotSupportedException($"Conversion to boolean failed for value {value}", e);
+                        }
+                    }
+                    else
+                    {
+                        _value = TypeDescriptor.GetConverter(ParameterDataType).ConvertFromInvariantString(value)
+                            ?.ToString();
+                    }
+                }
+                else
+                {
+                    _value = value;
+                }
+            }
+        }
+
         public ParameterSource Source { get; private set; }
         public bool Sensitive { get; protected set; }
 
@@ -33,6 +80,7 @@ namespace SsisBuild.Core.ProjectManagement
 
         protected XmlNode ParameterNode;
         protected string ScopeName;
+        private string _value;
 
         protected Parameter(string scopeName, XmlNode parameterNode, ParameterSource source)
         {
@@ -51,17 +99,17 @@ namespace SsisBuild.Core.ProjectManagement
             Value = value;
             Source = source;
 
-            if (value == null && ValueElement.ParentNode != null)
+            if (Value == null && ValueElement.ParentNode != null)
             {
                 ParentElement.RemoveChild(ValueElement);
             }
 
-            if (value != null && ValueElement.ParentNode == null)
+            if (Value != null && ValueElement.ParentNode == null)
             {
                 ParentElement.AppendChild(ValueElement);
             }
-            if (value != null)
-                ValueElement.InnerText = value;
+            if (Value != null)
+                ValueElement.InnerText = Value;
             else
             {
                 foreach (XmlNode childNode in ValueElement.ChildNodes)

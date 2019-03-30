@@ -116,7 +116,7 @@ namespace SsisBuild.Core.Tests
             return $@"<ConfigurationSetting>
                         <Id>{Guid.NewGuid():D}</Id>
                         <Name>{name}</Name>
-                        <Value xsi:type=""xsd:int"">{value}</Value>
+                        <Value xsi:type=""xsd:string"">{value}</Value>
                     </ConfigurationSetting>";
         }
 

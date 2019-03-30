@@ -50,12 +50,63 @@ namespace SsisBuild.Core.ProjectManagement
                         value = null;
 
                     Name = name;
+                    ParameterDataType = ExtractDataType();
                     Value = value;
                 }
             }
             else
             {
                 throw new InvalidXmlException("Id element is missing", ParameterNode);
+            }
+        }
+
+        private Type ExtractDataType()
+        {
+            var dataType = ParameterNode.SelectSingleNode("./Value", ParameterNode.GetNameSpaceManager())?.Attributes?["xsi:type"]?.Value;
+
+            switch (dataType)
+            {
+                case "xsd:boolean":
+                    return typeof(bool);
+
+                case "xsd:unsignedByte":
+                    return typeof(byte);
+
+                case "xsd:dateTime":
+                    return typeof(DateTime);
+
+                case "xsd:decimal":
+                    return typeof(decimal);
+
+                case "xsd:double":
+                    return typeof(double);
+
+                case "xsd:short":
+                    return typeof(short);
+
+                case "xsd:int":
+                    return typeof(int);
+
+                case "xsd:long":
+                    return typeof(long);
+
+                case "xsd:byte":
+                    return typeof(sbyte);
+
+                case "xsd:float":
+                    return typeof(float);
+
+                case "xsd:string":
+                    return typeof(string);
+
+                case "xsd:unsignedInt":
+                    return typeof(uint);
+
+                case "xsd:unsignedLong":
+                    return typeof(ulong);
+
+                default:
+                    return null;
             }
         }
     }
