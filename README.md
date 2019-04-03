@@ -1,6 +1,6 @@
 
 # **SSISBuild**
-A set of utilities that allow to autonomously build a Visual Studio SSIS project (dtproj) into a deployment package (ispac), and deploy the package to an SSIS catalog. Project deployment model only. This set is distributed via a nuget package and can be dewnloaded locally and used from and build server environment through a Windows batch file or a Windows Powershell script. Utilities do not use any Microsoft SSIS or Visual Studio components, so there is no additional installation is needed on the build server.
+A set of utilities that allow to autonomously build a Visual Studio SSIS project (dtproj) into a deployment package (ispac), and deploy the package to an SSIS catalog. Project deployment model only. This set is distributed via a nuget package and can be downloaded locally and used from and build server environment through a Windows batch file or a Windows Powershell script. Utilities do not use any Microsoft SSIS or Visual Studio components, so there is no additional installation is needed on the build server.
 ## **ssisbuild.exe** 
 Command line utility that builds a deployment package from a Visual Studio Project File
 ####**Syntax:**
@@ -15,7 +15,7 @@ Full path to a SSIS project file (with dtproj extension). If a project file is n
 Required. Name of project configuration to use.
 
 - **-OutputFolder:**
-Full path to a folder where the ispac file will be created. If ommitted, then the ispac file will be created in the bin/&lt;Configuration&gt; subfolder of the project folder.
+Full path to a folder where the ispac file will be created. If omitted, then the ispac file will be created in the bin/&lt;Configuration&gt; subfolder of the project folder.
 
 - **-ProtectionLevel:**
 Overrides current project protection level. Available values are `DontSaveSensitive`, `EncryptAllWithPassword`, `EncryptSensitiveWithPassword`.
@@ -24,7 +24,7 @@ Overrides current project protection level. Available values are `DontSaveSensit
 Password to decrypt original project data if its current protection level is either `EncryptAllWithPassword` or `EncryptSensitiveWithPassword`,  in which case the value should be supplied, otherwise build will fail.
 
 - **-NewPassword:**
-Password to encrypt resulting deployment packageif its resulting protection level is either `EncryptAllWithPassword` or `EncryptSensitiveWithPassword`. If ommitted, the value of the **-Password** switch is used for encryption, unless original protection level was `DontSaveSensitive`. In this case the value should be supplied, otherwise build will fail.
+Password to encrypt resulting deployment package if its resulting protection level is either `EncryptAllWithPassword` or `EncryptSensitiveWithPassword`. If omitted, the value of the **-Password** switch is used for encryption, unless original protection level was `DontSaveSensitive`. In this case the value should be supplied, otherwise build will fail.
 
 - **-Parameter:**
 Project or Package parameter. Name is a standard full parameter name including the scope. For example `Project::Parameter1`. During the build, these values will replace existing values regardless of what they were originally.
