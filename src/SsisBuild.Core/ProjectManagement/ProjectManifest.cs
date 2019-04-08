@@ -162,7 +162,6 @@ namespace SsisBuild.Core.ProjectManagement
                 {
                     if (element != null)
                     {
-                        element.InnerText = versionMajorString;
                         _versionMajorNodes.Add(element);
                     }
                 }
@@ -184,7 +183,6 @@ namespace SsisBuild.Core.ProjectManagement
                 {
                     if (element != null)
                     {
-                        element.InnerText = versionMinorString;
                         _versionMinorNodes.Add(element);
                     }
                 }
@@ -206,7 +204,6 @@ namespace SsisBuild.Core.ProjectManagement
                 {
                     if (element != null)
                     {
-                        element.InnerText = versionBuildString;
                         _versionBuildNodes.Add(element);
                     }
                 }
@@ -225,7 +222,6 @@ namespace SsisBuild.Core.ProjectManagement
                 {
                     if (element != null)
                     {
-                        element.InnerText = versionCommentsString;
                         _versionCommentsNodes.Add(element);
                     }
                 }
