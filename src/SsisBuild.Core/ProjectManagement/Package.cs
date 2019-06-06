@@ -50,7 +50,8 @@ namespace SsisBuild.Core.ProjectManagement
             var protectionLevelValue = _protectionLevelAttribute?.Value;
 
             if (protectionLevelValue == null)
-                throw new InvalidXmlException("Failed to determine protection level. DTS:ProtectionLevel attribute was not found.", FileXmlDocument);
+                protectionLevelValue = "1"; //Default is EncryptSensitiveWithUserKey
+                //throw new InvalidXmlException("Failed to determine protection level. DTS:ProtectionLevel attribute was not found. " + FileXmlDocument.BaseURI?.ToString(), FileXmlDocument);
 
             ProtectionLevel protectionLevel;
             if (!Enum.TryParse(protectionLevelValue, true, out protectionLevel))
