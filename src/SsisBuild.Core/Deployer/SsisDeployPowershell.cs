@@ -32,12 +32,10 @@ namespace SsisBuild.Core.Deployer
                    Mandatory = true)]
         public string ServerInstance { get; set; }
 
-        [Parameter(HelpMessage = "Required. Full Name of the target SQL Server instance.",
-           Mandatory = true)]
+        [Parameter(HelpMessage = "User Id for accessing the target SQL Server Instance. Required for Azure Data factory")]
         public string ServerInstanceUserID { get; set; }
 
-        [Parameter(HelpMessage = "Required. Full Name of the target SQL Server instance.",
-           Mandatory = true)]
+        [Parameter(HelpMessage = "Password for accessing the target SQL Server Instance. Required for Azure Data factory")]
         public string ServerInstancePassword { get; set; }
 
         [Parameter(HelpMessage = "Name of the SSIS Catalog on the target server. If not supplied, then SSISDB value is used.")]
