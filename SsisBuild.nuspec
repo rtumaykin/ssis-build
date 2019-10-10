@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>SSISBuild</id>
-    <version>2.1.2</version>
+    <version>2.3.1</version>
     <title>SSIS Build</title>
     <authors>Roman Tumaykin</authors>
     <owners>Roman Tumaykin</owners>
@@ -10,8 +10,7 @@
     <projectUrl>https://github.com/rtumaykin/ssis-build/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A set of utilities that allow to autonomously build a Visual Studio SSIS project (dtproj) into a deployment package (ispac), and deploy the package to an SSIS catalog.</description>
-    <releaseNotes>Added powershell parameters documentation
-Made Catalog and ProjectName parameters Optional in deployer</releaseNotes>
+    <releaseNotes>Fixed double copy of references</releaseNotes>
     <copyright>Copyright © 2017 Roman Tumaykin</copyright>
     <tags>SSIS build tools</tags>
   </metadata>
@@ -19,7 +18,7 @@ Made Catalog and ProjectName parameters Optional in deployer</releaseNotes>
     <file src="src\SsisBuild\bin\$configuration$\*.dll" target="tools" />
     <file src="src\SsisBuild\bin\$configuration$\ssisbuild.exe" target="tools" />
     <file src="src\SsisBuild\bin\$configuration$\ssisbuild.exe.config" target="tools" />
-    <file src="src\SsisDeploy\bin\$configuration$\*.dll" target="tools" exclude="**\SsisBuild.Core.dll;**\SsisBuild.Logger.dll" />
+    <file src="src\SsisDeploy\bin\$configuration$\*.dll" target="tools" exclude="**\SsisBuild.Core.dll;**\SsisBuild.Logger.dll;**\Microsoft.Management.Infrastructure.dll;**\System.Management.Automation.dll" />
     <file src="src\SsisDeploy\bin\$configuration$\ssisdeploy.exe" target="tools" />
     <file src="src\SsisDeploy\bin\$configuration$\ssisdeploy.exe.config" target="tools" />
   </files>
