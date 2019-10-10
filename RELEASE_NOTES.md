@@ -1,3 +1,6 @@
+#### 2.3.1 (Released 2019/10/10)
+* Fixed double copy of references
+
 #### 2.3.0 (Released 2019/03/29)
 * Added parameter data type validations
 
