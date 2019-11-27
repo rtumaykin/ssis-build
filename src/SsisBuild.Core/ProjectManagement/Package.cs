@@ -46,18 +46,21 @@ namespace SsisBuild.Core.ProjectManagement
         private void ResolveProtectionLevel()
         {
             _protectionLevelAttribute = FileXmlDocument.SelectSingleNode("/DTS:Executable", NamespaceManager)?.Attributes?["DTS:ProtectionLevel"];
+            if (_protectionLevelAttribute == null)
+            {
+                _protectionLevelAttribute = FileXmlDocument.SelectSingleNode("/DTS:Executable", NamespaceManager).Attributes.Append(FileXmlDocument.CreateAttribute("DTS:ProtectionLevel"));
+                ProtectionLevel = ProtectionLevel.DontSaveSensitive;
+            }
 
-            var protectionLevelValue = _protectionLevelAttribute?.Value;
+            var protectionLevelValue = _protectionLevelAttribute.Value;
 
-            if (protectionLevelValue == null)
-                throw new InvalidXmlException("Failed to determine protection level. DTS:ProtectionLevel attribute was not found.", FileXmlDocument);
-
+    
             ProtectionLevel protectionLevel;
             if (!Enum.TryParse(protectionLevelValue, true, out protectionLevel))
-                throw new InvalidXmlException($"Invalid DTS:ProtectionLevel value {protectionLevelValue}.", FileXmlDocument);
+                throw new InvalidXmlException($"Invalid DTS:ProtectionLevel value {protectionLevelValue}. For Project {FilePath}", FileXmlDocument);
 
             if (!Enum.IsDefined(typeof(ProtectionLevel), protectionLevel))
-                throw new InvalidXmlException($"Invalid DTS:ProtectionLevel value {protectionLevelValue}.", FileXmlDocument);
+                throw new InvalidXmlException($"Invalid DTS:ProtectionLevel value {protectionLevelValue}. . For Project {FilePath}", FileXmlDocument);
         }
 
 

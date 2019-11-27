@@ -38,6 +38,13 @@ namespace SsisBuild.Core.ProjectManagement
 
         private bool _isInitialized;
 
+        string _filepath;
+        public string FilePath
+        {
+            get { return _filepath; }
+            set { _filepath = value; }
+        }
+
         protected ProjectFile()
         {
             _parameters = new Dictionary<string, IParameter>();
@@ -51,6 +58,8 @@ namespace SsisBuild.Core.ProjectManagement
 
         public void Initialize(string filePath, string password)
         {
+            FilePath = filePath;
+
             using (var stream = File.OpenRead(filePath))
             {
                 Initialize(stream, password);
@@ -73,7 +82,7 @@ namespace SsisBuild.Core.ProjectManagement
                     }
                     catch (ArgumentException e)
                     {
-                        string errMsg = $"{e.GetType().Name}: {e.Message}\n\nCheck .dtproj file for duplicate package name of {parameter.Name.Split(new string[] { "::" }, StringSplitOptions.None)[0]} in SSIS:PackageMetaData.";
+                        string errMsg = $"{e.GetType().Name}: {e.Message}\n\nCheck {_filepath} file for duplicate package name of {parameter.Name.Split(new string[] { "::" }, StringSplitOptions.None)[0]} in SSIS:PackageMetaData.";
                         throw new Exception (errMsg);
                     }
                 }
@@ -137,8 +146,7 @@ namespace SsisBuild.Core.ProjectManagement
 
         private XmlDocument PrepareXmlToSave(ProtectionLevel protectionLevel, string password)
         {
-            ProtectionLevel = protectionLevel;
-
+            
             var xmlToSave = new XmlDocument();
             xmlToSave.LoadXml(FileXmlDocument.OuterXml);
 

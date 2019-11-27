@@ -69,7 +69,7 @@ namespace SsisBuild.Core.Tests
         }
 
         [Fact]
-        public void Fail_NoProtectionLevel()
+        public void NoProtectionLevel_DefaultDontSaveSensitive()
         {
             // Setup
             var xml = XmlGenerators.PackageFile(Fakes.RandomString(), 1000, Fakes.RandomString());
@@ -80,10 +80,10 @@ namespace SsisBuild.Core.Tests
             // Execute
             var package = new Package();
             var exception = Record.Exception(() => package.Initialize(path, null));
-
+            
             // Assert
-            Assert.NotNull(exception);
-            Assert.IsType<InvalidXmlException>(exception);
+            Assert.Null(exception);
+            Assert.Equal(ProtectionLevel.DontSaveSensitive, package.ProtectionLevel);
         }
 
         [Fact]

@@ -99,9 +99,10 @@ namespace SsisBuild.Core.Tests
             var projectManifest = new ProjectManifest();
             projectManifest.Initialize(path, null);
 
-            var desiredProtectionLevel = projectManifest.ProtectionLevel == ProtectionLevel.DontSaveSensitive
-                ? ProtectionLevel.ServerStorage
-                : ProtectionLevel.DontSaveSensitive;
+            var desiredProtectionLevel = projectManifest.ProtectionLevel;
+                //== ProtectionLevel.DontSaveSensitive
+                //? ProtectionLevel.DontSaveSensitive
+               // : ProtectionLevel.ServerStorage;
 
             string savedXml;
 
