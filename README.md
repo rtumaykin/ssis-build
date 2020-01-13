@@ -3,11 +3,11 @@
 A set of utilities that allow to autonomously build a Visual Studio SSIS project (dtproj) into a deployment package (ispac), and deploy the package to an SSIS catalog. Project deployment model only. This set is distributed via a nuget package and can be dewnloaded locally and used from and build server environment through a Windows batch file or a Windows Powershell script. Utilities do not use any Microsoft SSIS or Visual Studio components, so there is no additional installation is needed on the build server.
 ## **ssisbuild.exe** 
 Command line utility that builds a deployment package from a Visual Studio Project File
-####**Syntax:**
+#### **Syntax:**
 
 `ssisbuild [Project File] -Configuration <Value> [-OutputFolder <Value>] [-ProtectionLevel <Value>] [-Password <Value>] [-NewPassword <Value>] [-ReleaseNotes <Value>] [-Parameter:<Name> <Value>] [...[-Parameter:<Name> <Value>]]`
 
-####**Switches:**
+#### **Switches:**
 - **Project File:**
 Full path to a SSIS project file (with dtproj extension). If a project file is not specified, ssisbuild searches current working directory for a file with dtproj extension and uses that file.
 
@@ -41,17 +41,17 @@ A PowerShell Cmdlet that builds a deployment package from a Visual Studio Projec
 
 `New-SsisDeploymentPackage [[-ProjectPath] <string>] -Configuration <string> [-OutputFolder <string>] [-ProtectionLevel <string>] [-Password <string>] [-NewPassword <string>] [-ReleaseNotes <string>] [-Parameters <hashtable>]  [<CommonParameters>]`
 
-####**Example:**
+#### **Example:**
 
 `New-SsisDeploymentPackage sample.dtproj -Configuration Release -Parameters @{"SampleParameter" = "some value"}`
 
 ## **ssisdeploy.exe**
 A command line utility that deploys an SSIS deployment package to an SSIS catalog. 
-####**Syntax:**
+#### **Syntax:**
 
 `ssisdeploy [Ispac File] -ServerInstance <ServerInstanceName> -Catalog <CatalogName> -Folder <FolderName> -ProjectName <ProjectName> [-ProjectPassword <ProjectPassword>] [-EraseSensitiveInfo]`
 
-####**Switches:**
+#### **Switches:**
 - **Ispac File:**
 Full path to an SSIS deployment file (with ispac extension). If a deployment file is not specified, ssisdeploy searches current working directory for a file with ispac extension and uses that file.
 
@@ -73,20 +73,20 @@ Password to decrypt sensitive data for deployment.
 - **-EraseSensitiveInfo:**
 Option to remove all sensitive info from the deployment ispac and deploy all sensitive parameters separately. If not specified then sensitive data will not be removed.
 
-####**Example:**
+#### **Example:**
 `ssisdeploy.exe sample.ispac -ServerInstance dbserver\\instance -Catalog SSISDB -Folder SampleFolder -ProjectName Sample -ProjectPassword xyz -EraseSensitiveInfo`
 
-##**Publish-SsisDeploymentPackage**
+## **Publish-SsisDeploymentPackage**
 A PowerShell Cmdlet that that deploys an SSIS deployment package to an SSIS catalog.
 ####**Syntax:**
 
 `Publish-SsisDeploymentPackage [[-DeploymentFilePath] <string>] -ServerInstance <string> -Catalog <string> -Folder <string> -ProjectName <string> [-ProjectPassword <string>] [-EraseSensitiveInfo <bool>]  [<CommonParameters>]`
 
-####**Example:**
+#### **Example:**
 
 `Publish-SsisDeploymentPackage sample.ispac -ServerInstance sql01 -Catalog SSISDB -Folder SomeFolder -ProjectName SampleSSISProject -ProjectPassword ssis1234`
 
-##**Sample Build Powershell Script**
+## **Sample Build Powershell Script**
 
     param (
         [Parameter(Mandatory=$true)][string]$Configuration,
@@ -132,7 +132,7 @@ A PowerShell Cmdlet that that deploys an SSIS deployment package to an SSIS cata
     # Add deployment script to the build artifacts
 	Copy-Item .\deploy.ps1 .\build
 
-##**Sample Deployment Powershell Script**
+## **Sample Deployment Powershell Script**
 	param (
 	    [Parameter(Mandatory=$true)][string]$SSISInstanceName,
 	    [Parameter(Mandatory=$true)][string]$SSISCatalog,
